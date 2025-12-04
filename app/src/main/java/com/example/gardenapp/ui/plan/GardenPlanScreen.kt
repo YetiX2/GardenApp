@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.CenterFocusStrong
+import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -66,6 +66,14 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
     var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
     var dragging by remember { mutableStateOf(false) }
     var showEditor by remember { mutableStateOf(false) }
+    var isCreating by remember { mutableStateOf(false) } // State to distinguish creating from editing
+
+    // This effect keeps the selectedPlant state in sync with the main plants list.
+    LaunchedEffect(plants, selectedPlant) {
+        selectedPlant?.let { currentSelected ->
+            selectedPlant = plants.find { it.id == currentSelected.id }
+        }
+    }
 
     val baseGridPx = 50f
     fun screenToWorld(p: Offset): Offset = (p - offset) / scale
@@ -106,8 +114,9 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                     plantedAt = LocalDate.now()
                 )
                 selectedPlant = newPlant
+                isCreating = true // Set creating mode
                 showEditor = true
-            }) { Icon(Icons.Default.Add, contentDescription = null) }
+            }) { Icon(Icons.Default.Add, contentDescription = "Добавить") }
         }
     ) { pad ->
         val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
@@ -138,6 +147,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                                     val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
                                     if (hitOk) {
                                         selectedPlant = hit!!
+                                        isCreating = false // It's an existing plant
                                         if (event.keyboardModifiers.isCtrlPressed) {
                                             showEditor = true
                                         }
@@ -177,7 +187,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                 plants.forEach { p ->
                     val center = worldToScreen(Offset(p.x, p.y))
                     drawCircle(color = plantColor, radius = p.radius * scale, center = center)
-                    if (p.id == selectedPlant?.id) {
+                    if (p.id == selectedPlant?.id && !isCreating) { // Don't highlight during creation
                         drawCircle(
                             color = selectedStroke,
                             radius = (p.radius + 6) * scale,
@@ -189,7 +199,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
             }
 
             val current = selectedPlant
-            if (current != null) {
+            if (current != null && !isCreating) { // ActionBar only for existing, selected plants
                 ActionBarForPlant(
                     plant = current,
                     onRadiusMinus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius - 5f).coerceAtLeast(10f))) } },
@@ -200,17 +210,31 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
             }
 
             if (showEditor && current != null) {
-                ModalBottomSheet(onDismissRequest = { showEditor = false }, sheetState = bottomSheetState) {
+                ModalBottomSheet(onDismissRequest = {
+                    showEditor = false
+                    if (isCreating) { // If we were creating, deselect on dismiss
+                        selectedPlant = null
+                    }
+                    isCreating = false // Always reset creating mode
+                }, sheetState = bottomSheetState) {
                     PlantEditor(
                         plant = current,
                         fertilizerFlow = vm.fertilizerLogsFlow(current.id),
                         harvestFlow = vm.harvestLogsFlow(current.id),
                         careRulesFlow = vm.careRulesFlow(current.id),
-                        onSave = { updated -> 
+                        onSave = { updated ->
                             scope.launch { vm.upsertPlant(updated) }
-                            showEditor = false 
+                            showEditor = false
+                            isCreating = false
+                            selectedPlant = updated // Keep it selected
                         },
-                        onCancel = { showEditor = false }, // Added cancel logic
+                        onCancel = {
+                            showEditor = false
+                            if (isCreating) { // If we were creating, deselect on cancel
+                                selectedPlant = null
+                            }
+                            isCreating = false
+                        },
                         onAddFertilizer = { date, grams, note -> scope.launch { vm.addFertilizer(current.id, date, grams, note) } },
                         onDeleteFertilizer = { item -> scope.launch { vm.deleteFertilizer(item) } },
                         onAddHarvest = { date, kg, note -> scope.launch { vm.addHarvest(current.id, date, kg, note) } },
@@ -246,17 +270,17 @@ private fun ActionBarForPlant(
 @Composable
 private fun PlantEditor(
     plant: PlantEntity,
+    fertilizerFlow: Flow<List<FertilizerLogEntity>>,
     harvestFlow: Flow<List<HarvestLogEntity>>,
     careRulesFlow: Flow<List<CareRuleEntity>>,
     onSave: (PlantEntity) -> Unit,
-    onCancel: () -> Unit, // Added onCancel
+    onCancel: () -> Unit,
     onAddFertilizer: (LocalDate, Float, String?) -> Unit,
     onDeleteFertilizer: (FertilizerLogEntity) -> Unit,
     onAddHarvest: (LocalDate, Float, String?) -> Unit,
     onDeleteHarvest: (HarvestLogEntity) -> Unit,
     onAddCareRule: (TaskType, LocalDate, Int?, Int?) -> Unit,
-    onDeleteCareRule: (CareRuleEntity) -> Unit,
-    fertilizerFlow: Flow<List<FertilizerLogEntity>>
+    onDeleteCareRule: (CareRuleEntity) -> Unit
 ) {
     var title by remember { mutableStateOf(plant.title) }
     var variety by remember { mutableStateOf(plant.variety ?: "") }
@@ -276,7 +300,7 @@ private fun PlantEditor(
                 Text("Сохранить")
             }
             Spacer(Modifier.width(8.dp))
-            TextButton(onClick = onCancel) { // Added Cancel button
+            TextButton(onClick = onCancel) {
                 Text("Отмена")
             }
         }
