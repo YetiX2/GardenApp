@@ -1,0 +1,232 @@
+{
+  "fruit_trees": [
+    {
+      "id": "apple",
+      "title": "Яблоня"
+    },
+    {
+      "id": "pear",
+      "title": "Груша"
+    },
+    {
+      "id": "cherry_sour",
+      "title": "Вишня (кислая)"
+    },
+    {
+      "id": "cherry_sweet",
+      "title": "Черешня"
+    },
+    {
+      "id": "plum",
+      "title": "Слива"
+    },
+    {
+      "id": "apricot",
+      "title": "Абрикос"
+    },
+    {
+      "id": "peach",
+      "title": "Персик"
+    },
+    {
+      "id": "quince",
+      "title": "Айва"
+    }
+  ],
+  "berry_bushes": [
+    {
+      "id": "currant_black",
+      "title": "Смородина чёрная"
+    },
+    {
+      "id": "currant_red",
+      "title": "Смородина красная"
+    },
+    {
+      "id": "gooseberry",
+      "title": "Крыжовник"
+    },
+    {
+      "id": "raspberry",
+      "title": "Малина"
+    },
+    {
+      "id": "blackberry",
+      "title": "Ежевика"
+    },
+    {
+      "id": "honeyberry",
+      "title": "Жимолость съедобная"
+    },
+    {
+      "id": "blueberry",
+      "title": "Голубика"
+    },
+    {
+      "id": "seabuckthorn",
+      "title": "Облепиха"
+    }
+  ],
+  "vegetables": [
+    {
+      "id": "tomato",
+      "title": "Томат"
+    },
+    {
+      "id": "cucumber",
+      "title": "Огурец"
+    },
+    {
+      "id": "pepper_sweet",
+      "title": "Перец сладкий"
+    },
+    {
+      "id": "eggplant",
+      "title": "Баклажан"
+    },
+    {
+      "id": "cabbage_white",
+      "title": "Капуста белокочанная"
+    },
+    {
+      "id": "cabbage_broccoli",
+      "title": "Капуста брокколи/цветная"
+    },
+    {
+      "id": "carrot",
+      "title": "Морковь"
+    },
+    {
+      "id": "beet",
+      "title": "Свёкла"
+    },
+    {
+      "id": "radish",
+      "title": "Редис"
+    },
+    {
+      "id": "onion",
+      "title": "Лук репчатый"
+    },
+    {
+      "id": "garlic",
+      "title": "Чеснок"
+    },
+    {
+      "id": "potato",
+      "title": "Картофель"
+    },
+    {
+      "id": "pumpkin_group",
+      "title": "Тыквенные (тыква/кабачок/патиссон)"
+    },
+    {
+      "id": "legumes",
+      "title": "Бобовые (горох/фасоль)"
+    }
+  ],
+  "herbs": [
+    {
+      "id": "dill",
+      "title": "Укроп"
+    },
+    {
+      "id": "parsley",
+      "title": "Петрушка (листовая/корневая)"
+    },
+    {
+      "id": "lettuce",
+      "title": "Салаты (листовые/кочанные)"
+    },
+    {
+      "id": "basil",
+      "title": "Базилик"
+    },
+    {
+      "id": "cilantro",
+      "title": "Кинза (кориандр)"
+    },
+    {
+      "id": "spinach",
+      "title": "Шпинат"
+    },
+    {
+      "id": "onion_green",
+      "title": "Лук-батун/шнитт"
+    }
+  ],
+  "ornamental": [
+    {
+      "id": "tree_birch",
+      "title": "Берёза"
+    },
+    {
+      "id": "tree_rowan",
+      "title": "Рябина"
+    },
+    {
+      "id": "tree_maple",
+      "title": "Клён"
+    },
+    {
+      "id": "tree_spruce",
+      "title": "Ель"
+    },
+    {
+      "id": "shrub_lilac",
+      "title": "Сирень"
+    },
+    {
+      "id": "shrub_hydrangea",
+      "title": "Гортензия"
+    },
+    {
+      "id": "shrub_spiraea",
+      "title": "Спирея"
+    },
+    {
+      "id": "shrub_physocarpus",
+      "title": "Пузыреплодник"
+    },
+    {
+      "id": "perennial_paeonia",
+      "title": "Пион (многолетник)"
+    },
+    {
+      "id": "perennial_hosta",
+      "title": "Хоста (многолетник)"
+    },
+    {
+      "id": "perennial_iris",
+      "title": "Ирис (многолетник)"
+    },
+    {
+      "id": "perennial_echinacea",
+      "title": "Эхинацея (многолетник)"
+    },
+    {
+      "id": "annual_petunia",
+      "title": "Петуния (однолетник)"
+    },
+    {
+      "id": "annual_tagetes",
+      "title": "Бархатцы (однолетник)"
+    },
+    {
+      "id": "annual_aster",
+      "title": "Астра (однолетник)"
+    },
+    {
+      "id": "bulb_tulip",
+      "title": "Тюльпан (луковичный)"
+    },
+    {
+      "id": "bulb_narcissus",
+      "title": "Нарцисс (луковичный)"
+    },
+    {
+      "id": "bulb_hyacinth",
+      "title": "Гиацинт (луковичный)"
+    }
+  ]
+}
