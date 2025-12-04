@@ -298,64 +298,64 @@ private fun PlantEditor(
     val harvest by harvestFlow.collectAsState(initial = emptyList())
     val careRules by careRulesFlow.collectAsState(initial = emptyList())
 
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Свойства растения", style = MaterialTheme.typography.titleLarge)
-        OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Название") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = variety, onValueChange = { variety = it }, label = { Text("Сорт") }, modifier = Modifier.fillMaxWidth())
-        DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
-        Row {
-            Button(onClick = { onSave(plant.copy(title = title, variety = variety.ifBlank { null }, plantedAt = plantedAt)) }) {
-                Text("Сохранить")
+    // Replaced Column with LazyColumn to make the content scrollable
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Text("Свойства растения", style = MaterialTheme.typography.titleLarge)
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Название") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = variety, onValueChange = { variety = it }, label = { Text("Сорт") }, modifier = Modifier.fillMaxWidth())
+            DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
+            Row {
+                Button(onClick = { onSave(plant.copy(title = title, variety = variety.ifBlank { null }, plantedAt = plantedAt)) }) {
+                    Text("Сохранить")
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onCancel) {
+                    Text("Отмена")
+                }
             }
-            Spacer(Modifier.width(8.dp))
-            TextButton(onClick = onCancel) {
-                Text("Отмена")
-            }
+            Divider()
         }
 
-        Divider()
-        Text("Правила ухода", style = MaterialTheme.typography.titleMedium)
-        AddCareRuleRow(onAdd = onAddCareRule)
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(careRules, key = { it.id }) { rule ->
-                ListItem(
-                    headlineContent = { Text(rule.type.toString()) }, // Placeholder
-                    supportingContent = { Text("Начиная с ${rule.start}, каждые ${rule.everyDays ?: rule.everyMonths} дней/месяцев") },
-                    trailingContent = { IconButton(onClick = { onDeleteCareRule(rule) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
-                )
-                Divider()
-            }
+        item { Text("Правила ухода", style = MaterialTheme.typography.titleMedium) }
+        item { AddCareRuleRow(onAdd = onAddCareRule) }
+        items(careRules, key = { it.id }) { rule ->
+            ListItem(
+                headlineContent = { Text(rule.type.toString()) }, // Placeholder
+                supportingContent = { Text("Начиная с ${rule.start}, каждые ${rule.everyDays ?: rule.everyMonths} дней/месяцев") },
+                trailingContent = { IconButton(onClick = { onDeleteCareRule(rule) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+            )
+            Divider()
         }
 
-        Divider()
-        Text("Внесение удобрений", style = MaterialTheme.typography.titleMedium)
-        AddFertilizerRow(onAdd = onAddFertilizer)
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(fertilizer, key = { it.id }) { item ->
-                ListItem(
-                    headlineContent = { Text("${item.amountGrams} г") },
-                    supportingContent = { Text("${item.date}") },
-                    trailingContent = { IconButton(onClick = { onDeleteFertilizer(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
-                )
-                Divider()
-            }
+        item { Divider() }
+        item { Text("Внесение удобрений", style = MaterialTheme.typography.titleMedium) }
+        item { AddFertilizerRow(onAdd = onAddFertilizer) }
+        items(fertilizer, key = { it.id }) { item ->
+            ListItem(
+                headlineContent = { Text("${item.amountGrams} г") },
+                supportingContent = { Text("${item.date}") },
+                trailingContent = { IconButton(onClick = { onDeleteFertilizer(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+            )
+            Divider()
         }
 
-        Divider()
-        Text("Урожай", style = MaterialTheme.typography.titleMedium)
-        AddHarvestRow(onAdd = onAddHarvest)
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(harvest, key = { it.id }) { item ->
-                ListItem(
-                    headlineContent = { Text("${item.weightKg} кг") },
-                    supportingContent = { Text("${item.date}") },
-                    trailingContent = { IconButton(onClick = { onDeleteHarvest(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
-                )
-                Divider()
-            }
+        item { Divider() }
+        item { Text("Урожай", style = MaterialTheme.typography.titleMedium) }
+        item { AddHarvestRow(onAdd = onAddHarvest) }
+        items(harvest, key = { it.id }) { item ->
+            ListItem(
+                headlineContent = { Text("${item.weightKg} кг") },
+                supportingContent = { Text("${item.date}") },
+                trailingContent = { IconButton(onClick = { onDeleteHarvest(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+            )
+            Divider()
         }
 
-        Spacer(Modifier.height(24.dp))
+        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
