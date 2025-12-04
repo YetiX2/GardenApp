@@ -69,7 +69,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
     var isCreating by remember { mutableStateOf(false) } // State to distinguish creating from editing
 
     // This effect keeps the selectedPlant state in sync with the main plants list.
-    LaunchedEffect(plants, selectedPlant) {
+    LaunchedEffect(plants) {
         selectedPlant?.let { currentSelected ->
             selectedPlant = plants.find { it.id == currentSelected.id }
         }
