@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.hypot
 import kotlin.math.round
@@ -62,7 +63,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
     var plants by remember { mutableStateOf(listOf<PlantEntity>()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
 
-    var selectedId by remember { mutableStateOf<String?>(null) }
+    var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
     var dragging by remember { mutableStateOf(false) }
     var showEditor by remember { mutableStateOf(false) }
 
@@ -94,18 +95,17 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 val centerWorld = screenToWorld(Offset(600f, 900f))
-                val p = PlantEntity(
-                    id = java.util.UUID.randomUUID().toString(),
+                val newPlant = PlantEntity(
+                    id = UUID.randomUUID().toString(),
                     gardenId = gardenId,
-                    title = "Растение",
+                    title = "Новое растение",
                     variety = null,
                     x = centerWorld.x,
                     y = centerWorld.y,
                     radius = 35f,
                     plantedAt = LocalDate.now()
                 )
-                scope.launch { vm.upsertPlant(p) }
-                selectedId = p.id
+                selectedPlant = newPlant
                 showEditor = true
             }) { Icon(Icons.Default.Add, contentDescription = null) }
         }
@@ -126,34 +126,32 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                             }
                         }
                     }
-                    .pointerInput(plants, selectedId, dragging, snapToGrid, scale, offset) {
+                    .pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
                                 val change = event.changes.first()
 
-                                // Handle press start
                                 if (change.pressed && !change.previousPressed) {
                                     val world = screenToWorld(change.position)
                                     val hit = plants.minByOrNull { hypot(it.x - world.x, it.y - world.y) - it.radius }
                                     val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
                                     if (hitOk) {
-                                        selectedId = hit.id
+                                        selectedPlant = hit!!
                                         if (event.keyboardModifiers.isCtrlPressed) {
                                             showEditor = true
                                         }
                                         dragging = true
                                     } else {
-                                        selectedId = null
+                                        selectedPlant = null
                                     }
                                 }
 
-                                // Handle drag and release
-                                if (dragging && selectedId != null) {
+                                if (dragging && selectedPlant != null) {
                                     if (change.pressed) {
                                         val world = screenToWorld(change.position)
                                         val newWorld = if (snapToGrid) snap(world) else world
-                                        val current = plants.firstOrNull { it.id == selectedId }
+                                        val current = plants.firstOrNull { it.id == selectedPlant?.id }
                                         if (current != null) {
                                             scope.launch { vm.upsertPlant(current.copy(x = newWorld.x, y = newWorld.y)) }
                                         }
@@ -179,7 +177,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                 plants.forEach { p ->
                     val center = worldToScreen(Offset(p.x, p.y))
                     drawCircle(color = plantColor, radius = p.radius * scale, center = center)
-                    if (p.id == selectedId) {
+                    if (p.id == selectedPlant?.id) {
                         drawCircle(
                             color = selectedStroke,
                             radius = (p.radius + 6) * scale,
@@ -190,13 +188,13 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                 }
             }
 
-            val current = plants.firstOrNull { it.id == selectedId }
+            val current = selectedPlant
             if (current != null) {
                 ActionBarForPlant(
                     plant = current,
                     onRadiusMinus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius - 5f).coerceAtLeast(10f))) } },
                     onRadiusPlus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius + 5f).coerceAtMost(300f))) } },
-                    onDelete = { scope.launch { vm.deletePlant(current) }; selectedId = null },
+                    onDelete = { scope.launch { vm.deletePlant(current) }; selectedPlant = null },
                     onEdit = { showEditor = true }
                 )
             }
@@ -208,7 +206,11 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                         fertilizerFlow = vm.fertilizerLogsFlow(current.id),
                         harvestFlow = vm.harvestLogsFlow(current.id),
                         careRulesFlow = vm.careRulesFlow(current.id),
-                        onSave = { updated -> scope.launch { vm.upsertPlant(updated); showEditor = false } },
+                        onSave = { updated -> 
+                            scope.launch { vm.upsertPlant(updated) }
+                            showEditor = false 
+                        },
+                        onCancel = { showEditor = false }, // Added cancel logic
                         onAddFertilizer = { date, grams, note -> scope.launch { vm.addFertilizer(current.id, date, grams, note) } },
                         onDeleteFertilizer = { item -> scope.launch { vm.deleteFertilizer(item) } },
                         onAddHarvest = { date, kg, note -> scope.launch { vm.addHarvest(current.id, date, kg, note) } },
@@ -244,16 +246,17 @@ private fun ActionBarForPlant(
 @Composable
 private fun PlantEditor(
     plant: PlantEntity,
-    fertilizerFlow: Flow<List<FertilizerLogEntity>>,
     harvestFlow: Flow<List<HarvestLogEntity>>,
     careRulesFlow: Flow<List<CareRuleEntity>>,
     onSave: (PlantEntity) -> Unit,
+    onCancel: () -> Unit, // Added onCancel
     onAddFertilizer: (LocalDate, Float, String?) -> Unit,
     onDeleteFertilizer: (FertilizerLogEntity) -> Unit,
     onAddHarvest: (LocalDate, Float, String?) -> Unit,
     onDeleteHarvest: (HarvestLogEntity) -> Unit,
     onAddCareRule: (TaskType, LocalDate, Int?, Int?) -> Unit,
-    onDeleteCareRule: (CareRuleEntity) -> Unit
+    onDeleteCareRule: (CareRuleEntity) -> Unit,
+    fertilizerFlow: Flow<List<FertilizerLogEntity>>
 ) {
     var title by remember { mutableStateOf(plant.title) }
     var variety by remember { mutableStateOf(plant.variety ?: "") }
@@ -268,8 +271,14 @@ private fun PlantEditor(
         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Название") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = variety, onValueChange = { variety = it }, label = { Text("Сорт") }, modifier = Modifier.fillMaxWidth())
         DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
-        Button(onClick = { onSave(plant.copy(title = title, variety = variety.ifBlank { null }, plantedAt = plantedAt)) }) {
-            Text("Сохранить")
+        Row {
+            Button(onClick = { onSave(plant.copy(title = title, variety = variety.ifBlank { null }, plantedAt = plantedAt)) }) {
+                Text("Сохранить")
+            }
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onCancel) { // Added Cancel button
+                Text("Отмена")
+            }
         }
 
         Divider()
