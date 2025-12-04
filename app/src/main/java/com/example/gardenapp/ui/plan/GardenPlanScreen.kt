@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CenterFocusStrong
+import androidx.compose.material.icons.outlined.GridOff
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -95,8 +96,13 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                     }
                 },
                 actions = {
-                    IconButton({ snapToGrid = !snapToGrid }) { Icon(Icons.Outlined.GridOn, contentDescription = null) }
-                    IconButton({ scale = 1f; offset = Offset.Zero }) { Icon(Icons.Outlined.CenterFocusStrong, contentDescription = null) }
+                    IconButton({ snapToGrid = !snapToGrid }) {
+                        Icon(
+                            if (snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff,
+                            contentDescription = "Привязка к сетке"
+                        )
+                    }
+                    IconButton({ scale = 1f; offset = Offset.Zero }) { Icon(Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
                 }
             )
         },
@@ -173,16 +179,18 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                         }
                     }
             ) {
-                val step = baseGridPx * scale
-                var x = (-offset.x % step)
-                while (x < size.width) {
-                    drawLine(gridColor, Offset(x, 0f), Offset(x, size.height))
-                    x += step
-                }
-                var y = (-offset.y % step)
-                while (y < size.height) {
-                    drawLine(gridColor, Offset(0f, y), Offset(size.width, y))
-                    y += step
+                if (snapToGrid) {
+                    val step = baseGridPx * scale
+                    var x = (-offset.x % step)
+                    while (x < size.width) {
+                        drawLine(gridColor, Offset(x, 0f), Offset(x, size.height))
+                        x += step
+                    }
+                    var y = (-offset.y % step)
+                    while (y < size.height) {
+                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y))
+                        y += step
+                    }
                 }
                 plants.forEach { p ->
                     val center = worldToScreen(Offset(p.x, p.y))
