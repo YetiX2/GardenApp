@@ -1,5 +1,6 @@
 package com.example.gardenapp.data.db
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -7,7 +8,6 @@ import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// --- ORIGINAL ENTITIES (from your project) ---
 @Entity
 data class GardenEntity(
     @PrimaryKey val id: String,
@@ -22,7 +22,8 @@ data class PlantEntity(
     @PrimaryKey val id: String,
     val gardenId: String,
     val title: String,
-    val variety: String?,
+    val variety: String?,      // User-facing variety title, e.g., "Антоновка"
+    val varietyId: String?,   // The stable UUID of the variety from the reference table
     val x: Float,
     val y: Float,
     val radius: Float,
@@ -70,19 +71,16 @@ data class HarvestLogEntity(
     val note: String? = null
 )
 
-// --- NEW REFERENCE ENTITIES ---
-@Entity(tableName = "reference_groups")
+@Entity(tableName = "ref_groups")
 data class ReferenceGroupEntity(
     @PrimaryKey val id: String,
     val title: String
 )
 
 @Entity(
-    tableName = "reference_cultures",
+    tableName = "ref_cultures",
     indices = [Index(value = ["groupId"])],
-    foreignKeys = [
-        ForeignKey(entity = ReferenceGroupEntity::class, parentColumns = ["id"], childColumns = ["groupId"], onDelete = ForeignKey.CASCADE)
-    ]
+    foreignKeys = [ForeignKey(entity = ReferenceGroupEntity::class, parentColumns = ["id"], childColumns = ["groupId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceCultureEntity(
     @PrimaryKey val id: String,
@@ -91,28 +89,53 @@ data class ReferenceCultureEntity(
 )
 
 @Entity(
-    tableName = "reference_varieties",
+    tableName = "ref_varieties",
     indices = [Index(value = ["cultureId"])],
-    foreignKeys = [
-        ForeignKey(entity = ReferenceCultureEntity::class, parentColumns = ["id"], childColumns = ["cultureId"], onDelete = ForeignKey.CASCADE)
-    ]
+    foreignKeys = [ForeignKey(entity = ReferenceCultureEntity::class, parentColumns = ["id"], childColumns = ["cultureId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceVarietyEntity(
-    @PrimaryKey(autoGenerate = true) val varietyId: Long = 0,
+    @PrimaryKey val id: String, // UUID from JSON
     val cultureId: String,
-    val title: String
+    val title: String,
+    @Embedded(prefix = "i18n_") val i18n: I18nEntity,
+    @Embedded(prefix = "hardiness_") val hardiness: HardinessEntity?,
+    @Embedded(prefix = "filter_") val smartFilters: SmartFilterEntity
+)
+
+data class I18nEntity(val ru: String, val en: String, val kz: String)
+data class HardinessEntity(val min: Int, val max: Int)
+data class SmartFilterEntity(val soil_pH: String?, val height_cm: Int?)
+
+@Entity(
+    tableName = "ref_variety_tags",
+    primaryKeys = ["varietyId", "key"],
+    indices = [Index(value = ["varietyId"])],
+    foreignKeys = [ForeignKey(entity = ReferenceVarietyEntity::class, parentColumns = ["id"], childColumns = ["varietyId"], onDelete = ForeignKey.CASCADE)]
+)
+data class ReferenceTagEntity(
+    val varietyId: String, // Corrected to String to match Variety's UUID
+    val key: String,
+    val value: String
 )
 
 @Entity(
-    tableName = "reference_tags",
+    tableName = "ref_variety_regions",
+    primaryKeys = ["varietyId", "region"],
     indices = [Index(value = ["varietyId"])],
-    foreignKeys = [
-        ForeignKey(entity = ReferenceVarietyEntity::class, parentColumns = ["varietyId"], childColumns = ["varietyId"], onDelete = ForeignKey.CASCADE)
-    ]
+    foreignKeys = [ForeignKey(entity = ReferenceVarietyEntity::class, parentColumns = ["id"], childColumns = ["varietyId"], onDelete = ForeignKey.CASCADE)]
 )
-data class ReferenceTagEntity(
-    @PrimaryKey(autoGenerate = true) val tagId: Long = 0,
-    val varietyId: Long,
-    val key: String,
-    val value: String
+data class ReferenceRegionEntity(
+    val varietyId: String,
+    val region: String
+)
+
+@Entity(
+    tableName = "ref_variety_cultivation",
+    primaryKeys = ["varietyId", "cultivationType"],
+    indices = [Index(value = ["varietyId"])],
+    foreignKeys = [ForeignKey(entity = ReferenceVarietyEntity::class, parentColumns = ["id"], childColumns = ["varietyId"], onDelete = ForeignKey.CASCADE)]
+)
+data class ReferenceCultivationEntity(
+    val varietyId: String,
+    val cultivationType: String
 )

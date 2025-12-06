@@ -57,25 +57,37 @@ interface ReferenceDao {
     suspend fun insertCultures(cultures: List<ReferenceCultureEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertVarieties(varieties: List<ReferenceVarietyEntity>): List<Long>
+    suspend fun insertVarieties(varieties: List<ReferenceVarietyEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTags(tags: List<ReferenceTagEntity>)
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRegions(regions: List<ReferenceRegionEntity>)
 
-    @Query("SELECT COUNT(*) FROM reference_groups")
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCultivationTypes(types: List<ReferenceCultivationEntity>)
+
+    @Query("SELECT COUNT(*) FROM ref_groups")
     suspend fun getGroupsCount(): Int
 
-    @Query("SELECT * FROM reference_groups ORDER BY title")
+    @Query("SELECT * FROM ref_groups ORDER BY title")
     fun getGroups(): Flow<List<ReferenceGroupEntity>>
+    
+    @Query("SELECT * FROM ref_cultures")
+    fun getAllCultures(): Flow<List<ReferenceCultureEntity>>
+    
+    @Query("SELECT * FROM ref_varieties")
+    fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>>
 
-    @Query("SELECT * FROM reference_cultures WHERE groupId = :groupId ORDER BY title")
+    @Query("SELECT * FROM ref_cultures WHERE groupId = :groupId ORDER BY title")
     fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>>
 
-    @Query("SELECT * FROM reference_varieties WHERE cultureId = :cultureId ORDER BY title")
+    @Query("SELECT * FROM ref_varieties WHERE cultureId = :cultureId ORDER BY title")
     fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>>
 
-    @Query("SELECT * FROM reference_tags WHERE varietyId = :varietyId")
-    fun getTagsForVariety(varietyId: Long): Flow<List<ReferenceTagEntity>>
+    @Query("SELECT * FROM ref_variety_tags WHERE varietyId = :varietyId")
+    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> // Corrected to String
 }
 
 // --- Converters ---
@@ -94,9 +106,10 @@ class Converters {
     entities = [
         GardenEntity::class, PlantEntity::class, CareRuleEntity::class, TaskInstanceEntity::class, 
         FertilizerLogEntity::class, HarvestLogEntity::class,
-        ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, ReferenceTagEntity::class
+        ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
+        ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 7, // Incremented version to ensure changes are applied
+    version = 9, 
     exportSchema = false
 )
 @TypeConverters(Converters::class)

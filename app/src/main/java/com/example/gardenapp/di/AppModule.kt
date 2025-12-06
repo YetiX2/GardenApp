@@ -1,7 +1,6 @@
 package com.example.gardenapp.di
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -26,16 +25,12 @@ object AppModule {
     @Singleton
     fun provideDb(
         @ApplicationContext ctx: Context,
-        // Use a Provider to lazily get the repo and avoid circular dependency during db creation
-        repoProvider: Provider<ReferenceDataRepository>
+        repoProvider: Provider<ReferenceDataRepository> 
     ): GardenDatabase {
         return Room.databaseBuilder(ctx, GardenDatabase::class.java, "garden.db")
             .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
-                // Using onOpen because onCreate is only called once when the file is created.
-                // onOpen is called every time the DB is opened.
                 override fun onOpen(db: SupportSQLiteDatabase) {
-                    Log.d("GardenDatabase", "onOpen called")
                     super.onOpen(db)
                     CoroutineScope(Dispatchers.IO).launch {
                         repoProvider.get().populateDatabaseIfEmpty()
@@ -73,6 +68,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideReferenceDataRepository(db: GardenDatabase, @ApplicationContext context: Context) = 
-        ReferenceDataRepository(db.referenceDao(), context)
+    fun provideReferenceDataRepository(referenceDao: com.example.gardenapp.data.db.ReferenceDao, @ApplicationContext context: Context) = 
+        ReferenceDataRepository(referenceDao, context)
 }
