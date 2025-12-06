@@ -45,21 +45,39 @@ class PlanVm @Inject constructor(
     suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
 
     // Log data
-    fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
+    fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> =
+        repo.fertilizerLogs(plantId)
+
     fun harvestLogsFlow(plantId: String): Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)
     fun careRulesFlow(plantId: String): Flow<List<CareRuleEntity>> = repo.careRules(plantId)
-    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) = repo.addFertilizerLog(plantId, date, grams, note)
+    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) =
+        repo.addFertilizerLog(plantId, date, grams, note)
+
     suspend fun deleteFertilizer(item: FertilizerLogEntity) = repo.deleteFertilizerLog(item)
-    suspend fun addHarvest(plantId: String, date: LocalDate, kg: Float, note: String?) = repo.addHarvestLog(plantId, date, kg, note)
+    suspend fun addHarvest(plantId: String, date: LocalDate, kg: Float, note: String?) =
+        repo.addHarvestLog(plantId, date, kg, note)
+
     suspend fun deleteHarvest(item: HarvestLogEntity) = repo.deleteHarvestLog(item)
-    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) = repo.addCareRule(plantId, type, start, everyDays, everyMonths)
+    suspend fun addCareRule(
+        plantId: String,
+        type: TaskType,
+        start: LocalDate,
+        everyDays: Int?,
+        everyMonths: Int?
+    ) = repo.addCareRule(plantId, type, start, everyDays, everyMonths)
+
     suspend fun deleteCareRule(rule: CareRuleEntity) = repo.deleteCareRule(rule)
 
     // Reference Data - Now using the injected referenceDao
     val referenceGroups: Flow<List<ReferenceGroupEntity>> = referenceDao.getGroups()
-    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> = referenceDao.getCulturesByGroup(groupId)
-    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> = referenceDao.getVarietiesByCulture(cultureId)
-    fun getTagsForVariety(varietyId: Long): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
+    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> =
+        referenceDao.getCulturesByGroup(groupId)
+
+    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> =
+        referenceDao.getVarietiesByCulture(cultureId)
+
+    fun getTagsForVariety(varietyId: Long): Flow<List<ReferenceTagEntity>> =
+        referenceDao.getTagsForVariety(varietyId)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,7 +129,14 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                             contentDescription = "Привязка к сетке"
                         )
                     }
-                    IconButton({ scale = 1f; offset = Offset.Zero }) { Icon(Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
+                    IconButton({
+                        scale = 1f; offset = Offset.Zero
+                    }) {
+                        Icon(
+                            Icons.Outlined.CenterFocusStrong,
+                            contentDescription = "Сбросить вид"
+                        )
+                    }
                 }
             )
         },
@@ -140,52 +165,75 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
         val plantColor = Color(0xFF4CAF50)
         val selectedStroke = MaterialTheme.colorScheme.primary
 
-        Box(Modifier.fillMaxSize().padding(pad)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(pad)
+        ) {
             Canvas(
-                modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        if (!dragging) {
-                            scale = (scale * zoom).coerceIn(0.5f, 6f)
-                            offset += pan
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            if (!dragging) {
+                                scale = (scale * zoom).coerceIn(0.5f, 6f)
+                                offset += pan
+                            }
                         }
                     }
-                }.pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.first()
+                    .pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.first()
 
-                            if (change.pressed && !change.previousPressed) {
-                                val world = screenToWorld(change.position)
-                                val hit = plants.minByOrNull { hypot(it.x - world.x, it.y - world.y) - it.radius }
-                                val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
-                                if (hitOk) {
-                                    selectedPlant = hit!!
-                                    isCreating = false
-                                    if (event.keyboardModifiers.isCtrlPressed) {
-                                        showEditor = true
-                                    }
-                                    dragging = true
-                                } else {
-                                    selectedPlant = null
-                                }
-                            }
-
-                            if (dragging && selectedPlant != null) {
-                                if (change.pressed) {
+                                if (change.pressed && !change.previousPressed) {
                                     val world = screenToWorld(change.position)
-                                    val newWorld = if (snapToGrid) snap(world) else world
-                                    val current = plants.firstOrNull { it.id == selectedPlant?.id }
-                                    if (current != null) {
-                                        scope.launch { vm.upsertPlant(current.copy(x = newWorld.x, y = newWorld.y)) }
+                                    val hit = plants.minByOrNull {
+                                        hypot(
+                                            it.x - world.x,
+                                            it.y - world.y
+                                        ) - it.radius
                                     }
-                                } else {
-                                    dragging = false
+                                    val hitOk = hit != null && hypot(
+                                        hit.x - world.x,
+                                        hit.y - world.y
+                                    ) <= hit.radius + 16
+                                    if (hitOk) {
+                                        selectedPlant = hit!!
+                                        isCreating = false
+                                        if (event.keyboardModifiers.isCtrlPressed) {
+                                            showEditor = true
+                                        }
+                                        dragging = true
+                                    } else {
+                                        selectedPlant = null
+                                    }
+                                }
+
+                                if (dragging && selectedPlant != null) {
+                                    if (change.pressed) {
+                                        val world = screenToWorld(change.position)
+                                        val newWorld = if (snapToGrid) snap(world) else world
+                                        val current =
+                                            plants.firstOrNull { it.id == selectedPlant?.id }
+                                        if (current != null) {
+                                            scope.launch {
+                                                vm.upsertPlant(
+                                                    current.copy(
+                                                        x = newWorld.x,
+                                                        y = newWorld.y
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        dragging = false
+                                    }
                                 }
                             }
                         }
                     }
-                }
             ) {
                 if (snapToGrid) {
                     val step = baseGridPx * scale
@@ -202,7 +250,12 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                     val center = worldToScreen(Offset(p.x, p.y))
                     drawCircle(color = plantColor, radius = p.radius * scale, center = center)
                     if (p.id == selectedPlant?.id && !isCreating) {
-                        drawCircle(color = selectedStroke, radius = (p.radius + 6) * scale, center = center, style = Stroke(width = 3f))
+                        drawCircle(
+                            color = selectedStroke,
+                            radius = (p.radius + 6) * scale,
+                            center = center,
+                            style = Stroke(width = 3f)
+                        )
                     }
                 }
             }
@@ -211,8 +264,28 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
             if (current != null && !isCreating) {
                 ActionBarForPlant(
                     plant = current,
-                    onRadiusMinus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius - 5f).coerceAtLeast(10f))) } },
-                    onRadiusPlus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius + 5f).coerceAtMost(300f))) } },
+                    onRadiusMinus = {
+                        scope.launch {
+                            vm.upsertPlant(
+                                current.copy(
+                                    radius = (current.radius - 5f).coerceAtLeast(
+                                        10f
+                                    )
+                                )
+                            )
+                        }
+                    },
+                    onRadiusPlus = {
+                        scope.launch {
+                            vm.upsertPlant(
+                                current.copy(
+                                    radius = (current.radius + 5f).coerceAtMost(
+                                        300f
+                                    )
+                                )
+                            )
+                        }
+                    },
                     onDelete = { scope.launch { vm.deletePlant(current) }; selectedPlant = null },
                     onEdit = { showEditor = true }
                 )
@@ -221,7 +294,9 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
             if (showEditor && current != null) {
                 ModalBottomSheet(onDismissRequest = {
                     showEditor = false
-                    if (isCreating) { selectedPlant = null }
+                    if (isCreating) {
+                        selectedPlant = null
+                    }
                     isCreating = false
                 }, sheetState = bottomSheetState) {
                     PlantEditor(
@@ -235,14 +310,44 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                         },
                         onCancel = {
                             showEditor = false
-                            if (isCreating) { selectedPlant = null }
+                            if (isCreating) {
+                                selectedPlant = null
+                            }
                             isCreating = false
                         },
-                        onAddFertilizer = { date, grams, note -> scope.launch { vm.addFertilizer(current.id, date, grams, note) } },
+                        onAddFertilizer = { date, grams, note ->
+                            scope.launch {
+                                vm.addFertilizer(
+                                    current.id,
+                                    date,
+                                    grams,
+                                    note
+                                )
+                            }
+                        },
                         onDeleteFertilizer = { item -> scope.launch { vm.deleteFertilizer(item) } },
-                        onAddHarvest = { date, kg, note -> scope.launch { vm.addHarvest(current.id, date, kg, note) } },
+                        onAddHarvest = { date, kg, note ->
+                            scope.launch {
+                                vm.addHarvest(
+                                    current.id,
+                                    date,
+                                    kg,
+                                    note
+                                )
+                            }
+                        },
                         onDeleteHarvest = { item -> scope.launch { vm.deleteHarvest(item) } },
-                        onAddCareRule = { type, start, everyDays, everyMonths -> scope.launch { vm.addCareRule(current.id, type, start, everyDays, everyMonths) } },
+                        onAddCareRule = { type, start, everyDays, everyMonths ->
+                            scope.launch {
+                                vm.addCareRule(
+                                    current.id,
+                                    type,
+                                    start,
+                                    everyDays,
+                                    everyMonths
+                                )
+                            }
+                        },
                         onDeleteCareRule = { rule -> scope.launch { vm.deleteCareRule(rule) } }
                     )
                 }
@@ -259,13 +364,41 @@ private fun ActionBarForPlant(
     onDelete: () -> Unit,
     onEdit: () -> Unit,
 ) {
-    Surface(tonalElevation = 8.dp, modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+    Surface(
+        tonalElevation = 8.dp, modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
         Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(plant.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            FilledTonalIconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = null) }
-            FilledTonalIconButton(onClick = onRadiusMinus) { Icon(Icons.Default.RemoveCircle, contentDescription = null) }
-            FilledTonalIconButton(onClick = onRadiusPlus) { Icon(Icons.Default.Add, contentDescription = null) }
-            FilledTonalIconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null) }
+            Text(
+                plant.title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            FilledTonalIconButton(onClick = onEdit) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = null
+                )
+            }
+            FilledTonalIconButton(onClick = onRadiusMinus) {
+                Icon(
+                    Icons.Default.RemoveCircle,
+                    contentDescription = null
+                )
+            }
+            FilledTonalIconButton(onClick = onRadiusPlus) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null
+                )
+            }
+            FilledTonalIconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null
+                )
+            }
         }
     }
 }
@@ -303,37 +436,84 @@ private fun PlantEditor(
     val tags by remember(selectedVariety) {
         selectedVariety?.let { vm.getTagsForVariety(it.varietyId) } ?: flowOf(emptyList())
     }.collectAsState(initial = emptyList())
-    
-    LaunchedEffect(cultures) { if (selectedCulture != null && cultures.none { it.id == selectedCulture!!.id }) selectedCulture = null }
-    LaunchedEffect(varieties) { if (selectedVariety != null && varieties.none { it.varietyId == selectedVariety!!.varietyId }) selectedVariety = null }
+
+    LaunchedEffect(cultures) {
+        if (selectedCulture != null && cultures.none { it.id == selectedCulture!!.id }) selectedCulture =
+            null
+    }
+    LaunchedEffect(varieties) {
+        if (selectedVariety != null && varieties.none { it.varietyId == selectedVariety!!.varietyId }) selectedVariety =
+            null
+    }
 
     val fertilizer by vm.fertilizerLogsFlow(plant.id).collectAsState(initial = emptyList())
     val harvest by vm.harvestLogsFlow(plant.id).collectAsState(initial = emptyList())
     val careRules by vm.careRulesFlow(plant.id).collectAsState(initial = emptyList())
 
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text("Свойства растения", style = MaterialTheme.typography.titleLarge)
-            ReferenceDropdown(label = "Группа", items = groups, selected = selectedGroup, onSelected = { selectedGroup = it; selectedCulture = null; selectedVariety = null }, itemTitle = { it.title })
-            ReferenceDropdown(label = "Культура", items = cultures, selected = selectedCulture, onSelected = { selectedCulture = it; selectedVariety = null }, itemTitle = { it.title }, enabled = selectedGroup != null)
-            ReferenceDropdown(label = "Сорт", items = varieties, selected = selectedVariety, onSelected = { selectedVariety = it }, itemTitle = { it.title }, enabled = selectedCulture != null)
+            ReferenceDropdown(
+                label = "Группа",
+                items = groups,
+                selected = selectedGroup,
+                onSelected = { selectedGroup = it; selectedCulture = null; selectedVariety = null },
+                itemTitle = { it.title })
+            ReferenceDropdown(
+                label = "Культура",
+                items = cultures,
+                selected = selectedCulture,
+                onSelected = { selectedCulture = it; selectedVariety = null },
+                itemTitle = { it.title },
+                enabled = selectedGroup != null
+            )
+            ReferenceDropdown(
+                label = "Сорт",
+                items = varieties,
+                selected = selectedVariety,
+                onSelected = { selectedVariety = it },
+                itemTitle = { it.title },
+                enabled = selectedCulture != null
+            )
 
             if (tags.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 8.dp)) {
-                    tags.forEach { tag -> AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") }) }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    tags.forEach { tag ->
+                        AssistChip(
+                            onClick = { },
+                            label = { Text("${tag.key}: ${tag.value}") })
+                    }
                 }
             }
-            
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Собственное название (необязательно)") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Собственное название (необязательно)") },
+                modifier = Modifier.fillMaxWidth()
+            )
             DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
             Row {
                 Button(
-                    onClick = { 
-                        val finalTitle = title.ifBlank { selectedVariety?.title ?: selectedCulture?.title ?: "Растение" }
-                        onSave(plant.copy(title = finalTitle, variety = selectedVariety?.title, plantedAt = plantedAt))
+                    onClick = {
+                        val finalTitle = title.ifBlank {
+                            selectedVariety?.title ?: selectedCulture?.title ?: "Растение"
+                        }
+                        onSave(
+                            plant.copy(
+                                title = finalTitle,
+                                variety = selectedVariety?.title,
+                                plantedAt = plantedAt
+                            )
+                        )
                     },
                     enabled = selectedCulture != null
                 ) {
@@ -351,7 +531,14 @@ private fun PlantEditor(
             ListItem(
                 headlineContent = { Text(rule.type.toString()) },
                 supportingContent = { Text("Начиная с ${rule.start}, каждые ${rule.everyDays ?: rule.everyMonths} дней/месяцев") },
-                trailingContent = { IconButton(onClick = { onDeleteCareRule(rule) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+                trailingContent = {
+                    IconButton(onClick = { onDeleteCareRule(rule) }) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null
+                        )
+                    }
+                }
             )
             Divider()
         }
@@ -363,7 +550,14 @@ private fun PlantEditor(
             ListItem(
                 headlineContent = { Text("${item.amountGrams} г") },
                 supportingContent = { Text("${item.date}") },
-                trailingContent = { IconButton(onClick = { onDeleteFertilizer(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+                trailingContent = {
+                    IconButton(onClick = { onDeleteFertilizer(item) }) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null
+                        )
+                    }
+                }
             )
             Divider()
         }
@@ -375,7 +569,14 @@ private fun PlantEditor(
             ListItem(
                 headlineContent = { Text("${item.weightKg} кг") },
                 supportingContent = { Text("${item.date}") },
-                trailingContent = { IconButton(onClick = { onDeleteHarvest(item) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
+                trailingContent = {
+                    IconButton(onClick = { onDeleteHarvest(item) }) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null
+                        )
+                    }
+                }
             )
             Divider()
         }
@@ -396,9 +597,13 @@ fun <T> ReferenceDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if(enabled) expanded = !expanded }) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = !expanded }) {
         OutlinedTextField(
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
             value = selected?.let(itemTitle) ?: "",
             onValueChange = {},
             readOnly = true,
@@ -427,12 +632,22 @@ fun <T> ReferenceDropdown(
 private fun DateRow(label: String, date: LocalDate, onPick: (LocalDate) -> Unit) {
     var show by remember { mutableStateOf(false) }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedTextField(value = date.toString(), onValueChange = {}, enabled = false, label = { Text(label) })
-        FilledTonalButton(onClick = { show = true }) { Icon(Icons.Default.DateRange, contentDescription = null); Spacer(Modifier.width(6.dp)); Text("Выбрать") }
+        OutlinedTextField(
+            value = date.toString(),
+            onValueChange = {},
+            enabled = false,
+            label = { Text(label) })
+        FilledTonalButton(onClick = { show = true }) {
+            Icon(
+                Icons.Default.DateRange,
+                contentDescription = null
+            ); Spacer(Modifier.width(6.dp)); Text("Выбрать")
+        }
     }
     if (show) {
         DatePickerDialog(onDismissRequest = { show = false }, confirmButton = {}) {
-            val state = rememberDatePickerState(initialSelectedDateMillis = date.toEpochDay() * 86_400_000)
+            val state =
+                rememberDatePickerState(initialSelectedDateMillis = date.toEpochDay() * 86_400_000)
             LaunchedEffect(state.selectedDateMillis) {
                 val ms = state.selectedDateMillis ?: return@LaunchedEffect
                 onPick(LocalDate.ofEpochDay(ms / 86_400_000))
@@ -449,7 +664,14 @@ private fun AddCareRuleRow(onAdd: (TaskType, LocalDate, Int?, Int?) -> Unit) {
     var every by remember { mutableStateOf("7") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // TODO: Add UI for selecting TaskType, start date, and interval
-        Button(onClick = { onAdd(type, startDate, every.toIntOrNull(), null) }) { Text("Добавить правило") }
+        Button(onClick = {
+            onAdd(
+                type,
+                startDate,
+                every.toIntOrNull(),
+                null
+            )
+        }) { Text("Добавить правило") }
     }
 }
 
@@ -460,9 +682,20 @@ private fun AddFertilizerRow(onAdd: (LocalDate, Float, String?) -> Unit) {
     var note by remember { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         DateRow(label = "Дата", date = date, onPick = { date = it })
-        OutlinedTextField(value = grams, onValueChange = { grams = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Количество (г)") })
-        OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опц.)") })
-        Button(onClick = { onAdd(date, grams.toFloatOrNull() ?: 0f, note.ifBlank { null }) }) { Text("Добавить запись") }
+        OutlinedTextField(
+            value = grams,
+            onValueChange = { grams = it.filter { c -> c.isDigit() || c == '.' } },
+            label = { Text("Количество (г)") })
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text("Заметка (опц.)") })
+        Button(onClick = {
+            onAdd(
+                date,
+                grams.toFloatOrNull() ?: 0f,
+                note.ifBlank { null })
+        }) { Text("Добавить запись") }
     }
 }
 
@@ -473,8 +706,19 @@ private fun AddHarvestRow(onAdd: (LocalDate, Float, String?) -> Unit) {
     var note by remember { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         DateRow(label = "Дата", date = date, onPick = { date = it })
-        OutlinedTextField(value = kg, onValueChange = { kg = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Вес (кг)") })
-        OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опц.)") })
-        Button(onClick = { onAdd(date, kg.toFloatOrNull() ?: 0f, note.ifBlank { null }) }) { Text("Добавить запись") }
+        OutlinedTextField(
+            value = kg,
+            onValueChange = { kg = it.filter { c -> c.isDigit() || c == '.' } },
+            label = { Text("Вес (кг)") })
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text("Заметка (опц.)") })
+        Button(onClick = {
+            onAdd(
+                date,
+                kg.toFloatOrNull() ?: 0f,
+                note.ifBlank { null })
+        }) { Text("Добавить запись") }
     }
 }
