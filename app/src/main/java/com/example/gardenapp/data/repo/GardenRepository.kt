@@ -9,10 +9,12 @@ import javax.inject.Inject
 
 class GardenRepository @Inject constructor(private val db: GardenDatabase) {
     fun gardens(): Flow<List<GardenEntity>> = db.gardenDao().observeGardens()
-    suspend fun upsertGarden(name: String, width: Int, height: Int, step: Int, zone: Int?) {
-        db.gardenDao()
-            .upsert(GardenEntity(UUID.randomUUID().toString(), name, width, height, step, zone))
+    suspend fun getGarden(id: String): GardenEntity? = db.gardenDao().getGarden(id)
+    
+    suspend fun upsertGarden(garden: GardenEntity) {
+        db.gardenDao().upsert(garden)
     }
+
     suspend fun deleteGarden(g: GardenEntity) = db.gardenDao().delete(g)
 
     fun plants(gardenId: String): Flow<List<PlantEntity>> = db.plantDao().observeByGarden(gardenId)
@@ -40,7 +42,7 @@ class GardenRepository @Inject constructor(private val db: GardenDatabase) {
         )
     }
 
-    // Logs
+    // Логи
     fun fertilizerLogs(plantId: String): Flow<List<FertilizerLogEntity>> = db.fertilizerLogDao().observe(plantId)
     suspend fun addFertilizerLog(plantId: String, date: LocalDate, amountGrams: Float, note: String?) {
         db.fertilizerLogDao().upsert(

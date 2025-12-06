@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+// --- Original App Entities ---
 @Entity
 data class GardenEntity(
     @PrimaryKey val id: String,
@@ -15,7 +16,7 @@ data class GardenEntity(
     val widthCm: Int,
     val heightCm: Int,
     val gridStepCm: Int,
-    val climateZone: Int? = null // Added climate zone
+    val climateZone: Int? = null
 )
 
 @Entity
@@ -72,6 +73,8 @@ data class HarvestLogEntity(
     val note: String? = null
 )
 
+// --- NEW REFERENCE ENTITIES (Rebuilt for new JSON structure) ---
+
 @Entity(tableName = "ref_groups")
 data class ReferenceGroupEntity(
     @PrimaryKey val id: String,
@@ -84,9 +87,9 @@ data class ReferenceGroupEntity(
     foreignKeys = [ForeignKey(entity = ReferenceGroupEntity::class, parentColumns = ["id"], childColumns = ["groupId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceCultureEntity(
-    @PrimaryKey val id: String,
-    val groupId: String,
-    val title: String
+    @PrimaryKey val id: String, 
+    val groupId: String,      
+    val title: String         
 )
 
 @Entity(

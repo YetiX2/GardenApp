@@ -16,12 +16,23 @@ import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class GardenListVm @Inject constructor(private val repo: GardenRepository) : androidx.lifecycle.ViewModel() {
     val gardens = repo.gardens()
-    suspend fun add(name: String, w: Int, h: Int, step: Int, zone: Int?) = repo.upsertGarden(name, w, h, step, zone)
+    suspend fun upsert(id: String?, name: String, w: Int, h: Int, step: Int, zone: Int?) {
+        val entity = GardenEntity(
+            id = id ?: UUID.randomUUID().toString(),
+            name = name,
+            widthCm = w,
+            heightCm = h,
+            gridStepCm = step,
+            climateZone = zone
+        )
+        repo.upsertGarden(entity)
+    }
     suspend fun delete(g: GardenEntity) = repo.deleteGarden(g)
 }
 
@@ -69,10 +80,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel(
             onDismiss = { showDialog = false },
             onSave = { name, w, h, step, zone ->
                 scope.launch {
-                    // A better approach for edit would be to update the existing entity
-                    // but for now, delete and re-add is simpler.
-                    editTarget?.let { vm.delete(it) }
-                    vm.add(name, w, h, step, zone)
+                    vm.upsert(editTarget?.id, name, w, h, step, zone)
                     showDialog = false
                 }
             }

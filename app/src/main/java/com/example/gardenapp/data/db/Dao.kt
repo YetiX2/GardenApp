@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 @Dao
 interface GardenDao {
     @Query("SELECT * FROM GardenEntity") fun observeGardens(): Flow<List<GardenEntity>>
+    @Query("SELECT * FROM GardenEntity WHERE id = :id") suspend fun getGarden(id: String): GardenEntity?
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(g: GardenEntity)
     @Delete suspend fun delete(p: GardenEntity)
 }
@@ -115,7 +116,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 10, // Incremented version for climateZone field
+    version = 10, 
     exportSchema = false
 )
 @TypeConverters(Converters::class)

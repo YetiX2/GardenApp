@@ -9,10 +9,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CenterFocusStrong
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.GridOff
 import androidx.compose.material.icons.outlined.GridOn
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -21,6 +24,7 @@ import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +35,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.round
 
@@ -39,46 +44,33 @@ class PlanVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceDao: ReferenceDao
 ) : androidx.lifecycle.ViewModel() {
-    // Plant data
+    private val _currentGarden = mutableStateOf<GardenEntity?>(null)
+    val currentGarden: State<GardenEntity?> = _currentGarden
+
+    fun loadGarden(gardenId: String) {
+        viewModelScope.launch {
+            repo.getGarden(gardenId)?.let { _currentGarden.value = it }
+        }
+    }
+
     fun plantsFlow(gardenId: String): Flow<List<PlantEntity>> = repo.plants(gardenId)
     suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
     suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
 
-    // Log data
-    fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> =
-        repo.fertilizerLogs(plantId)
-
+    fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
     fun harvestLogsFlow(plantId: String): Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)
     fun careRulesFlow(plantId: String): Flow<List<CareRuleEntity>> = repo.careRules(plantId)
-    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) =
-        repo.addFertilizerLog(plantId, date, grams, note)
-
+    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) = repo.addFertilizerLog(plantId, date, grams, note)
     suspend fun deleteFertilizer(item: FertilizerLogEntity) = repo.deleteFertilizerLog(item)
-    suspend fun addHarvest(plantId: String, date: LocalDate, kg: Float, note: String?) =
-        repo.addHarvestLog(plantId, date, kg, note)
-
+    suspend fun addHarvest(plantId: String, date: LocalDate, kg: Float, note: String?) = repo.addHarvestLog(plantId, date, kg, note)
     suspend fun deleteHarvest(item: HarvestLogEntity) = repo.deleteHarvestLog(item)
-    suspend fun addCareRule(
-        plantId: String,
-        type: TaskType,
-        start: LocalDate,
-        everyDays: Int?,
-        everyMonths: Int?
-    ) = repo.addCareRule(plantId, type, start, everyDays, everyMonths)
-
+    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) = repo.addCareRule(plantId, type, start, everyDays, everyMonths)
     suspend fun deleteCareRule(rule: CareRuleEntity) = repo.deleteCareRule(rule)
 
-    // Reference Data
     val referenceGroups: Flow<List<ReferenceGroupEntity>> = referenceDao.getGroups()
-    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> =
-        referenceDao.getCulturesByGroup(groupId)
-
-    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> =
-        referenceDao.getVarietiesByCulture(cultureId)
-
-    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> =
-        referenceDao.getTagsForVariety(varietyId)
-    
+    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> = referenceDao.getCulturesByGroup(groupId)
+    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> = referenceDao.getVarietiesByCulture(cultureId)
+    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
     fun getAllCultures(): Flow<List<ReferenceCultureEntity>> = referenceDao.getAllCultures()
     fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>> = referenceDao.getAllVarieties()
 }
@@ -86,12 +78,12 @@ class PlanVm @Inject constructor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltViewModel()) {
-    val scope = rememberCoroutineScope()
+    LaunchedEffect(gardenId) { vm.loadGarden(gardenId) }
 
+    val scope = rememberCoroutineScope()
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var snapToGrid by remember { mutableStateOf(true) }
-
     var plants by remember { mutableStateOf(listOf<PlantEntity>()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
 
@@ -140,14 +132,13 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                     gardenId = gardenId,
                     title = "",
                     variety = null,
-                    varietyId = null, // Correctly initialized
+                    varietyId = null,
                     x = centerWorld.x,
                     y = centerWorld.y,
                     radius = 35f,
                     plantedAt = LocalDate.now()
                 )
                 Log.d("GardenPlanScreen", "Created new plant: $newPlant")
-
                 selectedPlant = newPlant
                 isCreating = true
                 showEditor = true
@@ -302,6 +293,9 @@ private fun PlantEditor(
     onAddCareRule: (TaskType, LocalDate, Int?, Int?) -> Unit,
     onDeleteCareRule: (CareRuleEntity) -> Unit
 ) {
+    val garden by vm.currentGarden
+    val gardenZone = garden?.climateZone
+
     var title by remember { mutableStateOf(plant.title) }
     var plantedAt by remember { mutableStateOf(plant.plantedAt) }
 
@@ -314,9 +308,8 @@ private fun PlantEditor(
     var selectedCulture by remember { mutableStateOf<ReferenceCultureEntity?>(null) }
     val varieties by remember(selectedCulture) { selectedCulture?.let { vm.getVarietiesByCulture(it.id) } ?: flowOf(emptyList()) }.collectAsState(initial = emptyList())
     var selectedVariety by remember { mutableStateOf<ReferenceVarietyEntity?>(null) }
-    
     val tags by remember(selectedVariety) { selectedVariety?.let { vm.getTagsForVariety(it.id) } ?: flowOf(emptyList()) }.collectAsState(initial = emptyList())
-    
+
     LaunchedEffect(plant, allCultures, allVarieties, groups) {
         if (plant.varietyId != null && allVarieties.isNotEmpty() && allCultures.isNotEmpty() && groups.isNotEmpty()) {
             val variety = allVarieties.find { it.id == plant.varietyId }
@@ -341,8 +334,48 @@ private fun PlantEditor(
             Text("Свойства растения", style = MaterialTheme.typography.titleLarge)
             ReferenceDropdown(label = "Группа", items = groups, selected = selectedGroup, onSelected = { selectedGroup = it; selectedCulture = null; selectedVariety = null }, itemTitle = { it.title })
             ReferenceDropdown(label = "Культура", items = cultures, selected = selectedCulture, onSelected = { selectedCulture = it; selectedVariety = null }, itemTitle = { it.title }, enabled = selectedGroup != null)
-            ReferenceDropdown(label = "Сорт", items = varieties, selected = selectedVariety, onSelected = { selectedVariety = it }, itemTitle = { it.title }, enabled = selectedCulture != null)
+            
+            var varietyMenuExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(expanded = varietyMenuExpanded, onExpandedChange = { if (selectedCulture != null) varietyMenuExpanded = !varietyMenuExpanded }) {
+                OutlinedTextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    value = selectedVariety?.title ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Сорт") },
+                    trailingIcon = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            selectedVariety?.hardiness?.let { Text("(${it.min}-${it.max})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+                            Spacer(Modifier.width(4.dp))
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = varietyMenuExpanded)
+                        }
+                    },
+                    enabled = selectedCulture != null
+                )
+                ExposedDropdownMenu(expanded = varietyMenuExpanded, onDismissRequest = { varietyMenuExpanded = false }) {
+                    varieties.forEach { variety ->
+                        val recommendation = checkRecommendation(gardenZone, variety.hardiness)
 
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    variety.title,
+                                    color = if (recommendation == RecommendationLevel.RECOMMENDED) LocalContentColor.current else MaterialTheme.colorScheme.outline
+                                )
+                            },
+                            trailingIcon = {
+                                when (recommendation) {
+                                    RecommendationLevel.WARNING -> Icon(Icons.Outlined.Warning, "Незначительное несоответствие", tint = Color.Yellow)
+                                    RecommendationLevel.NOT_RECOMMENDED -> Icon(Icons.Outlined.Error, "Не рекомендуется для вашей зоны", tint = MaterialTheme.colorScheme.error)
+                                    else -> {}
+                                }
+                            },
+                            onClick = { selectedVariety = variety; varietyMenuExpanded = false }
+                        )
+                    }
+                }
+            }
+            
             if (tags.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 8.dp)) {
                     tags.forEach { tag -> AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") }) }
@@ -357,8 +390,8 @@ private fun PlantEditor(
                         val finalTitle = title.ifBlank { selectedVariety?.title ?: selectedCulture?.title ?: "Растение" }
                         onSave(plant.copy(
                             title = finalTitle, 
-                            variety = selectedVariety?.title, // Save name for display
-                            varietyId = selectedVariety?.id, // Save ID for linking
+                            variety = selectedVariety?.title,
+                            varietyId = selectedVariety?.id,
                             plantedAt = plantedAt
                         ))
                     },
@@ -503,5 +536,20 @@ private fun AddHarvestRow(onAdd: (LocalDate, Float, String?) -> Unit) {
         OutlinedTextField(value = kg, onValueChange = { kg = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Вес (кг)") })
         OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опц.)") })
         Button(onClick = { onAdd(date, kg.toFloatOrNull() ?: 0f, note.ifBlank { null }) }) { Text("Добавить запись") }
+    }
+}
+
+private fun checkRecommendation(gardenZone: Int?, varietyHardiness: HardinessEntity?): RecommendationLevel {
+    if (gardenZone == null || varietyHardiness == null) {
+        return RecommendationLevel.RECOMMENDED // No data to check against
+    }
+
+    val min = varietyHardiness.min
+    val max = varietyHardiness.max
+
+    return when {
+        gardenZone in min..max -> RecommendationLevel.RECOMMENDED
+        abs(gardenZone - min) == 1 || abs(gardenZone - max) == 1 -> RecommendationLevel.WARNING
+        else -> RecommendationLevel.NOT_RECOMMENDED
     }
 }
