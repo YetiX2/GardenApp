@@ -14,7 +14,8 @@ data class GardenEntity(
     val name: String,
     val widthCm: Int,
     val heightCm: Int,
-    val gridStepCm: Int
+    val gridStepCm: Int,
+    val climateZone: Int? = null // Added climate zone
 )
 
 @Entity
@@ -22,8 +23,8 @@ data class PlantEntity(
     @PrimaryKey val id: String,
     val gardenId: String,
     val title: String,
-    val variety: String?,      // User-facing variety title, e.g., "Антоновка"
-    val varietyId: String?,   // The stable UUID of the variety from the reference table
+    val variety: String?,
+    val varietyId: String?,
     val x: Float,
     val y: Float,
     val radius: Float,
@@ -113,7 +114,7 @@ data class SmartFilterEntity(val soil_pH: String?, val height_cm: Int?)
     foreignKeys = [ForeignKey(entity = ReferenceVarietyEntity::class, parentColumns = ["id"], childColumns = ["varietyId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceTagEntity(
-    val varietyId: String, // Corrected to String to match Variety's UUID
+    val varietyId: String,
     val key: String,
     val value: String
 )

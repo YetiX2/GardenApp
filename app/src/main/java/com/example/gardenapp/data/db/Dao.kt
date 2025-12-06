@@ -6,27 +6,31 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 // --- DAOs ---
-@Dao interface GardenDao {
+@Dao
+interface GardenDao {
     @Query("SELECT * FROM GardenEntity") fun observeGardens(): Flow<List<GardenEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(g: GardenEntity)
     @Delete suspend fun delete(p: GardenEntity)
 }
 
-@Dao interface PlantDao {
+@Dao
+interface PlantDao {
     @Query("SELECT * FROM PlantEntity WHERE gardenId = :gardenId")
     fun observeByGarden(gardenId: String): Flow<List<PlantEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(p: PlantEntity)
     @Delete suspend fun delete(p: PlantEntity)
 }
 
-@Dao interface RuleDao {
+@Dao
+interface RuleDao {
     @Query("SELECT * FROM CareRuleEntity WHERE plantId = :plantId")
     fun observeRulesForPlant(plantId: String): Flow<List<CareRuleEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(rule: CareRuleEntity)
     @Delete suspend fun delete(rule: CareRuleEntity)
 }
 
-@Dao interface TaskDao {
+@Dao
+interface TaskDao {
     @Query("SELECT * FROM TaskInstanceEntity WHERE status = 'PENDING' ORDER BY due ASC")
     fun observePending(): Flow<List<TaskInstanceEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(task: TaskInstanceEntity)
@@ -34,14 +38,16 @@ import java.time.LocalDateTime
     suspend fun setStatus(id: String, status: TaskStatus)
 }
 
-@Dao interface FertilizerLogDao {
+@Dao
+interface FertilizerLogDao {
     @Query("SELECT * FROM FertilizerLogEntity WHERE plantId = :plantId ORDER BY date DESC")
     fun observe(plantId: String): Flow<List<FertilizerLogEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(log: FertilizerLogEntity)
     @Delete suspend fun delete(log: FertilizerLogEntity)
 }
 
-@Dao interface HarvestLogDao {
+@Dao
+interface HarvestLogDao {
     @Query("SELECT * FROM HarvestLogEntity WHERE plantId = :plantId ORDER BY date DESC")
     fun observe(plantId: String): Flow<List<HarvestLogEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(log: HarvestLogEntity)
@@ -61,7 +67,7 @@ interface ReferenceDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTags(tags: List<ReferenceTagEntity>)
-    
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRegions(regions: List<ReferenceRegionEntity>)
 
@@ -73,10 +79,10 @@ interface ReferenceDao {
 
     @Query("SELECT * FROM ref_groups ORDER BY title")
     fun getGroups(): Flow<List<ReferenceGroupEntity>>
-    
+
     @Query("SELECT * FROM ref_cultures")
     fun getAllCultures(): Flow<List<ReferenceCultureEntity>>
-    
+
     @Query("SELECT * FROM ref_varieties")
     fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>>
 
@@ -87,7 +93,7 @@ interface ReferenceDao {
     fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>>
 
     @Query("SELECT * FROM ref_variety_tags WHERE varietyId = :varietyId")
-    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> // Corrected to String
+    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>>
 }
 
 // --- Converters ---
@@ -109,7 +115,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 9, 
+    version = 10, // Incremented version for climateZone field
     exportSchema = false
 )
 @TypeConverters(Converters::class)

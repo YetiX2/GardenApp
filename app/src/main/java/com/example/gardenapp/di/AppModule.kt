@@ -25,7 +25,7 @@ object AppModule {
     @Singleton
     fun provideDb(
         @ApplicationContext ctx: Context,
-        repoProvider: Provider<ReferenceDataRepository> 
+        repoProvider: Provider<ReferenceDataRepository>
     ): GardenDatabase {
         return Room.databaseBuilder(ctx, GardenDatabase::class.java, "garden.db")
             .fallbackToDestructiveMigration()
@@ -44,7 +44,6 @@ object AppModule {
     @Singleton
     fun provideRepo(db: GardenDatabase) = GardenRepository(db)
 
-    // DAOs
     @Provides
     fun provideGardenDao(db: GardenDatabase) = db.gardenDao()
 

@@ -9,8 +9,9 @@ import javax.inject.Inject
 
 class GardenRepository @Inject constructor(private val db: GardenDatabase) {
     fun gardens(): Flow<List<GardenEntity>> = db.gardenDao().observeGardens()
-    suspend fun upsertGarden(name: String, width: Int, height: Int, step: Int) {
-        db.gardenDao().upsert(GardenEntity(UUID.randomUUID().toString(), name, width, height, step))
+    suspend fun upsertGarden(name: String, width: Int, height: Int, step: Int, zone: Int?) {
+        db.gardenDao()
+            .upsert(GardenEntity(UUID.randomUUID().toString(), name, width, height, step, zone))
     }
     suspend fun deleteGarden(g: GardenEntity) = db.gardenDao().delete(g)
 

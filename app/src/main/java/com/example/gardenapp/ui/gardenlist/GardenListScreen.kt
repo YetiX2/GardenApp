@@ -19,9 +19,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class GardenListVm @Inject constructor(private val repo: GardenRepository): androidx.lifecycle.ViewModel() {
+class GardenListVm @Inject constructor(private val repo: GardenRepository) : androidx.lifecycle.ViewModel() {
     val gardens = repo.gardens()
-    suspend fun add(name: String, w: Int, h: Int, step: Int) = repo.upsertGarden(name, w, h, step)
+    suspend fun add(name: String, w: Int, h: Int, step: Int, zone: Int?) = repo.upsertGarden(name, w, h, step, zone)
     suspend fun delete(g: GardenEntity) = repo.deleteGarden(g)
 }
 
@@ -47,7 +47,10 @@ fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel(
                 ElevatedCard(onClick = { onOpen(g.id) }) {
                     ListItem(
                         headlineContent = { Text(g.name) },
-                        supportingContent = { Text("${g.widthCm}×${g.heightCm} см • шаг ${g.gridStepCm} см") },
+                        supportingContent = { 
+                            val zoneText = g.climateZone?.let { "(зона $it)" } ?: ""
+                            Text("${g.widthCm}×${g.heightCm} см • шаг ${g.gridStepCm} см $zoneText") 
+                        },
                         trailingContent = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 IconButton(onClick = { editTarget = g; showDialog = true }) { Icon(Icons.Default.Edit, contentDescription = null) }
@@ -64,15 +67,12 @@ fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel(
         GardenDialog(
             initial = editTarget,
             onDismiss = { showDialog = false },
-            onSave = { name, w, h, step ->
+            onSave = { name, w, h, step, zone ->
                 scope.launch {
-                    if (editTarget == null) {
-                        vm.add(name, w, h, step)
-                    } else {
-                        // Простой путь: удалить и создать новый (ID изменится)
-                        vm.delete(editTarget!!)
-                        vm.add(name, w, h, step)
-                    }
+                    // A better approach for edit would be to update the existing entity
+                    // but for now, delete and re-add is simpler.
+                    editTarget?.let { vm.delete(it) }
+                    vm.add(name, w, h, step, zone)
                     showDialog = false
                 }
             }
@@ -84,12 +84,13 @@ fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel(
 private fun GardenDialog(
     initial: GardenEntity?,
     onDismiss: () -> Unit,
-    onSave: (String, Int, Int, Int) -> Unit
+    onSave: (String, Int, Int, Int, Int?) -> Unit
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "Мой сад") }
     var w by remember { mutableStateOf((initial?.widthCm ?: 1000).toString()) }
     var h by remember { mutableStateOf((initial?.heightCm ?: 600).toString()) }
     var step by remember { mutableStateOf((initial?.gridStepCm ?: 50).toString()) }
+    var zone by remember { mutableStateOf((initial?.climateZone ?: "").toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -100,11 +101,12 @@ private fun GardenDialog(
                 OutlinedTextField(w, { w = it.filter { c -> c.isDigit() } }, label = { Text("Ширина (см)") })
                 OutlinedTextField(h, { h = it.filter { c -> c.isDigit() } }, label = { Text("Высота (см)") })
                 OutlinedTextField(step, { step = it.filter { c -> c.isDigit() } }, label = { Text("Шаг сетки (см)") })
+                OutlinedTextField(zone, { zone = it.filter { c -> c.isDigit() } }, label = { Text("Зона зимостойкости (1-9)") })
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50)
+                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, zone.toIntOrNull())
             }) { Text("Сохранить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
