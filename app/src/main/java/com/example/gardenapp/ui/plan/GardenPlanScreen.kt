@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.plan
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -25,6 +26,7 @@ import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
@@ -33,23 +35,31 @@ import kotlin.math.hypot
 import kotlin.math.round
 
 @HiltViewModel
-class PlanVm @Inject constructor(private val repo: GardenRepository) : androidx.lifecycle.ViewModel() {
+class PlanVm @Inject constructor(
+    private val repo: GardenRepository,
+    private val referenceDao: ReferenceDao // Correctly inject ReferenceDao
+) : androidx.lifecycle.ViewModel() {
+    // Plant data
     fun plantsFlow(gardenId: String): Flow<List<PlantEntity>> = repo.plants(gardenId)
+    suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
+    suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
+
+    // Log data
     fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
     fun harvestLogsFlow(plantId: String): Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)
     fun careRulesFlow(plantId: String): Flow<List<CareRuleEntity>> = repo.careRules(plantId)
-
-    suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
-    suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
-    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) =
-        repo.addFertilizerLog(plantId, date, grams, note)
-
+    suspend fun addFertilizer(plantId: String, date: LocalDate, grams: Float, note: String?) = repo.addFertilizerLog(plantId, date, grams, note)
     suspend fun deleteFertilizer(item: FertilizerLogEntity) = repo.deleteFertilizerLog(item)
     suspend fun addHarvest(plantId: String, date: LocalDate, kg: Float, note: String?) = repo.addHarvestLog(plantId, date, kg, note)
     suspend fun deleteHarvest(item: HarvestLogEntity) = repo.deleteHarvestLog(item)
-    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) =
-        repo.addCareRule(plantId, type, start, everyDays, everyMonths)
+    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) = repo.addCareRule(plantId, type, start, everyDays, everyMonths)
     suspend fun deleteCareRule(rule: CareRuleEntity) = repo.deleteCareRule(rule)
+
+    // Reference Data - Now using the injected referenceDao
+    val referenceGroups: Flow<List<ReferenceGroupEntity>> = referenceDao.getGroups()
+    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> = referenceDao.getCulturesByGroup(groupId)
+    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> = referenceDao.getVarietiesByCulture(cultureId)
+    fun getTagsForVariety(varietyId: Long): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,9 +77,8 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
     var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
     var dragging by remember { mutableStateOf(false) }
     var showEditor by remember { mutableStateOf(false) }
-    var isCreating by remember { mutableStateOf(false) } // State to distinguish creating from editing
+    var isCreating by remember { mutableStateOf(false) }
 
-    // This effect keeps the selectedPlant state in sync with the main plants list.
     LaunchedEffect(plants) {
         selectedPlant?.let { currentSelected ->
             selectedPlant = plants.find { it.id == currentSelected.id }
@@ -112,15 +121,17 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                 val newPlant = PlantEntity(
                     id = UUID.randomUUID().toString(),
                     gardenId = gardenId,
-                    title = "Новое растение",
+                    title = "",
                     variety = null,
                     x = centerWorld.x,
                     y = centerWorld.y,
                     radius = 35f,
                     plantedAt = LocalDate.now()
                 )
+                Log.d("GardenPlanScreen", "Created new plant: $newPlant")
+
                 selectedPlant = newPlant
-                isCreating = true // Set creating mode
+                isCreating = true
                 showEditor = true
             }) { Icon(Icons.Default.Add, contentDescription = "Добавить") }
         }
@@ -131,83 +142,73 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
 
         Box(Modifier.fillMaxSize().padding(pad)) {
             Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) { // Use Unit to avoid recompositions
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            if (!dragging) {
-                                scale = (scale * zoom).coerceIn(0.5f, 6f)
-                                offset += pan
-                            }
+                modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        if (!dragging) {
+                            scale = (scale * zoom).coerceIn(0.5f, 6f)
+                            offset += pan
                         }
                     }
-                    .pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val change = event.changes.first()
+                }.pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.first()
 
-                                if (change.pressed && !change.previousPressed) {
+                            if (change.pressed && !change.previousPressed) {
+                                val world = screenToWorld(change.position)
+                                val hit = plants.minByOrNull { hypot(it.x - world.x, it.y - world.y) - it.radius }
+                                val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
+                                if (hitOk) {
+                                    selectedPlant = hit!!
+                                    isCreating = false
+                                    if (event.keyboardModifiers.isCtrlPressed) {
+                                        showEditor = true
+                                    }
+                                    dragging = true
+                                } else {
+                                    selectedPlant = null
+                                }
+                            }
+
+                            if (dragging && selectedPlant != null) {
+                                if (change.pressed) {
                                     val world = screenToWorld(change.position)
-                                    val hit = plants.minByOrNull { hypot(it.x - world.x, it.y - world.y) - it.radius }
-                                    val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
-                                    if (hitOk) {
-                                        selectedPlant = hit!!
-                                        isCreating = false // It's an existing plant
-                                        if (event.keyboardModifiers.isCtrlPressed) {
-                                            showEditor = true
-                                        }
-                                        dragging = true
-                                    } else {
-                                        selectedPlant = null
+                                    val newWorld = if (snapToGrid) snap(world) else world
+                                    val current = plants.firstOrNull { it.id == selectedPlant?.id }
+                                    if (current != null) {
+                                        scope.launch { vm.upsertPlant(current.copy(x = newWorld.x, y = newWorld.y)) }
                                     }
-                                }
-
-                                if (dragging && selectedPlant != null) {
-                                    if (change.pressed) {
-                                        val world = screenToWorld(change.position)
-                                        val newWorld = if (snapToGrid) snap(world) else world
-                                        val current = plants.firstOrNull { it.id == selectedPlant?.id }
-                                        if (current != null) {
-                                            scope.launch { vm.upsertPlant(current.copy(x = newWorld.x, y = newWorld.y)) }
-                                        }
-                                    } else {
-                                        dragging = false
-                                    }
+                                } else {
+                                    dragging = false
                                 }
                             }
                         }
                     }
+                }
             ) {
                 if (snapToGrid) {
                     val step = baseGridPx * scale
                     var x = (-offset.x % step)
                     while (x < size.width) {
-                        drawLine(gridColor, Offset(x, 0f), Offset(x, size.height))
-                        x += step
+                        drawLine(gridColor, Offset(x, 0f), Offset(x, size.height)); x += step
                     }
                     var y = (-offset.y % step)
                     while (y < size.height) {
-                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y))
-                        y += step
+                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y)); y += step
                     }
                 }
                 plants.forEach { p ->
                     val center = worldToScreen(Offset(p.x, p.y))
                     drawCircle(color = plantColor, radius = p.radius * scale, center = center)
-                    if (p.id == selectedPlant?.id && !isCreating) { // Don't highlight during creation
-                        drawCircle(
-                            color = selectedStroke,
-                            radius = (p.radius + 6) * scale,
-                            center = center,
-                            style = Stroke(width = 3f)
-                        )
+                    if (p.id == selectedPlant?.id && !isCreating) {
+                        drawCircle(color = selectedStroke, radius = (p.radius + 6) * scale, center = center, style = Stroke(width = 3f))
                     }
                 }
             }
 
             val current = selectedPlant
-            if (current != null && !isCreating) { // ActionBar only for existing, selected plants
+            if (current != null && !isCreating) {
                 ActionBarForPlant(
                     plant = current,
                     onRadiusMinus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius - 5f).coerceAtLeast(10f))) } },
@@ -220,27 +221,21 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
             if (showEditor && current != null) {
                 ModalBottomSheet(onDismissRequest = {
                     showEditor = false
-                    if (isCreating) { // If we were creating, deselect on dismiss
-                        selectedPlant = null
-                    }
-                    isCreating = false // Always reset creating mode
+                    if (isCreating) { selectedPlant = null }
+                    isCreating = false
                 }, sheetState = bottomSheetState) {
                     PlantEditor(
                         plant = current,
-                        fertilizerFlow = vm.fertilizerLogsFlow(current.id),
-                        harvestFlow = vm.harvestLogsFlow(current.id),
-                        careRulesFlow = vm.careRulesFlow(current.id),
+                        vm = vm,
                         onSave = { updated ->
                             scope.launch { vm.upsertPlant(updated) }
                             showEditor = false
                             isCreating = false
-                            selectedPlant = updated // Keep it selected
+                            selectedPlant = updated
                         },
                         onCancel = {
                             showEditor = false
-                            if (isCreating) { // If we were creating, deselect on cancel
-                                selectedPlant = null
-                            }
+                            if (isCreating) { selectedPlant = null }
                             isCreating = false
                         },
                         onAddFertilizer = { date, grams, note -> scope.launch { vm.addFertilizer(current.id, date, grams, note) } },
@@ -275,12 +270,11 @@ private fun ActionBarForPlant(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlantEditor(
     plant: PlantEntity,
-    fertilizerFlow: Flow<List<FertilizerLogEntity>>,
-    harvestFlow: Flow<List<HarvestLogEntity>>,
-    careRulesFlow: Flow<List<CareRuleEntity>>,
+    vm: PlanVm,
     onSave: (PlantEntity) -> Unit,
     onCancel: () -> Unit,
     onAddFertilizer: (LocalDate, Float, String?) -> Unit,
@@ -291,31 +285,62 @@ private fun PlantEditor(
     onDeleteCareRule: (CareRuleEntity) -> Unit
 ) {
     var title by remember { mutableStateOf(plant.title) }
-    var variety by remember { mutableStateOf(plant.variety ?: "") }
     var plantedAt by remember { mutableStateOf(plant.plantedAt) }
 
-    val fertilizer by fertilizerFlow.collectAsState(initial = emptyList())
-    val harvest by harvestFlow.collectAsState(initial = emptyList())
-    val careRules by careRulesFlow.collectAsState(initial = emptyList())
+    val groups by vm.referenceGroups.collectAsState(initial = emptyList())
+    var selectedGroup by remember { mutableStateOf<ReferenceGroupEntity?>(null) }
 
-    // Replaced Column with LazyColumn to make the content scrollable
+    val cultures by remember(selectedGroup) {
+        selectedGroup?.let { vm.getCulturesByGroup(it.id) } ?: flowOf(emptyList())
+    }.collectAsState(initial = emptyList())
+    var selectedCulture by remember { mutableStateOf<ReferenceCultureEntity?>(null) }
+
+    val varieties by remember(selectedCulture) {
+        selectedCulture?.let { vm.getVarietiesByCulture(it.id) } ?: flowOf(emptyList())
+    }.collectAsState(initial = emptyList())
+    var selectedVariety by remember { mutableStateOf<ReferenceVarietyEntity?>(null) }
+
+    val tags by remember(selectedVariety) {
+        selectedVariety?.let { vm.getTagsForVariety(it.varietyId) } ?: flowOf(emptyList())
+    }.collectAsState(initial = emptyList())
+    
+    LaunchedEffect(cultures) { if (selectedCulture != null && cultures.none { it.id == selectedCulture!!.id }) selectedCulture = null }
+    LaunchedEffect(varieties) { if (selectedVariety != null && varieties.none { it.varietyId == selectedVariety!!.varietyId }) selectedVariety = null }
+
+    val fertilizer by vm.fertilizerLogsFlow(plant.id).collectAsState(initial = emptyList())
+    val harvest by vm.harvestLogsFlow(plant.id).collectAsState(initial = emptyList())
+    val careRules by vm.careRulesFlow(plant.id).collectAsState(initial = emptyList())
+
     LazyColumn(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text("Свойства растения", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Название") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = variety, onValueChange = { variety = it }, label = { Text("Сорт") }, modifier = Modifier.fillMaxWidth())
+            ReferenceDropdown(label = "Группа", items = groups, selected = selectedGroup, onSelected = { selectedGroup = it; selectedCulture = null; selectedVariety = null }, itemTitle = { it.title })
+            ReferenceDropdown(label = "Культура", items = cultures, selected = selectedCulture, onSelected = { selectedCulture = it; selectedVariety = null }, itemTitle = { it.title }, enabled = selectedGroup != null)
+            ReferenceDropdown(label = "Сорт", items = varieties, selected = selectedVariety, onSelected = { selectedVariety = it }, itemTitle = { it.title }, enabled = selectedCulture != null)
+
+            if (tags.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 8.dp)) {
+                    tags.forEach { tag -> AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") }) }
+                }
+            }
+            
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Собственное название (необязательно)") }, modifier = Modifier.fillMaxWidth())
             DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
             Row {
-                Button(onClick = { onSave(plant.copy(title = title, variety = variety.ifBlank { null }, plantedAt = plantedAt)) }) {
+                Button(
+                    onClick = { 
+                        val finalTitle = title.ifBlank { selectedVariety?.title ?: selectedCulture?.title ?: "Растение" }
+                        onSave(plant.copy(title = finalTitle, variety = selectedVariety?.title, plantedAt = plantedAt))
+                    },
+                    enabled = selectedCulture != null
+                ) {
                     Text("Сохранить")
                 }
                 Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onCancel) {
-                    Text("Отмена")
-                }
+                TextButton(onClick = onCancel) { Text("Отмена") }
             }
             Divider()
         }
@@ -324,7 +349,7 @@ private fun PlantEditor(
         item { AddCareRuleRow(onAdd = onAddCareRule) }
         items(careRules, key = { it.id }) { rule ->
             ListItem(
-                headlineContent = { Text(rule.type.toString()) }, // Placeholder
+                headlineContent = { Text(rule.type.toString()) },
                 supportingContent = { Text("Начиная с ${rule.start}, каждые ${rule.everyDays ?: rule.everyMonths} дней/месяцев") },
                 trailingContent = { IconButton(onClick = { onDeleteCareRule(rule) }) { Icon(Icons.Default.Delete, contentDescription = null) } }
             )
@@ -356,6 +381,44 @@ private fun PlantEditor(
         }
 
         item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> ReferenceDropdown(
+    label: String,
+    items: List<T>,
+    selected: T?,
+    onSelected: (T) -> Unit,
+    itemTitle: (T) -> String,
+    enabled: Boolean = true
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if(enabled) expanded = !expanded }) {
+        OutlinedTextField(
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            value = selected?.let(itemTitle) ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            enabled = enabled
+        )
+        if (enabled) {
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(itemTitle(item)) },
+                        onClick = {
+                            onSelected(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 

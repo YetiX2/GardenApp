@@ -2,7 +2,10 @@ package com.example.gardenapp.data.db
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+import java.time.LocalDateTime
 
+// --- DAOs ---
 @Dao interface GardenDao {
     @Query("SELECT * FROM GardenEntity") fun observeGardens(): Flow<List<GardenEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(g: GardenEntity)
@@ -45,16 +48,55 @@ import kotlinx.coroutines.flow.Flow
     @Delete suspend fun delete(log: HarvestLogEntity)
 }
 
+@Dao
+interface ReferenceDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGroups(groups: List<ReferenceGroupEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCultures(cultures: List<ReferenceCultureEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertVarieties(varieties: List<ReferenceVarietyEntity>): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTags(tags: List<ReferenceTagEntity>)
+
+    @Query("SELECT COUNT(*) FROM reference_groups")
+    suspend fun getGroupsCount(): Int
+
+    @Query("SELECT * FROM reference_groups ORDER BY title")
+    fun getGroups(): Flow<List<ReferenceGroupEntity>>
+
+    @Query("SELECT * FROM reference_cultures WHERE groupId = :groupId ORDER BY title")
+    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>>
+
+    @Query("SELECT * FROM reference_varieties WHERE cultureId = :cultureId ORDER BY title")
+    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>>
+
+    @Query("SELECT * FROM reference_tags WHERE varietyId = :varietyId")
+    fun getTagsForVariety(varietyId: Long): Flow<List<ReferenceTagEntity>>
+}
+
+// --- Converters ---
+class Converters {
+    @TypeConverter fun fromEpochDay(v: Long?): LocalDate? = v?.let(LocalDate::ofEpochDay)
+    @TypeConverter fun toEpochDay(d: LocalDate?): Long? = d?.toEpochDay()
+
+    @TypeConverter fun fromEpochMillis(v: Long?): LocalDateTime? =
+        v?.let { LocalDateTime.ofEpochSecond(it / 1000, ((it % 1000) * 1_000_000).toInt(), java.time.ZoneOffset.UTC) }
+    @TypeConverter fun toEpochMillis(dt: LocalDateTime?): Long? =
+        dt?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli()
+}
+
+// --- Main Database Class ---
 @Database(
     entities = [
-        GardenEntity::class,
-        PlantEntity::class,
-        CareRuleEntity::class,
-        TaskInstanceEntity::class,
-        FertilizerLogEntity::class,
-        HarvestLogEntity::class
+        GardenEntity::class, PlantEntity::class, CareRuleEntity::class, TaskInstanceEntity::class, 
+        FertilizerLogEntity::class, HarvestLogEntity::class,
+        ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, ReferenceTagEntity::class
     ],
-    version = 2,
+    version = 7, // Incremented version to ensure changes are applied
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -65,4 +107,5 @@ abstract class GardenDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun fertilizerLogDao(): FertilizerLogDao
     abstract fun harvestLogDao(): HarvestLogDao
+    abstract fun referenceDao(): ReferenceDao
 }
