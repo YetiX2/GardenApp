@@ -4,8 +4,8 @@
         <!-- Устанавливаем фон загрузочного экрана -->
         <item name="windowSplashScreenBackground">@android:color/white</item>
 
-        <!-- Устанавливаем иконку (ваш логотип) -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <!-- Используем "обертку", чтобы избежать обрезки -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
 
         <!-- Указываем тему, в которую переключится приложение после загрузки -->
         <item name="postSplashScreenTheme">@style/Theme.GardenApp</item>
