@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Устанавливаем фон загрузочного экрана -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+
+        <!-- Устанавливаем иконку (ваш логотип) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+
+        <!-- Указываем тему, в которую переключится приложение после загрузки -->
+        <item name="postSplashScreenTheme">@style/Theme.GardenApp</item>
+    </style>
+</resources>
