@@ -38,8 +38,8 @@ fun AppNav() {
             GardenPlanScreen(gardenId = id, onBack = { nav.popBackStack() })
         }
         composable(Route.Tasks.value) {
-            // We can reuse the DashboardVm since it already has the pending tasks flow
-            TaskListScreen(onBack = { nav.popBackStack() }, vm = hiltViewModel(it))
+            // The TaskListScreen will now get its own specific ViewModel instance.
+            TaskListScreen(onBack = { nav.popBackStack() })
         }
     }
 }

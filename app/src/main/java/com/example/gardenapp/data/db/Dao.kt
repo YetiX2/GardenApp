@@ -135,7 +135,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 12, 
+    version = 13, // Incremented for TaskStatus.REJECTED
     exportSchema = false
 )
 @TypeConverters(Converters::class)

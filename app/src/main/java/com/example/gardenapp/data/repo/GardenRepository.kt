@@ -32,6 +32,7 @@ class GardenRepository @Inject constructor(
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
 
     fun pendingTasks(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observePendingWithPlantInfo()
+    suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
 
     suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
         db.taskDao().upsert(
@@ -49,7 +50,6 @@ class GardenRepository @Inject constructor(
 
     // --- Test Data Population ---
     suspend fun populateWithTestData() {
-        // Check if test data already exists
         if (db.gardenDao().getGardenByName("Участок") != null) {
             return // Test data already exists, do nothing
         }
@@ -62,7 +62,6 @@ class GardenRepository @Inject constructor(
         val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 3)
         db.gardenDao().upsert(plot)
 
-        // Add 5 random plants to the plot
         val plotPlants = allVarieties.shuffled().take(5).map {
             PlantEntity(
                 id = UUID.randomUUID().toString(),

@@ -33,7 +33,7 @@ data class PlantEntity(
 )
 
 enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, OTHER }
-enum class TaskStatus { PENDING, DONE, SNOOZED }
+enum class TaskStatus { PENDING, DONE, SNOOZED, REJECTED }
 
 @Entity
 data class CareRuleEntity(

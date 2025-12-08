@@ -1,4 +1,4 @@
-package com.example.gardenapp.ui.dashboard
+package com.example.gardenapp.ui.tasks
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,20 +9,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DashboardVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
+class TaskListVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
     val pendingTasks = repo.pendingTasks()
-    val gardens = repo.gardens()
 
-    fun setTaskStatus(taskId: String, isDone: Boolean) {
+    fun updateTaskStatus(taskId: String, newStatus: TaskStatus) {
         viewModelScope.launch {
-            val newStatus = if (isDone) TaskStatus.DONE else TaskStatus.PENDING
             repo.setTaskStatus(taskId, newStatus)
-        }
-    }
-
-    fun createTestData() {
-        viewModelScope.launch {
-            repo.populateWithTestData()
         }
     }
 }
