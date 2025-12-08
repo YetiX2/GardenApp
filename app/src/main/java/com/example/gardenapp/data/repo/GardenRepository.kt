@@ -49,6 +49,11 @@ class GardenRepository @Inject constructor(
 
     // --- Test Data Population ---
     suspend fun populateWithTestData() {
+        // Check if test data already exists
+        if (db.gardenDao().getGardenByName("Участок") != null) {
+            return // Test data already exists, do nothing
+        }
+
         val allVarieties = referenceDao.getAllVarietiesList()
         if (allVarieties.isEmpty()) return // Can't do anything without reference data
 
@@ -57,6 +62,7 @@ class GardenRepository @Inject constructor(
         val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 3)
         db.gardenDao().upsert(plot)
 
+        // Add 5 random plants to the plot
         val plotPlants = allVarieties.shuffled().take(5).map {
             PlantEntity(
                 id = UUID.randomUUID().toString(),

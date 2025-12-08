@@ -17,6 +17,7 @@ data class TaskWithPlantInfo(
 interface GardenDao {
     @Query("SELECT * FROM GardenEntity") fun observeGardens(): Flow<List<GardenEntity>>
     @Query("SELECT * FROM GardenEntity WHERE id = :id") suspend fun getGarden(id: String): GardenEntity?
+    @Query("SELECT * FROM GardenEntity WHERE name = :name LIMIT 1") suspend fun getGardenByName(name: String): GardenEntity?
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(g: GardenEntity)
     @Delete suspend fun delete(p: GardenEntity)
 }
@@ -134,7 +135,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 12, // Incremented version to apply schema changes
+    version = 12, 
     exportSchema = false
 )
 @TypeConverters(Converters::class)
