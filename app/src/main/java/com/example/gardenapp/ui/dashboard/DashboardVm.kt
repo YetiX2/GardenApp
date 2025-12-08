@@ -11,7 +11,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DashboardVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
-    val pendingTasks = repo.allTasksWithPlantInfo()
+    // Expose all tasks to the UI, which will be responsible for grouping and counting
+    val allTasks = repo.allTasksWithPlantInfo()
     
     val gardens = repo.gardens()
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 
@@ -31,14 +32,21 @@ private fun TaskType.toRussian(): String = when (this) {
     TaskType.OTHER -> "Другое"
 }
 
+private fun TaskStatus.toRussian(): String = when (this) {
+    TaskStatus.PENDING -> "Новые"
+    TaskStatus.DONE -> "Готово"
+    TaskStatus.SNOOZED -> "Ждут"
+    TaskStatus.REJECTED -> "Нафиг"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onOpenGardens: () -> Unit,
-    onOpenTasks: () -> Unit, // Added navigation callback
+    onOpenTasks: () -> Unit,
     vm: DashboardVm = hiltViewModel()
 ) {
-    val tasks by vm.pendingTasks.collectAsState(initial = emptyList())
+    val allTasks by vm.allTasks.collectAsState(initial = emptyList())
     val gardens by vm.gardens.collectAsState(initial = emptyList())
 
     Scaffold(
@@ -63,7 +71,7 @@ fun DashboardScreen(
                 WeatherCard()
             }
             item {
-                TodayTasksCard(tasks = tasks, onOpenTasks = onOpenTasks) // Pass it down
+                TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks)
             }
             item {
                 MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
@@ -108,22 +116,25 @@ private fun ForecastItem(day: String, temp: String, icon: androidx.compose.ui.gr
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>, onOpenTasks: () -> Unit) {
-    Card {
-        Column(Modifier.padding(16.dp)) {
+    Card(onClick = onOpenTasks) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text("Сегодняшние задачи", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(16.dp))
-            if (tasks.isEmpty()) {
+
+            val counts = tasks.groupingBy { it.task.status }.eachCount()
+
+            if (counts.isEmpty()) {
                 Text("Задач на сегодня нет.", style = MaterialTheme.typography.bodyMedium)
             } else {
-                tasks.take(2).forEach { taskInfo ->
-                    Row(Modifier.fillMaxWidth()) {
-                        Checkbox(checked = false, onCheckedChange = {})
-                        val taskDescription = taskInfo.task.type.toRussian()
-                        val taskText = "$taskDescription \"${taskInfo.plantName}\""
-                        Text(taskText)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                    TaskStatus.values().forEach { status ->
+                        val count = counts.getOrDefault(status, 0)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(count.toString(), style = MaterialTheme.typography.headlineMedium)
+                            Text(status.toRussian(), style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
-                TextButton(onClick = onOpenTasks) { Text("Посмотреть все") }
             }
         }
     }
