@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.*
@@ -75,6 +77,9 @@ fun DashboardScreen(
             }
             item {
                 MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
+            }
+            item {
+                RecentEntriesCard()
             }
         }
     }
@@ -162,6 +167,34 @@ private fun MyGardensCard(gardens: List<GardenEntity>, onOpenGardens: () -> Unit
                             Text(garden.name, style = MaterialTheme.typography.titleMedium)
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecentEntriesCard() {
+    Column {
+        Text("Последние записи", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Card(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Icon(Icons.Default.BugReport, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Появилась тля на смородине", style = MaterialTheme.typography.titleSmall)
+                }
+            }
+            Card(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.secondary)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Семена томатов под ваш регион", style = MaterialTheme.typography.titleSmall)
                 }
             }
         }
