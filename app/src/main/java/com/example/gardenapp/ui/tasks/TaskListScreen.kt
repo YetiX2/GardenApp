@@ -32,6 +32,13 @@ private fun TaskType.toRussian(): String = when (this) {
     TaskType.OTHER -> "Другое"
 }
 
+private fun TaskStatus.toRussian(): String = when (this) {
+    TaskStatus.PENDING -> "Новые"
+    TaskStatus.DONE -> "Готово"
+    TaskStatus.SNOOZED -> "Ждёт"
+    TaskStatus.REJECTED -> "Нафиг"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
@@ -62,7 +69,7 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
-                        text = { Text(status.name.replaceFirstChar { it.titlecase() }) }
+                        text = { Text(status.toRussian()) }
                     )
                 }
             }
