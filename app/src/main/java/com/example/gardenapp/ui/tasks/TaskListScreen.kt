@@ -109,15 +109,27 @@ private fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) -
                     IconButton(onClick = { onStatusChange(TaskStatus.DONE) }) {
                         Icon(Icons.Default.Check, contentDescription = "Выполнено", tint = Color.Green)
                     }
+                }else{
+                    IconButton(onClick = { }, enabled = false) {
+                        Icon(Icons.Default.Check, contentDescription = "Выполнено")
+                    }
                 }
                 if (taskInfo.task.status != TaskStatus.SNOOZED) {
                     IconButton(onClick = { onStatusChange(TaskStatus.SNOOZED) }) {
                         Icon(Icons.Default.Pause, contentDescription = "Отложить", tint = Color(0xFFE69A1B)) // Amber
                     }
+                }else{
+                    IconButton(onClick = { }, enabled = false) {
+                        Icon(Icons.Default.Pause, contentDescription = "Отложено")
+                    }
                 }
                 if (taskInfo.task.status != TaskStatus.REJECTED) {
                     IconButton(onClick = { onStatusChange(TaskStatus.REJECTED) }) {
                         Icon(Icons.Default.Close, contentDescription = "Отклонить", tint = MaterialTheme.colorScheme.error)
+                    }
+                }else{
+                    IconButton(onClick = { }, enabled = false) {
+                        Icon(Icons.Default.Close, contentDescription = "Отклонено")
                     }
                 }
             }
