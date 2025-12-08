@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gardenapp.data.db.GardenDatabase
+import com.example.gardenapp.data.db.ReferenceDao
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import dagger.Module
@@ -42,7 +43,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRepo(db: GardenDatabase) = GardenRepository(db)
+    fun provideRepo(db: GardenDatabase, referenceDao: ReferenceDao) = GardenRepository(db, referenceDao)
 
     @Provides
     fun provideGardenDao(db: GardenDatabase) = db.gardenDao()
@@ -63,10 +64,10 @@ object AppModule {
     fun provideHarvestLogDao(db: GardenDatabase) = db.harvestLogDao()
 
     @Provides
-    fun provideReferenceDao(db: GardenDatabase) = db.referenceDao()
+    fun provideReferenceDao(db: GardenDatabase): ReferenceDao = db.referenceDao()
 
     @Provides
     @Singleton
-    fun provideReferenceDataRepository(referenceDao: com.example.gardenapp.data.db.ReferenceDao, @ApplicationContext context: Context) = 
+    fun provideReferenceDataRepository(referenceDao: ReferenceDao, @ApplicationContext context: Context) = 
         ReferenceDataRepository(referenceDao, context)
 }

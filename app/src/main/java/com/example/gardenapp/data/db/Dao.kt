@@ -8,8 +8,7 @@ import java.time.LocalDateTime
 // Data class to hold combined info for the dashboard
 data class TaskWithPlantInfo(
     @Embedded val task: TaskInstanceEntity,
-    val plantName: String,
-    val taskType: TaskType?
+    val plantName: String
 )
 
 
@@ -40,12 +39,11 @@ interface RuleDao {
 
 @Dao
 interface TaskDao {
-    // This query now joins all three tables: Tasks, Plants, and Rules
+    // This query now only joins Tasks and Plants
     @Query("""
-        SELECT t.*, p.title as plantName, r.type as taskType 
+        SELECT t.*, p.title as plantName 
         FROM TaskInstanceEntity as t
         INNER JOIN PlantEntity as p ON t.plantId = p.id
-        LEFT JOIN CareRuleEntity as r ON t.ruleId = r.id
         WHERE t.status = 'PENDING' 
         ORDER BY t.due ASC
     """)
@@ -104,6 +102,9 @@ interface ReferenceDao {
     @Query("SELECT * FROM ref_varieties")
     fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>>
 
+    @Query("SELECT * FROM ref_varieties")
+    suspend fun getAllVarietiesList(): List<ReferenceVarietyEntity>
+
     @Query("SELECT * FROM ref_cultures WHERE groupId = :groupId ORDER BY title")
     fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>>
 
@@ -133,7 +134,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 11, // Incremented version to fix schema mismatch error
+    version = 12, // Incremented version to apply schema changes
     exportSchema = false
 )
 @TypeConverters(Converters::class)

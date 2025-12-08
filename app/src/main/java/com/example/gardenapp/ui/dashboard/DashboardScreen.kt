@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,7 +15,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 
-// Helper to get a Russian representation of the task type
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
     TaskType.PRUNE -> "Обрезать"
@@ -29,7 +29,16 @@ fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()
     val tasks by vm.pendingTasks.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Сегодня на даче") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Сегодня на даче") },
+                actions = {
+                    IconButton(onClick = { vm.createTestData() }) {
+                        Icon(Icons.Default.Science, contentDescription = "Заполнить тестовыми данными")
+                    }
+                }
+            )
+        },
         floatingActionButton = { FloatingActionButton(onClick = {}) { Icon(Icons.Default.Add, null) } }
     ) { pad ->
         LazyColumn(
@@ -60,7 +69,8 @@ private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>) {
                 tasks.take(2).forEach { taskInfo ->
                     Row(Modifier.fillMaxWidth()) {
                         Checkbox(checked = false, onCheckedChange = {})
-                        val taskText = "${taskInfo.task.type.toRussian()} \"${taskInfo.plantName}\""
+                        val taskDescription = taskInfo.task.type.toRussian()
+                        val taskText = "$taskDescription \"${taskInfo.plantName}\""
                         Text(taskText)
                     }
                 }
