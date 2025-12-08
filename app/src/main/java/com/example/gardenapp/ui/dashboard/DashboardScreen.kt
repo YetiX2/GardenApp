@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WbSunny
@@ -17,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.gardenapp.data.db.GardenEntity
+
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
@@ -33,6 +36,8 @@ private fun TaskType.toRussian(): String = when (this) {
 @Composable
 fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()) {
     val tasks by vm.pendingTasks.collectAsState(initial = emptyList())
+    val gardens by vm.gardens.collectAsState(initial = emptyList())
+
 
     Scaffold(
         topBar = {
@@ -59,7 +64,7 @@ fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()
                 TodayTasksCard(tasks = tasks)
             }
             item {
-                MyGardensCard(onOpenGardens = onOpenGardens)
+                MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
             }
         }
     }
@@ -124,11 +129,28 @@ private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MyGardensCard(onOpenGardens: () -> Unit) {
-    Card(onClick = onOpenGardens) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Мои грядки / участок", style = MaterialTheme.typography.titleLarge)
-            // TODO: Add garden preview cards from the image
+private fun MyGardensCard(gardens: List<GardenEntity>, onOpenGardens: () -> Unit) {
+    Column {
+        Text("Мои грядки / участок", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        Card(onClick = onOpenGardens) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                gardens.take(2).forEach { garden ->
+                    Card(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text(garden.name, style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+            }
         }
     }
 }

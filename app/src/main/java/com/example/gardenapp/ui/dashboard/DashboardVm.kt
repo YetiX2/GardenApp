@@ -10,6 +10,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
     val pendingTasks = repo.pendingTasks()
+    val gardens = repo.gardens() // Expose the gardens flow
 
     fun createTestData() {
         viewModelScope.launch {
