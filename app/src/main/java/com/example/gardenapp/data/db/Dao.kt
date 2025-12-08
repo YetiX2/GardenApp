@@ -40,15 +40,13 @@ interface RuleDao {
 
 @Dao
 interface TaskDao {
-    // This query now only joins Tasks and Plants
     @Query("""
         SELECT t.*, p.title as plantName 
         FROM TaskInstanceEntity as t
         INNER JOIN PlantEntity as p ON t.plantId = p.id
-        WHERE t.status = 'PENDING' 
         ORDER BY t.due ASC
     """)
-    fun observePendingWithPlantInfo(): Flow<List<TaskWithPlantInfo>>
+    fun observeAllWithPlantInfo(): Flow<List<TaskWithPlantInfo>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(task: TaskInstanceEntity)
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
@@ -135,7 +133,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 13, // Incremented for TaskStatus.REJECTED
+    version = 13, 
     exportSchema = false
 )
 @TypeConverters(Converters::class)

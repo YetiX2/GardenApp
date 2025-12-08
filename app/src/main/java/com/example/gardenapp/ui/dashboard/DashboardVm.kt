@@ -5,20 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
-    val pendingTasks = repo.pendingTasks()
+    val pendingTasks = repo.allTasksWithPlantInfo()
+    
     val gardens = repo.gardens()
-
-    fun setTaskStatus(taskId: String, isDone: Boolean) {
-        viewModelScope.launch {
-            val newStatus = if (isDone) TaskStatus.DONE else TaskStatus.PENDING
-            repo.setTaskStatus(taskId, newStatus)
-        }
-    }
 
     fun createTestData() {
         viewModelScope.launch {

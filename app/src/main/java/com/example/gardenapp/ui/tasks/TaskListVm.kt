@@ -10,7 +10,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TaskListVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
-    val pendingTasks = repo.pendingTasks()
+    // Expose all tasks now, not just pending
+    val allTasks = repo.allTasksWithPlantInfo()
 
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus) {
         viewModelScope.launch {

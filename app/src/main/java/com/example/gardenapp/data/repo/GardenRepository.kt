@@ -10,7 +10,7 @@ import kotlin.random.Random
 
 class GardenRepository @Inject constructor(
     private val db: GardenDatabase,
-    private val referenceDao: ReferenceDao // Added dependency
+    private val referenceDao: ReferenceDao 
 ) {
     fun gardens(): Flow<List<GardenEntity>> = db.gardenDao().observeGardens()
     suspend fun getGarden(id: String): GardenEntity? = db.gardenDao().getGarden(id)
@@ -31,7 +31,7 @@ class GardenRepository @Inject constructor(
     }
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
 
-    fun pendingTasks(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observePendingWithPlantInfo()
+    fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
 
     suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
@@ -55,7 +55,7 @@ class GardenRepository @Inject constructor(
         }
 
         val allVarieties = referenceDao.getAllVarietiesList()
-        if (allVarieties.isEmpty()) return // Can't do anything without reference data
+        if (allVarieties.isEmpty()) return 
 
         // 1. Create the 20x20m plot
         val plotId = UUID.randomUUID().toString()

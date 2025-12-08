@@ -1,6 +1,7 @@
 package com.example.gardenapp.ui.tasks
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,9 +14,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -35,12 +35,19 @@ private fun TaskType.toRussian(): String = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
-    val tasks by vm.pendingTasks.collectAsState(initial = emptyList())
+    val allTasks by vm.allTasks.collectAsState(initial = emptyList())
+    var selectedTabIndex by remember { mutableStateOf(0) }
+
+    val taskStatuses = listOf(TaskStatus.PENDING, TaskStatus.DONE, TaskStatus.SNOOZED, TaskStatus.REJECTED)
+
+    val tasksToShow = remember(selectedTabIndex, allTasks) {
+        allTasks.filter { it.task.status == taskStatuses[selectedTabIndex] }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Сегодняшние задачи") },
+                title = { Text("Все задачи") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
@@ -49,21 +56,32 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
             )
         }
     ) { pad ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(pad),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (tasks.isEmpty()) {
-                item {
-                    Text("Задач на сегодня нет.", modifier = Modifier.padding(16.dp))
-                }
-            } else {
-                items(tasks, key = { it.task.id }) { taskInfo ->
-                    TaskItem(
-                        taskInfo = taskInfo,
-                        onStatusChange = { newStatus -> vm.updateTaskStatus(taskInfo.task.id, newStatus) }
+        Column(Modifier.fillMaxSize().padding(pad)) {
+            TabRow(selectedTabIndex = selectedTabIndex) {
+                taskStatuses.forEachIndexed { index, status ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { selectedTabIndex = index },
+                        text = { Text(status.name.replaceFirstChar { it.titlecase() }) }
                     )
+                }
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (tasksToShow.isEmpty()) {
+                    item {
+                        Text("Задач в этом статусе нет.", modifier = Modifier.padding(16.dp))
+                    }
+                } else {
+                    items(tasksToShow, key = { it.task.id }) { taskInfo ->
+                        TaskItem(
+                            taskInfo = taskInfo,
+                            onStatusChange = { newStatus -> vm.updateTaskStatus(taskInfo.task.id, newStatus) }
+                        )
+                    }
                 }
             }
         }
@@ -79,14 +97,21 @@ private fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) -
         headlineContent = { Text(taskText) },
         trailingContent = {
             Row {
-                IconButton(onClick = { onStatusChange(TaskStatus.DONE) }) {
-                    Icon(Icons.Default.Check, contentDescription = "Выполнено", tint = Color.Green)
+                // Show buttons only if the task is not already in that state
+                if (taskInfo.task.status != TaskStatus.DONE) {
+                    IconButton(onClick = { onStatusChange(TaskStatus.DONE) }) {
+                        Icon(Icons.Default.Check, contentDescription = "Выполнено", tint = Color.Green)
+                    }
                 }
-                IconButton(onClick = { onStatusChange(TaskStatus.SNOOZED) }) {
-                    Icon(Icons.Default.Pause, contentDescription = "Отложить", tint = Color(0xFFE69A1B)) // Amber
+                if (taskInfo.task.status != TaskStatus.SNOOZED) {
+                    IconButton(onClick = { onStatusChange(TaskStatus.SNOOZED) }) {
+                        Icon(Icons.Default.Pause, contentDescription = "Отложить", tint = Color(0xFFE69A1B)) // Amber
+                    }
                 }
-                IconButton(onClick = { onStatusChange(TaskStatus.REJECTED) }) {
-                    Icon(Icons.Default.Close, contentDescription = "Отклонить", tint = MaterialTheme.colorScheme.error)
+                if (taskInfo.task.status != TaskStatus.REJECTED) {
+                    IconButton(onClick = { onStatusChange(TaskStatus.REJECTED) }) {
+                        Icon(Icons.Default.Close, contentDescription = "Отклонить", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
