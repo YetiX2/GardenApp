@@ -5,12 +5,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.outlined.Thermostat
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
@@ -47,12 +53,48 @@ fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                WeatherCard()
+            }
+            item {
                 TodayTasksCard(tasks = tasks)
             }
             item {
                 MyGardensCard(onOpenGardens = onOpenGardens)
             }
         }
+    }
+}
+
+@Composable
+private fun WeatherCard() {
+    Card {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Outlined.WbSunny, contentDescription = "Погода", modifier = Modifier.size(64.dp), tint = Color(0xFFFFC107))
+            Spacer(Modifier.width(16.dp))
+            Text("23°", style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Light))
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text("Ночью возможны заморозки до -2 °C", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    ForecastItem(day = "Пт", temp = "25°", icon = Icons.Outlined.WbSunny)
+                    ForecastItem(day = "Сб", temp = "21°", icon = Icons.Outlined.Thermostat) // Placeholder icon
+                    ForecastItem(day = "Вс", temp = "16°", icon = Icons.Outlined.Thermostat) // Placeholder icon
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForecastItem(day: String, temp: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(day, style = MaterialTheme.typography.bodySmall)
+        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(temp, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 
