@@ -228,7 +228,7 @@ private fun DateRow(label: String, date: LocalDate, onPick: (LocalDate) -> Unit)
     var show by remember { mutableStateOf(false) }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(value = date.toString(), onValueChange = {}, enabled = false, label = { Text(label) })
-        FilledTonalButton(onClick = { show = true }) { Icon(Icons.Default.DateRange, contentDescription = null); Spacer(Modifier.width(6.dp)); Text("Выбрать") }
+        FilledTonalButton(onClick = { show = true }) { Icon(Icons.Default.DateRange, contentDescription = null); Spacer(Modifier.width(6.dp)); }
     }
     if (show) {
         DatePickerDialog(onDismissRequest = { show = false }, confirmButton = {}) {
