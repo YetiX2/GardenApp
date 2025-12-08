@@ -18,9 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.gardenapp.data.db.GardenEntity
-
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 
@@ -34,10 +33,13 @@ private fun TaskType.toRussian(): String = when (this) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()) {
+fun DashboardScreen(
+    onOpenGardens: () -> Unit,
+    onOpenTasks: () -> Unit, // Added navigation callback
+    vm: DashboardVm = hiltViewModel()
+) {
     val tasks by vm.pendingTasks.collectAsState(initial = emptyList())
     val gardens by vm.gardens.collectAsState(initial = emptyList())
-
 
     Scaffold(
         topBar = {
@@ -61,7 +63,7 @@ fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()
                 WeatherCard()
             }
             item {
-                TodayTasksCard(tasks = tasks)
+                TodayTasksCard(tasks = tasks, onOpenTasks = onOpenTasks) // Pass it down
             }
             item {
                 MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
@@ -105,7 +107,7 @@ private fun ForecastItem(day: String, temp: String, icon: androidx.compose.ui.gr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>) {
+private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>, onOpenTasks: () -> Unit) {
     Card {
         Column(Modifier.padding(16.dp)) {
             Text("Сегодняшние задачи", style = MaterialTheme.typography.titleLarge)
@@ -121,7 +123,7 @@ private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>) {
                         Text(taskText)
                     }
                 }
-                TextButton(onClick = { /* TODO */ }) { Text("Посмотреть все") }
+                TextButton(onClick = onOpenTasks) { Text("Посмотреть все") }
             }
         }
     }
