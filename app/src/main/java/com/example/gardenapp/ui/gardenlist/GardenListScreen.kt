@@ -43,8 +43,9 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
     val scope = rememberCoroutineScope()
     val gardens by vm.gardens.collectAsState(initial = emptyList())
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<GardenEntity?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf<GardenEntity?>(null) }
 
     Scaffold(
         topBar = { 
@@ -58,7 +59,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { editTarget = null; showDialog = true }) {
+            FloatingActionButton(onClick = { editTarget = null; showEditDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = null)
             }
         }
@@ -74,8 +75,8 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                         },
                         trailingContent = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                IconButton(onClick = { editTarget = g; showDialog = true }) { Icon(Icons.Default.Edit, contentDescription = null) }
-                                IconButton(onClick = { scope.launch { vm.delete(g) } }) { Icon(Icons.Default.Delete, contentDescription = null) }
+                                IconButton(onClick = { editTarget = g; showEditDialog = true }) { Icon(Icons.Default.Edit, contentDescription = null) }
+                                IconButton(onClick = { showDeleteConfirm = g }) { Icon(Icons.Default.Delete, contentDescription = null) }
                             }
                         }
                     )
@@ -84,14 +85,37 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
         }
     }
 
-    if (showDialog) {
-        GardenDialog(
+    if (showEditDialog) {
+        GardenEditDialog(
             initial = editTarget,
-            onDismiss = { showDialog = false },
+            onDismiss = { showEditDialog = false },
             onSave = { name, w, h, step, zone ->
                 scope.launch {
                     vm.upsert(editTarget?.id, name, w, h, step, zone)
-                    showDialog = false
+                    showEditDialog = false
+                }
+            }
+        )
+    }
+
+    showDeleteConfirm?.let { gardenToDelete ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = { Text("Подтвердите удаление") },
+            text = { Text("Вы уверены, что хотите удалить сад \"${gardenToDelete.name}\"? Все связанные с ним растения и данные будут также удалены.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch { vm.delete(gardenToDelete) }
+                        showDeleteConfirm = null
+                    }
+                ) {
+                    Text("Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = null }) {
+                    Text("Отмена")
                 }
             }
         )
@@ -99,7 +123,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
 }
 
 @Composable
-private fun GardenDialog(
+private fun GardenEditDialog(
     initial: GardenEntity?,
     onDismiss: () -> Unit,
     onSave: (String, Int, Int, Int, Int?) -> Unit
