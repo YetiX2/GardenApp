@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class DashboardVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
+class DashboardVm @Inject constructor(repo: GardenRepository) : ViewModel() {
+    // Теперь ViewModel предоставляет Flow с задачами, уже содержащими имена растений
     val pendingTasks = repo.pendingTasks()
 }

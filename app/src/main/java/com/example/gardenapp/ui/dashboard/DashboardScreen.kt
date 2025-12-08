@@ -11,7 +11,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gardenapp.data.db.TaskInstanceEntity
+import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.data.db.TaskWithPlantInfo
+
+// Helper to get a Russian representation of the task type
+private fun TaskType.toRussian(): String = when (this) {
+    TaskType.FERTILIZE -> "Подкормить"
+    TaskType.PRUNE -> "Обрезать"
+    TaskType.TREAT -> "Обработать"
+    TaskType.WATER -> "Полить"
+    TaskType.OTHER -> "Другое"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +49,7 @@ fun DashboardScreen(onOpenGardens: () -> Unit, vm: DashboardVm = hiltViewModel()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TodayTasksCard(tasks: List<TaskInstanceEntity>) {
+private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>) {
     Card {
         Column(Modifier.padding(16.dp)) {
             Text("Сегодняшние задачи", style = MaterialTheme.typography.titleLarge)
@@ -47,10 +57,11 @@ private fun TodayTasksCard(tasks: List<TaskInstanceEntity>) {
             if (tasks.isEmpty()) {
                 Text("Задач на сегодня нет.", style = MaterialTheme.typography.bodyMedium)
             } else {
-                tasks.take(2).forEach { task ->
+                tasks.take(2).forEach { taskInfo ->
                     Row(Modifier.fillMaxWidth()) {
                         Checkbox(checked = false, onCheckedChange = {})
-                        Text(task.plantId) // Placeholder, need to resolve plant name
+                        val taskText = "${taskInfo.task.type.toRussian()} \"${taskInfo.plantName}\""
+                        Text(taskText)
                     }
                 }
                 TextButton(onClick = { /* TODO */ }) { Text("Посмотреть все") }

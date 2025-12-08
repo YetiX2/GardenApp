@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -38,7 +39,7 @@ class GardenListVm @Inject constructor(private val repo: GardenRepository) : and
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel()) {
+fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenListVm = hiltViewModel()) {
     val scope = rememberCoroutineScope()
     val gardens by vm.gardens.collectAsState(initial = emptyList())
 
@@ -46,7 +47,16 @@ fun GardenListScreen(onOpen: (String) -> Unit, vm: GardenListVm = hiltViewModel(
     var editTarget by remember { mutableStateOf<GardenEntity?>(null) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Мои сады") }) },
+        topBar = { 
+            TopAppBar(
+                title = { Text("Мои сады") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { editTarget = null; showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = null)

@@ -5,6 +5,14 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+// Data class to hold combined info for the dashboard
+data class TaskWithPlantInfo(
+    @Embedded val task: TaskInstanceEntity,
+    val plantName: String,
+    val taskType: TaskType?
+)
+
+
 // --- DAOs ---
 @Dao
 interface GardenDao {
@@ -32,8 +40,17 @@ interface RuleDao {
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM TaskInstanceEntity WHERE status = 'PENDING' ORDER BY due ASC")
-    fun observePending(): Flow<List<TaskInstanceEntity>>
+    // This query now joins all three tables: Tasks, Plants, and Rules
+    @Query("""
+        SELECT t.*, p.title as plantName, r.type as taskType 
+        FROM TaskInstanceEntity as t
+        INNER JOIN PlantEntity as p ON t.plantId = p.id
+        LEFT JOIN CareRuleEntity as r ON t.ruleId = r.id
+        WHERE t.status = 'PENDING' 
+        ORDER BY t.due ASC
+    """)
+    fun observePendingWithPlantInfo(): Flow<List<TaskWithPlantInfo>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(task: TaskInstanceEntity)
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
     suspend fun setStatus(id: String, status: TaskStatus)
@@ -116,7 +133,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 10, 
+    version = 11, // Incremented version to fix schema mismatch error
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -27,7 +27,7 @@ class GardenRepository @Inject constructor(private val db: GardenDatabase) {
     }
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
 
-    fun pendingTasks(): Flow<List<TaskInstanceEntity>> = db.taskDao().observePending()
+    fun pendingTasks(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observePendingWithPlantInfo()
 
     suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
         db.taskDao().upsert(
@@ -37,7 +37,8 @@ class GardenRepository @Inject constructor(private val db: GardenDatabase) {
                 plantId = rule.plantId,
                 due = due,
                 exact = true,
-                status = TaskStatus.PENDING
+                status = TaskStatus.PENDING,
+                type = rule.type
             )
         )
     }

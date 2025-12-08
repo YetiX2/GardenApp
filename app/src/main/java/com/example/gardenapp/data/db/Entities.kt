@@ -52,7 +52,8 @@ data class TaskInstanceEntity(
     val plantId: String,
     val due: LocalDateTime,
     val exact: Boolean,
-    val status: TaskStatus
+    val status: TaskStatus,
+    val type:TaskType
 )
 
 @Entity(indices = [Index("plantId")])

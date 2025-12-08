@@ -25,7 +25,8 @@ fun AppNav() {
         }
         composable(Route.Gardens.value) {
             GardenListScreen(
-                onOpen = { id -> nav.navigate("plan/$id") }
+                onOpen = { id -> nav.navigate("plan/$id") },
+                onBack = { nav.popBackStack() }
             )
         }
         composable(Route.Plan.value) { backStack ->
