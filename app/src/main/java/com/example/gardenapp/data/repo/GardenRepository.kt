@@ -59,7 +59,7 @@ class GardenRepository @Inject constructor(
 
         // 1. Create the 20x20m plot
         val plotId = UUID.randomUUID().toString()
-        val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 3)
+        val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 2) // Zone 2
         db.gardenDao().upsert(plot)
 
         val plotPlants = allVarieties.shuffled().take(5).map {
@@ -79,7 +79,7 @@ class GardenRepository @Inject constructor(
 
         // 2. Create the 3x6m greenhouse
         val greenhouseId = UUID.randomUUID().toString()
-        val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, null)
+        val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4) // Zone 4
         db.gardenDao().upsert(greenhouse)
         
         val tomatoVarieties = allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2)
