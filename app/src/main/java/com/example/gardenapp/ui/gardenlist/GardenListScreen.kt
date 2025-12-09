@@ -14,28 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
-import com.example.gardenapp.data.repo.GardenRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.util.UUID
-import javax.inject.Inject
-
-@HiltViewModel
-class GardenListVm @Inject constructor(private val repo: GardenRepository) : androidx.lifecycle.ViewModel() {
-    val gardens = repo.gardens()
-    suspend fun upsert(id: String?, name: String, w: Int, h: Int, step: Int, zone: Int?) {
-        val entity = GardenEntity(
-            id = id ?: UUID.randomUUID().toString(),
-            name = name,
-            widthCm = w,
-            heightCm = h,
-            gridStepCm = step,
-            climateZone = zone
-        )
-        repo.upsertGarden(entity)
-    }
-    suspend fun delete(g: GardenEntity) = repo.deleteGarden(g)
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,8 +70,11 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
             onDismiss = { showEditDialog = false },
             onSave = { name, w, h, step, zone ->
                 scope.launch {
-                    vm.upsert(editTarget?.id, name, w, h, step, zone)
+                    val newGardenId = vm.upsert(editTarget?.id, name, w, h, step, zone)
                     showEditDialog = false
+                    if (editTarget == null) { // Only navigate if it's a new garden
+                        onOpen(newGardenId)
+                    }
                 }
             }
         )
