@@ -9,13 +9,8 @@ import com.example.gardenapp.data.db.ReferenceDao
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import com.example.gardenapp.data.repo.WeatherRepository
-import com.example.gardenapp.data.weather.Condition
-import com.example.gardenapp.data.weather.CurrentWeather
-import com.example.gardenapp.data.weather.Day
-import com.example.gardenapp.data.weather.Forecast
-import com.example.gardenapp.data.weather.ForecastDay
 import com.example.gardenapp.data.weather.WeatherApi
-import com.example.gardenapp.data.weather.WeatherResponse
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,44 +18,19 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
 import javax.inject.Provider
 import javax.inject.Singleton
-
-// Fake Weather API implementation for demonstration purposes
-class FakeWeatherApi : WeatherApi {
-    override suspend fun getWeather(latitude: Double, longitude: Double): WeatherResponse {
-        delay(1000) // Simulate network delay
-        return WeatherResponse(
-            current = CurrentWeather(
-                tempC = 23.0f,
-                condition = Condition(text = "Солнечно", iconUrl = "//cdn.weatherapi.com/weather/64x64/day/113.png")
-            ),
-            forecast = Forecast(
-                forecastDay = listOf(
-                    ForecastDay(
-                        date = "2023-08-01",
-                        day = Day(maxTempC = 25.0f, minTempC = 15.0f, condition = Condition(text = "", iconUrl = ""))
-                    ),
-                    ForecastDay(
-                        date = "2023-08-02",
-                        day = Day(maxTempC = 21.0f, minTempC = 14.0f, condition = Condition(text = "", iconUrl = ""))
-                    ),
-                    ForecastDay(
-                        date = "2023-08-03",
-                        day = Day(maxTempC = 16.0f, minTempC = 10.0f, condition = Condition(text = "", iconUrl = ""))
-                    )
-                )
-            )
-        )
-    }
-}
-
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    // ... provideDb, provideRepo и другие DAO остаются без изменений ...
     @Provides
     @Singleton
     fun provideDb(
@@ -80,9 +50,35 @@ object AppModule {
             .build()
     }
 
+    // --- Weather API Dependencies ---
     @Provides
     @Singleton
-    fun provideWeatherApi(): WeatherApi = FakeWeatherApi()
+    fun provideJson(): Json = Json { ignoreUnknownKeys = true }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient, json: Json): Retrofit {
+        return Retrofit.Builder()
+            .client(okHttpClient)
+            .baseUrl("https://api.weatherapi.com/v1/")
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherApi(retrofit: Retrofit): WeatherApi {
+        return retrofit.create(WeatherApi::class.java)
+    }
+    // -----------------------------
 
     @Provides
     @Singleton
@@ -92,6 +88,7 @@ object AppModule {
     @Singleton
     fun provideRepo(db: GardenDatabase, referenceDao: ReferenceDao) = GardenRepository(db, referenceDao)
 
+    // ... остальные DAO ...
     @Provides
     fun provideGardenDao(db: GardenDatabase) = db.gardenDao()
 
@@ -104,6 +101,8 @@ object AppModule {
     @Provides
     fun provideTaskDao(db: GardenDatabase) = db.taskDao()
 
+
+
     @Provides
     fun provideFertilizerLogDao(db: GardenDatabase) = db.fertilizerLogDao()
 
@@ -115,6 +114,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideReferenceDataRepository(referenceDao: ReferenceDao, @ApplicationContext context: Context) = 
+    fun provideReferenceDataRepository(referenceDao: ReferenceDao, @ApplicationContext context: Context) =
         ReferenceDataRepository(referenceDao, context)
 }

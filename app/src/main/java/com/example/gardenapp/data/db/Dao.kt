@@ -162,7 +162,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 13, 
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

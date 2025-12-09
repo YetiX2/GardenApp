@@ -11,10 +11,13 @@ class WeatherRepository @Inject constructor(private val weatherApi: WeatherApi) 
             // TODO: Replace with real user location
             val lat = 55.75
             val lon = 37.61
-            val response = weatherApi.getWeather(lat, lon)
+
+            // !!! ВСТАВЬТЕ ВАШ КЛЮЧ ЗДЕСЬ !!!
+            val apiKey = "9343d7d615f44fcbab6193901250912"
+
+            val response = weatherApi.getWeather(apiKey = apiKey, location = "$lat,$lon")
             Result.success(response)
         } catch (e: Exception) {
-            // In a real app, you would log this error and distinguish between network, server, etc. errors
             Result.failure(e)
         }
     }

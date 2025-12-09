@@ -1,20 +1,15 @@
 package com.example.gardenapp.data.weather
 
-// This is where you would use Retrofit annotations, for example:
-// import retrofit2.http.GET
-// import retrofit2.http.Query
+import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface WeatherApi {
-    /**
-     * Fetches weather data from the API.
-     * The user would implement this with Retrofit.
-     * Example:
-     * @GET("forecast.json")
-     * suspend fun getWeather(
-     *     @Query("key") apiKey: String,
-     *     @Query("q") location: String,
-     *     @Query("days") days: Int = 3
-     * ): WeatherResponse
-     */
-    suspend fun getWeather(latitude: Double, longitude: Double): WeatherResponse
+    @GET("forecast.json")
+    suspend fun getWeather(
+        @Query("key") apiKey: String,
+        @Query("q") location: String, // e.g., "55.75,37.61"
+        @Query("days") days: Int = 3,
+        @Query("aqi") aqi: String = "no",
+        @Query("alerts") alerts: String = "no"
+    ): WeatherResponse
 }
