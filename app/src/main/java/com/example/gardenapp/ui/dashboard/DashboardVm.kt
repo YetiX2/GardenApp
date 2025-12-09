@@ -8,8 +8,10 @@ import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.WeatherRepository
 import com.example.gardenapp.data.weather.WeatherResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -18,9 +20,13 @@ import javax.inject.Inject
 
 sealed interface WeatherUiState {
     data object Loading : WeatherUiState
-    data object PermissionDenied : WeatherUiState // New state
+    data object PermissionDenied : WeatherUiState
     data class Success(val data: WeatherResponse) : WeatherUiState
     data class Error(val message: String) : WeatherUiState
+}
+
+sealed interface UiEvent {
+    data class ShowSnackbar(val message: String) : UiEvent
 }
 
 @HiltViewModel
@@ -31,6 +37,9 @@ class DashboardVm @Inject constructor(
 
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val weatherState: StateFlow<WeatherUiState> = _weatherState.asStateFlow()
+
+    private val _eventFlow = MutableSharedFlow<UiEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
 
     val allTasks = repo.allTasksWithPlantInfo()
     val gardens = repo.gardens()
@@ -57,18 +66,21 @@ class DashboardVm @Inject constructor(
     fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
         viewModelScope.launch {
             repo.addTask(plant, type, due)
+            _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
         }
     }
 
     fun addFertilizerLog(plant: PlantEntity, grams: Float, date: LocalDate, note: String?) {
         viewModelScope.launch {
             repo.addFertilizerLog(plant.id, date, grams, note)
+            _eventFlow.emit(UiEvent.ShowSnackbar("Запись об удобрении добавлена"))
         }
     }
 
     fun addHarvestLog(plant: PlantEntity, weight: Float, date: LocalDate, note: String?) {
         viewModelScope.launch {
             repo.addHarvestLog(plant.id, date, weight, note)
+            _eventFlow.emit(UiEvent.ShowSnackbar("Запись об урожае добавлена"))
         }
     }
 

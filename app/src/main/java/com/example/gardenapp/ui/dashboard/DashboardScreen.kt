@@ -28,6 +28,7 @@ import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
 import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
 import com.example.gardenapp.ui.dashboard.widgets.TodayTasksCard
 import com.example.gardenapp.ui.dashboard.widgets.WeatherCard
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +43,19 @@ fun DashboardScreen(
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     val weatherState by vm.weatherState.collectAsState()
+    
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        vm.eventFlow.collectLatest { event ->
+            when (event) {
+                is UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(message = event.message)
+                }
+            }
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -57,7 +71,6 @@ fun DashboardScreen(
     var showAddFertilizerDialog by remember { mutableStateOf(false) }
     var showAddHarvestDialog by remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 /*
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -106,6 +119,7 @@ fun DashboardScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Сегодня на даче") },
