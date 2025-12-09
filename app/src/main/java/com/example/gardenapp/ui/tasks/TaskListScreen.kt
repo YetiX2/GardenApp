@@ -23,7 +23,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
+import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 private fun TaskType.toRussian(): String = when (this) {
@@ -48,6 +50,18 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     var showAddTaskDialog by remember { mutableStateOf(false) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        vm.eventFlow.collectLatest { event ->
+            when (event) {
+                is UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(message = event.message)
+                }
+            }
+        }
+    }
+
     val taskStatuses = listOf(TaskStatus.PENDING, TaskStatus.DONE, TaskStatus.SNOOZED, TaskStatus.REJECTED)
     val pagerState = rememberPagerState { taskStatuses.size }
     val scope = rememberCoroutineScope()
@@ -64,6 +78,7 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Все задачи") },
