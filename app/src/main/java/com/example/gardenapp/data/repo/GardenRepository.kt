@@ -2,6 +2,8 @@ package com.example.gardenapp.data.repo
 
 import com.example.gardenapp.data.db.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -48,6 +50,15 @@ class GardenRepository @Inject constructor(
         )
     }
 
+    fun getRecentActivity(): Flow<List<RecentActivity>> {
+        val fertilizerFlow = db.fertilizerLogDao().observeLatestWithPlant(5).map { it.map { logWithPlant -> RecentActivity.Fertilizer(logWithPlant) } }
+        val harvestFlow = db.harvestLogDao().observeLatestWithPlant(5).map { it.map { logWithPlant -> RecentActivity.Harvest(logWithPlant) } }
+
+        return combine(fertilizerFlow, harvestFlow) { fertilizers, harvests ->
+            (fertilizers + harvests).sortedByDescending { it.date }.take(3)
+        }
+    }
+
     // --- Test Data Population ---
     suspend fun populateWithTestData() {
         if (db.gardenDao().getGardenByName("Участок") != null) {
@@ -55,7 +66,7 @@ class GardenRepository @Inject constructor(
         }
 
         val allVarieties = referenceDao.getAllVarietiesList()
-        if (allVarieties.isEmpty()) return 
+        if (allVarieties.isEmpty()) return
 
         // 1. Create the 20x20m plot
         val plotId = UUID.randomUUID().toString()
@@ -81,13 +92,13 @@ class GardenRepository @Inject constructor(
         val greenhouseId = UUID.randomUUID().toString()
         val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4) // Zone 4
         db.gardenDao().upsert(greenhouse)
-        
+
         val tomatoVarieties = allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2)
         val cucumberVarieties = allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2)
         val greenhouseVarieties = tomatoVarieties + cucumberVarieties
 
         val greenhousePlants = greenhouseVarieties.mapIndexed { i, variety ->
-             PlantEntity(
+            PlantEntity(
                 id = UUID.randomUUID().toString(),
                 gardenId = greenhouseId,
                 title = variety.title,

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Science
@@ -22,9 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.RecentActivity
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
+import kotlin.collections.forEach
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -50,6 +53,7 @@ fun DashboardScreen(
 ) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
     val gardens by vm.gardens.collectAsState(initial = emptyList())
+    val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -79,7 +83,7 @@ fun DashboardScreen(
                 MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
             }
             item {
-                RecentEntriesCard()
+                RecentEntriesCard(activityItems = recentActivity)
             }
         }
     }
@@ -175,26 +179,38 @@ private fun MyGardensCard(gardens: List<GardenEntity>, onOpenGardens: () -> Unit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecentEntriesCard() {
+private fun RecentEntriesCard(activityItems: List<RecentActivity>) {
     Column {
         Text("Последние записи", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Card(modifier = Modifier.weight(1f)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Icon(Icons.Default.BugReport, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Появилась тля на смородине", style = MaterialTheme.typography.titleSmall)
-                }
-            }
-            Card(modifier = Modifier.weight(1f)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.secondary)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Семена томатов под ваш регион", style = MaterialTheme.typography.titleSmall)
+        if (activityItems.isEmpty()) {
+            Text("Пока нет недавних записей.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                activityItems.forEach { item ->
+                    Card(modifier = Modifier.weight(1f)) {
+                        when (item) {
+                            is RecentActivity.Fertilizer -> {
+                                val text = "Удобрение: ${item.data.log.amountGrams}г для \"${item.data.plantName}\""
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(text, style = MaterialTheme.typography.titleSmall)
+                                }
+                            }
+                            is RecentActivity.Harvest -> {
+                                val text = "Урожай: ${item.data.log.weightKg}кг с \"${item.data.plantName}\""
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Icon(Icons.Default.Agriculture, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.secondary)
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(text, style = MaterialTheme.typography.titleSmall)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

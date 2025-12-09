@@ -5,12 +5,21 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// Data class to hold combined info for the dashboard
+// --- POJOs for combined queries ---
 data class TaskWithPlantInfo(
     @Embedded val task: TaskInstanceEntity,
     val plantName: String
 )
 
+data class FertilizerLogWithPlant(
+    @Embedded val log: FertilizerLogEntity,
+    val plantName: String
+)
+
+data class HarvestLogWithPlant(
+    @Embedded val log: HarvestLogEntity,
+    val plantName: String
+)
 
 // --- DAOs ---
 @Dao
@@ -57,6 +66,15 @@ interface TaskDao {
 interface FertilizerLogDao {
     @Query("SELECT * FROM FertilizerLogEntity WHERE plantId = :plantId ORDER BY date DESC")
     fun observe(plantId: String): Flow<List<FertilizerLogEntity>>
+    
+    @Query("""
+        SELECT l.*, p.title as plantName 
+        FROM FertilizerLogEntity as l 
+        INNER JOIN PlantEntity as p ON l.plantId = p.id 
+        ORDER BY l.date DESC LIMIT :limit
+    """)
+    fun observeLatestWithPlant(limit: Int): Flow<List<FertilizerLogWithPlant>>
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(log: FertilizerLogEntity)
     @Delete suspend fun delete(log: FertilizerLogEntity)
 }
@@ -65,6 +83,15 @@ interface FertilizerLogDao {
 interface HarvestLogDao {
     @Query("SELECT * FROM HarvestLogEntity WHERE plantId = :plantId ORDER BY date DESC")
     fun observe(plantId: String): Flow<List<HarvestLogEntity>>
+
+    @Query("""
+        SELECT l.*, p.title as plantName 
+        FROM HarvestLogEntity as l 
+        INNER JOIN PlantEntity as p ON l.plantId = p.id 
+        ORDER BY l.date DESC LIMIT :limit
+    """)
+    fun observeLatestWithPlant(limit: Int): Flow<List<HarvestLogWithPlant>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(log: HarvestLogEntity)
     @Delete suspend fun delete(log: HarvestLogEntity)
 }

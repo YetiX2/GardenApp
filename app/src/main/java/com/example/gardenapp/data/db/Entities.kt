@@ -8,6 +8,18 @@ import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+// Sealed interface for recent activity feed on the dashboard
+sealed interface RecentActivity {
+    val date: LocalDate
+    data class Fertilizer(val data: FertilizerLogWithPlant) : RecentActivity {
+        override val date: LocalDate get() = data.log.date
+    }
+    data class Harvest(val data: HarvestLogWithPlant) : RecentActivity {
+        override val date: LocalDate get() = data.log.date
+    }
+}
+
+
 // --- Original App Entities ---
 @Entity
 data class GardenEntity(
