@@ -37,7 +37,7 @@ fun DashboardScreen(
     val gardens by vm.gardens.collectAsState(initial = emptyList())
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
-
+    val weatherState by vm.weatherState.collectAsState()
     var showAddMenu by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showAddFertilizerDialog by remember { mutableStateOf(false) }
@@ -100,7 +100,7 @@ fun DashboardScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { WeatherCard() }
+            item { WeatherCard(state = weatherState, onRetry = { vm.fetchWeather() }) }
             item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
             item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
             item { RecentEntriesCard(activityItems = recentActivity) }
