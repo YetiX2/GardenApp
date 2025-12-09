@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.tasks
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,12 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
+import kotlinx.coroutines.launch
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -46,14 +46,11 @@ private fun TaskStatus.toRussian(): String = when (this) {
 fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
-
-    var selectedTabIndex by remember { mutableStateOf(0) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
-    val taskStatuses = listOf(TaskStatus.PENDING, TaskStatus.DONE, TaskStatus.SNOOZED, TaskStatus.REJECTED)
 
-    val tasksToShow = remember(selectedTabIndex, allTasks) {
-        allTasks.filter { it.task.status == taskStatuses[selectedTabIndex] }
-    }
+    val taskStatuses = listOf(TaskStatus.PENDING, TaskStatus.DONE, TaskStatus.SNOOZED, TaskStatus.REJECTED)
+    val pagerState = rememberPagerState { taskStatuses.size }
+    val scope = rememberCoroutineScope()
 
     if (showAddTaskDialog) {
         AddTaskDialog(
@@ -84,32 +81,39 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
-            TabRow(selectedTabIndex = selectedTabIndex) {
+            TabRow(selectedTabIndex = pagerState.currentPage) {
                 taskStatuses.forEachIndexed { index, status ->
                     Tab(
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
+                        selected = pagerState.currentPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(status.toRussian()) }
                     )
                 }
             }
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (tasksToShow.isEmpty()) {
-                    item {
-                        Text("Задач в этом статусе нет.", modifier = Modifier.padding(16.dp))
-                    }
-                } else {
-                    items(tasksToShow, key = { it.task.id }) { taskInfo ->
-                        TaskItem(
-                            taskInfo = taskInfo,
-                            onStatusChange = { newStatus -> vm.updateTaskStatus(taskInfo.task.id, newStatus) }
-                        )
-                    }
-                }
+            HorizontalPager(state = pagerState) {
+                pageIndex ->
+                val tasksToShow = allTasks.filter { it.task.status == taskStatuses[pageIndex] }
+                TaskList(tasks = tasksToShow, vm = vm)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TaskList(tasks: List<TaskWithPlantInfo>, vm: TaskListVm) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (tasks.isEmpty()) {
+            item { Text("Задач в этом статусе нет.", modifier = Modifier.padding(16.dp)) }
+        } else {
+            items(tasks, key = { it.task.id }) { taskInfo ->
+                TaskItem(
+                    taskInfo = taskInfo,
+                    onStatusChange = { newStatus -> vm.updateTaskStatus(taskInfo.task.id, newStatus) }
+                )
             }
         }
     }
