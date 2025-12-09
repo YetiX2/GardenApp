@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -23,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
+import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -43,12 +45,25 @@ private fun TaskStatus.toRussian(): String = when (this) {
 @Composable
 fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    val allPlants by vm.allPlants.collectAsState(initial = emptyList())
 
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    var showAddTaskDialog by remember { mutableStateOf(false) }
     val taskStatuses = listOf(TaskStatus.PENDING, TaskStatus.DONE, TaskStatus.SNOOZED, TaskStatus.REJECTED)
 
     val tasksToShow = remember(selectedTabIndex, allTasks) {
         allTasks.filter { it.task.status == taskStatuses[selectedTabIndex] }
+    }
+
+    if (showAddTaskDialog) {
+        AddTaskDialog(
+            onDismiss = { showAddTaskDialog = false },
+            onAddTask = { plant, type, due ->
+                vm.addTask(plant, type, due)
+                showAddTaskDialog = false
+            },
+            plants = allPlants
+        )
     }
 
     Scaffold(
@@ -61,6 +76,11 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
                     }
                 }
             )
+        },
+                floatingActionButton = {
+            FloatingActionButton(onClick = { showAddTaskDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Добавить задачу")
+            }
         }
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
