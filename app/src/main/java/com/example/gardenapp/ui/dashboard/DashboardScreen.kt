@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
+import com.example.gardenapp.ui.dashboard.widgets.AdCard
 import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
 import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
 import com.example.gardenapp.ui.dashboard.widgets.TodayTasksCard
@@ -120,6 +121,7 @@ fun DashboardScreen(
             item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
             item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
             item { RecentEntriesCard(activityItems = recentActivity) }
+            item { AdCard() }
         }
 
         if (showAddMenu) {
