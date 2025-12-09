@@ -1,50 +1,28 @@
 package com.example.gardenapp.ui.dashboard
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Thermostat
-import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.PlaylistAddCheck
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gardenapp.data.db.GardenEntity
-import com.example.gardenapp.data.db.PlantEntity
-import com.example.gardenapp.data.db.RecentActivity
-import com.example.gardenapp.data.db.TaskStatus
-import com.example.gardenapp.data.db.TaskType
-import com.example.gardenapp.data.db.TaskWithPlantInfo
-import com.example.gardenapp.ui.tasks.TaskListScreen
+import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
+import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
+import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
+import com.example.gardenapp.ui.dashboard.widgets.TodayTasksCard
+import com.example.gardenapp.ui.dashboard.widgets.WeatherCard
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import kotlin.collections.forEach
-
-private fun TaskType.toRussian(): String = when (this) {
-    TaskType.FERTILIZE -> "Подкормить"
-    TaskType.PRUNE -> "Обрезать"
-    TaskType.TREAT -> "Обработать"
-    TaskType.WATER -> "Полить"
-    TaskType.OTHER -> "Другое"
-}
-
-private fun TaskStatus.toRussian(): String = when (this) {
-    TaskStatus.PENDING -> "Новые"
-    TaskStatus.DONE -> "Готово"
-    TaskStatus.SNOOZED -> "Ждут"
-    TaskStatus.REJECTED -> "Нафиг"
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +48,6 @@ fun DashboardScreen(
                 vm.addTask(plant, type, due)
                 showAddTaskDialog = false
             },
-            // TODO: Get plants from ViewModel
             plants = allPlants
         )
     }
@@ -97,19 +74,12 @@ fun DashboardScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                WeatherCard()
-            }
-            item {
-                TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks)
-            }
-            item {
-                MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens)
-            }
-            item {
-                RecentEntriesCard(activityItems = recentActivity)
-            }
+            item { WeatherCard() }
+            item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
+            item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
+            item { RecentEntriesCard(activityItems = recentActivity) }
         }
+
         if (showAddMenu) {
             ModalBottomSheet(
                 onDismissRequest = { showAddMenu = false },
@@ -119,9 +89,9 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить задачу") },
                         leadingContent = { Icon(Icons.Default.PlaylistAddCheck, null) },
-                        modifier = Modifier.clickable {
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
-                                showAddMenu = false
+                        modifier = Modifier.clickable { 
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { 
+                                showAddMenu = false 
                                 showAddTaskDialog = true
                             }
                         }
@@ -129,7 +99,7 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить запись об удобрении") },
                         leadingContent = { Icon(Icons.Default.Science, null) },
-                        modifier = Modifier.clickable {
+                        modifier = Modifier.clickable { 
                             // TODO: Navigate to Add Fertilizer Log screen
                             scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
                         }
@@ -137,7 +107,7 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить запись об урожае") },
                         leadingContent = { Icon(Icons.Default.Agriculture, null) },
-                        modifier = Modifier.clickable {
+                        modifier = Modifier.clickable { 
                             // TODO: Navigate to Add Harvest Log screen
                             scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
                         }
@@ -146,225 +116,4 @@ fun DashboardScreen(
             }
         }
     }
-}
-
-@Composable
-private fun WeatherCard() {
-    Card {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Outlined.WbSunny, contentDescription = "Погода", modifier = Modifier.size(64.dp), tint = Color(0xFFFFC107))
-            Spacer(Modifier.width(16.dp))
-            Text("23°", style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Light))
-            Spacer(Modifier.width(16.dp))
-            Column {
-                Text("Ночью возможны заморозки до -2 °C", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ForecastItem(day = "Пт", temp = "25°", icon = Icons.Outlined.WbSunny)
-                    ForecastItem(day = "Сб", temp = "21°", icon = Icons.Outlined.Thermostat) // Placeholder icon
-                    ForecastItem(day = "Вс", temp = "16°", icon = Icons.Outlined.Thermostat) // Placeholder icon
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ForecastItem(day: String, temp: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(day, style = MaterialTheme.typography.bodySmall)
-        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(temp, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TodayTasksCard(tasks: List<TaskWithPlantInfo>, onOpenTasks: () -> Unit) {
-    Card(onClick = onOpenTasks) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text("Сегодняшние задачи", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(16.dp))
-
-            val counts = tasks.groupingBy { it.task.status }.eachCount()
-
-            if (counts.isEmpty()) {
-                Text("Задач на сегодня нет.", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    TaskStatus.values().forEach { status ->
-                        val count = counts.getOrDefault(status, 0)
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(count.toString(), style = MaterialTheme.typography.headlineMedium)
-                            Text(status.toRussian(), style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MyGardensCard(gardens: List<GardenEntity>, onOpenGardens: () -> Unit) {
-    Column {
-        Text("Мои грядки / участок", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        Card(onClick = onOpenGardens) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                gardens.take(2).forEach { garden ->
-                    Card(modifier = Modifier.weight(1f)) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(48.dp))
-                            Spacer(Modifier.height(8.dp))
-                            Text(garden.name, style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RecentEntriesCard(activityItems: List<RecentActivity>) {
-    Column {
-        Text("Последние записи", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
-        if (activityItems.isEmpty()) {
-            Text("Пока нет недавних записей.", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                activityItems.forEach { item ->
-                    Card(modifier = Modifier.weight(1f)) {
-                        when (item) {
-                            is RecentActivity.Fertilizer -> {
-                                val text = "Удобрение: ${item.data.log.amountGrams}г для \"${item.data.plantName}\""
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(text, style = MaterialTheme.typography.titleSmall)
-                                }
-                            }
-                            is RecentActivity.Harvest -> {
-                                val text = "Урожай: ${item.data.log.weightKg}кг с \"${item.data.plantName}\""
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Icon(Icons.Default.Agriculture, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.secondary)
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(text, style = MaterialTheme.typography.titleSmall)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddTaskDialog(
-    onDismiss: () -> Unit,
-    onAddTask: (PlantEntity, TaskType, LocalDateTime) -> Unit,
-    plants: List<PlantEntity>
-) {
-    var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
-    var plantMenuExpanded by remember { mutableStateOf(false) }
-
-    var selectedType by remember { mutableStateOf(TaskType.WATER) }
-    var typeMenuExpanded by remember { mutableStateOf(false) }
-
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
-                        selectedDate = LocalDate.ofEpochDay(it / (1000 * 60 * 60 * 24))
-                    }
-                    showDatePicker = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Отмена") } }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Новая задача") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ExposedDropdownMenuBox(expanded = plantMenuExpanded, onExpandedChange = { plantMenuExpanded = !plantMenuExpanded }) {
-                    OutlinedTextField(
-                        value = selectedPlant?.title ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Растение") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = plantMenuExpanded) }
-                    )
-                    ExposedDropdownMenu(expanded = plantMenuExpanded, onDismissRequest = { plantMenuExpanded = false }) {
-                        plants.forEach {
-                            DropdownMenuItem(text = { Text(it.title) }, onClick = { selectedPlant = it; plantMenuExpanded = false })
-                        }
-                    }
-                }
-                ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
-                    OutlinedTextField(
-                        value = selectedType.toRussian(),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Тип задачи") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
-                    )
-                    ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                        TaskType.values().forEach {
-                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { selectedType = it; typeMenuExpanded = false })
-                        }
-                    }
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(value = selectedDate.toString(), onValueChange = {}, readOnly = true, label = { Text("Дата") }, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    selectedPlant?.let { onAddTask(it, selectedType, selectedDate.atStartOfDay()) }
-                },
-                enabled = selectedPlant != null
-            ) {
-                Text("Добавить")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
-    )
 }
