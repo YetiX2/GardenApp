@@ -7,6 +7,7 @@ import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -15,11 +16,17 @@ class DashboardVm @Inject constructor(private val repo: GardenRepository) : View
     val allTasks = repo.allTasksWithPlantInfo()
     val gardens = repo.gardens()
     val recentActivity = repo.getRecentActivity()
-    val allPlants = repo.observeAllPlants() // For the AddTask dialog
+    val allPlants = repo.observeAllPlants()
 
     fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
         viewModelScope.launch {
             repo.addTask(plant, type, due)
+        }
+    }
+
+    fun addFertilizerLog(plant: PlantEntity, grams: Float, date: LocalDate, note: String?) {
+        viewModelScope.launch {
+            repo.addFertilizerLog(plant.id, date, grams, note)
         }
     }
 

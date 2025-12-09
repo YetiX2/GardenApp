@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
 import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
@@ -38,6 +39,8 @@ fun DashboardScreen(
 
     var showAddMenu by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
+    var showAddFertilizerDialog by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -51,7 +54,16 @@ fun DashboardScreen(
             plants = allPlants
         )
     }
-
+    if (showAddFertilizerDialog) {
+        AddFertilizerLogDialog(
+            onDismiss = { showAddFertilizerDialog = false },
+            onAddLog = { plant, grams, date, note ->
+                vm.addFertilizerLog(plant, grams, date, note)
+                showAddFertilizerDialog = false
+            },
+            plants = allPlants
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -99,9 +111,11 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить запись об удобрении") },
                         leadingContent = { Icon(Icons.Default.Science, null) },
-                        modifier = Modifier.clickable { 
-                            // TODO: Navigate to Add Fertilizer Log screen
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                        modifier = Modifier.clickable {
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                                showAddMenu = false
+                                showAddFertilizerDialog = true
+                            }
                         }
                     )
                     ListItem(
