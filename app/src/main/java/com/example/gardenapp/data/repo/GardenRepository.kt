@@ -24,9 +24,9 @@ class GardenRepository @Inject constructor(
     suspend fun deleteGarden(g: GardenEntity) = db.gardenDao().delete(g)
 
     fun plants(gardenId: String): Flow<List<PlantEntity>> = db.plantDao().observeByGarden(gardenId)
+    fun observeAllPlants(): Flow<List<PlantEntity>> = db.plantDao().observeAllPlants()
     suspend fun upsertPlant(p: PlantEntity) = db.plantDao().upsert(p)
     suspend fun deletePlant(p: PlantEntity) = db.plantDao().delete(p)
-    fun observeAllPlants(): Flow<List<PlantEntity>> = db.plantDao().observeAllPlants()
 
     fun careRules(plantId: String): Flow<List<CareRuleEntity>> = db.ruleDao().observeRulesForPlant(plantId)
     suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) {
@@ -36,7 +36,6 @@ class GardenRepository @Inject constructor(
 
     fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
-
     suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
         db.taskDao().upsert(
             TaskInstanceEntity(
@@ -50,6 +49,7 @@ class GardenRepository @Inject constructor(
             )
         )
     }
+
     suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
         db.taskDao().upsert(
             TaskInstanceEntity(
@@ -80,11 +80,11 @@ class GardenRepository @Inject constructor(
         }
 
         val allVarieties = referenceDao.getAllVarietiesList()
-        if (allVarieties.isEmpty()) return
+        if (allVarieties.isEmpty()) return 
 
         // 1. Create the 20x20m plot
         val plotId = UUID.randomUUID().toString()
-        val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 2) // Zone 2
+        val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 2)
         db.gardenDao().upsert(plot)
 
         val plotPlants = allVarieties.shuffled().take(5).map {
@@ -104,15 +104,15 @@ class GardenRepository @Inject constructor(
 
         // 2. Create the 3x6m greenhouse
         val greenhouseId = UUID.randomUUID().toString()
-        val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4) // Zone 4
+        val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4)
         db.gardenDao().upsert(greenhouse)
-
+        
         val tomatoVarieties = allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2)
         val cucumberVarieties = allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2)
+        val greenhousePlants = tomatoVarieties + cucumberVarieties
         val greenhouseVarieties = tomatoVarieties + cucumberVarieties
-
-        val greenhousePlants = greenhouseVarieties.mapIndexed { i, variety ->
-            PlantEntity(
+        val greenhousePlantsEntities = greenhouseVarieties.mapIndexed { i, variety ->
+             PlantEntity(
                 id = UUID.randomUUID().toString(),
                 gardenId = greenhouseId,
                 title = variety.title,
@@ -124,7 +124,7 @@ class GardenRepository @Inject constructor(
                 plantedAt = LocalDate.now().minusDays(Random.nextLong(10, 90))
             )
         }
-        greenhousePlants.forEach { db.plantDao().upsert(it) }
+        greenhousePlantsEntities.forEach { db.plantDao().upsert(it) }
 
         // 3. Create test tasks
         val beerPlantId = UUID.randomUUID().toString()
@@ -134,9 +134,15 @@ class GardenRepository @Inject constructor(
         val tasks = listOf(
             TaskInstanceEntity(UUID.randomUUID().toString(), null, beerPlantId, TaskType.OTHER, LocalDateTime.now(), true, TaskStatus.PENDING),
             TaskInstanceEntity(UUID.randomUUID().toString(), null, plotPlants[0].id, TaskType.WATER, LocalDateTime.now().plusHours(1), true, TaskStatus.PENDING),
-            TaskInstanceEntity(UUID.randomUUID().toString(), null, greenhousePlants[0].id, TaskType.FERTILIZE, LocalDateTime.now().plusHours(2), true, TaskStatus.PENDING)
+            TaskInstanceEntity(UUID.randomUUID().toString(), null, greenhousePlantsEntities[0].id, TaskType.FERTILIZE, LocalDateTime.now().plusHours(2), true, TaskStatus.PENDING)
         )
         tasks.forEach { db.taskDao().upsert(it) }
+
+        // 4. Create test log entries
+        addFertilizerLog(plotPlants[1].id, LocalDate.now().minusDays(5), 15f, "Первая подкормка")
+        addHarvestLog(greenhousePlantsEntities[0].id, LocalDate.now().minusDays(2), 2.5f, "Собрали первые огурцы")
+        addFertilizerLog(greenhousePlantsEntities[1].id, LocalDate.now().minusDays(1), 10f, null)
+        addHarvestLog(plotPlants[0].id, LocalDate.now(), 5.1f, "Клубника пошла!")
     }
 
     // --- Logs ---
