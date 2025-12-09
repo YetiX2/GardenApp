@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.gardenapp.data.weather.WeatherResponse
@@ -29,16 +30,29 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
-fun WeatherCard(state: WeatherUiState, onRetry: () -> Unit) {
+fun WeatherCard(state: WeatherUiState, onRetry: () -> Unit, onGrantPermission: () -> Unit) {
     Card {
-        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
             when (state) {
                 is WeatherUiState.Loading -> {
                     CircularProgressIndicator()
                 }
+                is WeatherUiState.PermissionDenied -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Для отображения погоды нужно разрешение на доступ к геолокации.",
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = onGrantPermission) { Text("Дать разрешение") }
+                    }
+                }
                 is WeatherUiState.Error -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
+                        Text(state.message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = onRetry) { Text("Повторить") }
                     }

@@ -42,6 +42,16 @@ fun DashboardScreen(
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     val weatherState by vm.weatherState.collectAsState()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted -> vm.onPermissionResult(isGranted) }
+    )
+
+    LaunchedEffect(Unit) {
+        permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+    }
+
     var showAddMenu by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showAddFertilizerDialog by remember { mutableStateOf(false) }
@@ -49,7 +59,7 @@ fun DashboardScreen(
 
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
+/*
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -57,7 +67,7 @@ fun DashboardScreen(
             vm.fetchWeather()
         }
     }
-
+*/
     LaunchedEffect(Unit) {
         permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
@@ -117,7 +127,13 @@ fun DashboardScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { WeatherCard(state = weatherState, onRetry = { vm.fetchWeather() }) }
+            item { 
+                WeatherCard(
+                    state = weatherState, 
+                    onRetry = { vm.fetchWeather() },
+                    onGrantPermission = { permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }
+                )
+            }
             item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
             item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
             item { RecentEntriesCard(activityItems = recentActivity) }

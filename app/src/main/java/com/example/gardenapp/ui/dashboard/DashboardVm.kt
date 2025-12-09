@@ -18,6 +18,7 @@ import javax.inject.Inject
 
 sealed interface WeatherUiState {
     data object Loading : WeatherUiState
+    data object PermissionDenied : WeatherUiState // New state
     data class Success(val data: WeatherResponse) : WeatherUiState
     data class Error(val message: String) : WeatherUiState
 }
@@ -36,7 +37,13 @@ class DashboardVm @Inject constructor(
     val recentActivity = repo.getRecentActivity()
     val allPlants = repo.observeAllPlants()
 
-    // The init block is removed. fetchWeather() will be called from the UI after permission is granted.
+    fun onPermissionResult(isGranted: Boolean) {
+        if (isGranted) {
+            fetchWeather()
+        } else {
+            _weatherState.value = WeatherUiState.PermissionDenied
+        }
+    }
 
     fun fetchWeather() {
         viewModelScope.launch {
