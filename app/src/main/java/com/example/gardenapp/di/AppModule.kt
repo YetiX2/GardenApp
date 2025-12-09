@@ -1,15 +1,18 @@
 package com.example.gardenapp.di
 
+import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.db.ReferenceDao
+import com.example.gardenapp.data.location.LocationTracker
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import com.example.gardenapp.data.repo.WeatherRepository
 import com.example.gardenapp.data.weather.WeatherApi
+import com.google.android.gms.location.LocationServices
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -30,7 +33,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    // ... provideDb, provideRepo и другие DAO остаются без изменений ...
     @Provides
     @Singleton
     fun provideDb(
@@ -78,11 +80,26 @@ object AppModule {
     fun provideWeatherApi(retrofit: Retrofit): WeatherApi {
         return retrofit.create(WeatherApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideFusedLocationProviderClient(app: Application): com.google.android.gms.location.FusedLocationProviderClient {
+        return LocationServices.getFusedLocationProviderClient(app)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationTracker(
+        locationClient: com.google.android.gms.location.FusedLocationProviderClient,
+        app: Application
+    ): LocationTracker {
+        return LocationTracker(locationClient, app)
+    }
     // -----------------------------
 
     @Provides
     @Singleton
-    fun provideWeatherRepository(weatherApi: WeatherApi) = WeatherRepository(weatherApi)
+    fun provideWeatherRepository(weatherApi: WeatherApi, locationTracker: LocationTracker) = WeatherRepository(weatherApi, locationTracker)
 
     @Provides
     @Singleton
@@ -100,8 +117,6 @@ object AppModule {
 
     @Provides
     fun provideTaskDao(db: GardenDatabase) = db.taskDao()
-
-
 
     @Provides
     fun provideFertilizerLogDao(db: GardenDatabase) = db.fertilizerLogDao()

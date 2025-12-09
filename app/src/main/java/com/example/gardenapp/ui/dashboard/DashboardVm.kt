@@ -36,9 +36,7 @@ class DashboardVm @Inject constructor(
     val recentActivity = repo.getRecentActivity()
     val allPlants = repo.observeAllPlants()
 
-    init {
-        fetchWeather()
-    }
+    // The init block is removed. fetchWeather() will be called from the UI after permission is granted.
 
     fun fetchWeather() {
         viewModelScope.launch {

@@ -1,5 +1,8 @@
 package com.example.gardenapp.ui.dashboard
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,6 +48,19 @@ fun DashboardScreen(
 
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            vm.fetchWeather()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+    }
+
 
     if (showAddTaskDialog) {
         AddTaskDialog(
@@ -115,9 +131,9 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить задачу") },
                         leadingContent = { Icon(Icons.Default.PlaylistAddCheck, null) },
-                        modifier = Modifier.clickable { 
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { 
-                                showAddMenu = false 
+                        modifier = Modifier.clickable {
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                                showAddMenu = false
                                 showAddTaskDialog = true
                             }
                         }
