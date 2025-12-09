@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
+import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
 import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
@@ -40,6 +41,7 @@ fun DashboardScreen(
     var showAddMenu by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showAddFertilizerDialog by remember { mutableStateOf(false) }
+    var showAddHarvestDialog by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -64,6 +66,18 @@ fun DashboardScreen(
             plants = allPlants
         )
     }
+
+    if (showAddHarvestDialog) {
+        AddHarvestLogDialog(
+            onDismiss = { showAddHarvestDialog = false },
+            onAddLog = { plant, weight, date, note ->
+                vm.addHarvestLog(plant, weight, date, note)
+                showAddHarvestDialog = false
+            },
+            plants = allPlants
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -121,9 +135,11 @@ fun DashboardScreen(
                     ListItem(
                         headlineContent = { Text("Добавить запись об урожае") },
                         leadingContent = { Icon(Icons.Default.Agriculture, null) },
-                        modifier = Modifier.clickable { 
-                            // TODO: Navigate to Add Harvest Log screen
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                        modifier = Modifier.clickable {
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                                showAddMenu = false
+                                showAddHarvestDialog = true
+                            }
                         }
                     )
                 }

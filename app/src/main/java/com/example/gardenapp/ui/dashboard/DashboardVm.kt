@@ -30,6 +30,12 @@ class DashboardVm @Inject constructor(private val repo: GardenRepository) : View
         }
     }
 
+    fun addHarvestLog(plant: PlantEntity, weight: Float, date: LocalDate, note: String?) {
+        viewModelScope.launch {
+            repo.addHarvestLog(plant.id, date, weight, note)
+        }
+    }
+
     fun createTestData() {
         viewModelScope.launch {
             repo.populateWithTestData()
