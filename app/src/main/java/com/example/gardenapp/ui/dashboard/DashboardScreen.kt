@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Thermostat
@@ -15,6 +17,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +34,7 @@ import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 import kotlin.collections.forEach
+import kotlinx.coroutines.launch
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -55,6 +62,11 @@ fun DashboardScreen(
     val gardens by vm.gardens.collectAsState(initial = emptyList())
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
 
+    var showAddMenu by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -66,7 +78,11 @@ fun DashboardScreen(
                 }
             )
         },
-        floatingActionButton = { FloatingActionButton(onClick = {}) { Icon(Icons.Default.Add, null) } }
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddMenu = true }) {
+                Icon(Icons.Default.Add, null)
+            }
+        }
     ) { pad ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(pad),
@@ -84,6 +100,39 @@ fun DashboardScreen(
             }
             item {
                 RecentEntriesCard(activityItems = recentActivity)
+            }
+        }
+        if (showAddMenu) {
+            ModalBottomSheet(
+                onDismissRequest = { showAddMenu = false },
+                sheetState = bottomSheetState
+            ) {
+                Column(modifier = Modifier.padding(bottom = 32.dp)) {
+                    ListItem(
+                        headlineContent = { Text("Добавить задачу") },
+                        leadingContent = { Icon(Icons.Default.PlaylistAddCheck, null) },
+                        modifier = Modifier.clickable {
+                            // TODO: Navigate to Add Task screen
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Добавить запись об удобрении") },
+                        leadingContent = { Icon(Icons.Default.Science, null) },
+                        modifier = Modifier.clickable {
+                            // TODO: Navigate to Add Fertilizer Log screen
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Добавить запись об урожае") },
+                        leadingContent = { Icon(Icons.Default.Agriculture, null) },
+                        modifier = Modifier.clickable {
+                            // TODO: Navigate to Add Harvest Log screen
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                        }
+                    )
+                }
             }
         }
     }
