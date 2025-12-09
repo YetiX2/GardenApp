@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,7 +26,9 @@ import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 import com.example.gardenapp.ui.tasks.TaskListScreen
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlin.collections.forEach
 
 private fun TaskType.toRussian(): String = when (this) {
@@ -286,8 +289,28 @@ private fun AddTaskDialog(
     var selectedType by remember { mutableStateOf(TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
 
-    // TODO: Implement date picker
-    val dueDate = LocalDateTime.now()
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        selectedDate = LocalDate.ofEpochDay(it / (1000 * 60 * 60 * 24))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Отмена") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -324,12 +347,18 @@ private fun AddTaskDialog(
                         }
                     }
                 }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(value = selectedDate.toString(), onValueChange = {}, readOnly = true, label = { Text("Дата") }, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    selectedPlant?.let { onAddTask(it, selectedType, dueDate) }
+                    selectedPlant?.let { onAddTask(it, selectedType, selectedDate.atStartOfDay()) }
                 },
                 enabled = selectedPlant != null
             ) {
