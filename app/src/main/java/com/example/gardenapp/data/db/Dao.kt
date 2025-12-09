@@ -35,6 +35,8 @@ interface GardenDao {
 interface PlantDao {
     @Query("SELECT * FROM PlantEntity WHERE gardenId = :gardenId")
     fun observeByGarden(gardenId: String): Flow<List<PlantEntity>>
+    @Query("SELECT * FROM PlantEntity ORDER BY title ASC")
+    fun observeAllPlants(): Flow<List<PlantEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(p: PlantEntity)
     @Delete suspend fun delete(p: PlantEntity)
 }

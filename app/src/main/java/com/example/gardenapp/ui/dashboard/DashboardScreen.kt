@@ -4,23 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Agriculture
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.PlaylistAddCheck
-import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,12 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.PlantEntity
 import com.example.gardenapp.data.db.RecentActivity
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
-import kotlin.collections.forEach
+import com.example.gardenapp.ui.tasks.TaskListScreen
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import kotlin.collections.forEach
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -61,11 +53,24 @@ fun DashboardScreen(
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
     val gardens by vm.gardens.collectAsState(initial = emptyList())
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
+    val allPlants by vm.allPlants.collectAsState(initial = emptyList())
 
     var showAddMenu by remember { mutableStateOf(false) }
+    var showAddTaskDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    if (showAddTaskDialog) {
+        AddTaskDialog(
+            onDismiss = { showAddTaskDialog = false },
+            onAddTask = { plant, type, due ->
+                vm.addTask(plant, type, due)
+                showAddTaskDialog = false
+            },
+            // TODO: Get plants from ViewModel
+            plants = allPlants
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -112,8 +117,10 @@ fun DashboardScreen(
                         headlineContent = { Text("Добавить задачу") },
                         leadingContent = { Icon(Icons.Default.PlaylistAddCheck, null) },
                         modifier = Modifier.clickable {
-                            // TODO: Navigate to Add Task screen
-                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion { showAddMenu = false }
+                            scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                                showAddMenu = false
+                                showAddTaskDialog = true
+                            }
                         }
                     )
                     ListItem(
@@ -264,4 +271,71 @@ private fun RecentEntriesCard(activityItems: List<RecentActivity>) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddTaskDialog(
+    onDismiss: () -> Unit,
+    onAddTask: (PlantEntity, TaskType, LocalDateTime) -> Unit,
+    plants: List<PlantEntity>
+) {
+    var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
+    var plantMenuExpanded by remember { mutableStateOf(false) }
+
+    var selectedType by remember { mutableStateOf(TaskType.WATER) }
+    var typeMenuExpanded by remember { mutableStateOf(false) }
+
+    // TODO: Implement date picker
+    val dueDate = LocalDateTime.now()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Новая задача") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ExposedDropdownMenuBox(expanded = plantMenuExpanded, onExpandedChange = { plantMenuExpanded = !plantMenuExpanded }) {
+                    OutlinedTextField(
+                        value = selectedPlant?.title ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Растение") },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = plantMenuExpanded) }
+                    )
+                    ExposedDropdownMenu(expanded = plantMenuExpanded, onDismissRequest = { plantMenuExpanded = false }) {
+                        plants.forEach {
+                            DropdownMenuItem(text = { Text(it.title) }, onClick = { selectedPlant = it; plantMenuExpanded = false })
+                        }
+                    }
+                }
+                ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
+                    OutlinedTextField(
+                        value = selectedType.toRussian(),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Тип задачи") },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
+                    )
+                    ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
+                        TaskType.values().forEach {
+                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { selectedType = it; typeMenuExpanded = false })
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    selectedPlant?.let { onAddTask(it, selectedType, dueDate) }
+                },
+                enabled = selectedPlant != null
+            ) {
+                Text("Добавить")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+    )
 }
