@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -51,10 +52,11 @@ fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (Care
             
             // --- Care Rules List ---
             Text("Правила ухода", style = MaterialTheme.typography.titleMedium)
-            if (rules.isEmpty()) {
-                Text("Правил ухода пока нет. Нажмите +, чтобы добавить.")
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                 if (rules.isEmpty()) {
+                    item { Text("Правил ухода пока нет. Нажмите +, чтобы добавить.") }
+                } else {
                     items(rules, key = { it.id }) { rule ->
                         val everyText = rule.everyDays?.let { "каждые $it дней" } ?: ""
                         ListItem(
@@ -65,6 +67,16 @@ fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (Care
                     }
                 }
             }
+
+            // --- Ad Block ---
+            Card(modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    headlineContent = { Text("Видео-каналы по уходу за садом") },
+                    supportingContent = { Text("на YouTube / RuTube") },
+                    trailingContent = { Icon(Icons.Outlined.Link, null) }
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp)) // Spacer for padding at the bottom
         }
     }
 }
