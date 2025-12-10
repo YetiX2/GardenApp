@@ -35,6 +35,8 @@ interface GardenDao {
 interface PlantDao {
     @Query("SELECT * FROM PlantEntity WHERE gardenId = :gardenId")
     fun observeByGarden(gardenId: String): Flow<List<PlantEntity>>
+    @Query("SELECT * FROM PlantEntity WHERE id = :id")
+    fun observePlant(id: String): Flow<PlantEntity?>
     @Query("SELECT * FROM PlantEntity ORDER BY title ASC")
     fun observeAllPlants(): Flow<List<PlantEntity>>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(p: PlantEntity)
@@ -162,7 +164,7 @@ class Converters {
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

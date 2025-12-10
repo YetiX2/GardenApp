@@ -2,6 +2,7 @@ package com.example.gardenapp.ui.plan
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +39,12 @@ import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltViewModel()) {
+fun GardenPlanScreen(
+    gardenId: String,
+    onBack: () -> Unit,
+    onOpenPlant: (String) -> Unit, // Added this parameter
+    vm: PlanVm = hiltViewModel()
+) {
     LaunchedEffect(gardenId) { vm.loadGarden(gardenId) }
 
     val scope = rememberCoroutineScope()
@@ -112,13 +118,22 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
 
         Box(Modifier.fillMaxSize().padding(pad)) {
             Canvas(
-                modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        if (!dragging) {
-                            scale = (scale * zoom).coerceIn(0.5f, 6f)
-                            offset += pan
+                modifier = Modifier.fillMaxSize().pointerInput(plants, dragging, snapToGrid, scale, offset) {
+                    detectTapGestures(
+                        onTap = {
+                            val world = screenToWorld(it)
+                            val hit = plants.minByOrNull { p -> hypot(p.x - world.x, p.y - world.y) - p.radius }
+                            val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
+                            if (hitOk) {
+                                selectedPlant = hit
+                            } else {
+                                selectedPlant = null
+                            }
+                        },
+                        onDoubleTap = {
+                            selectedPlant?.let { plant -> onOpenPlant(plant.id) }
                         }
-                    }
+                    )
                 }.pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
                     awaitPointerEventScope {
                         while (true) {
@@ -184,7 +199,7 @@ fun GardenPlanScreen(gardenId: String, onBack: () -> Unit, vm: PlanVm = hiltView
                     onRadiusMinus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius - 5f).coerceAtLeast(10f))) } },
                     onRadiusPlus = { scope.launch { vm.upsertPlant(current.copy(radius = (current.radius + 5f).coerceAtMost(300f))) } },
                     onDelete = { scope.launch { vm.deletePlant(current) }; selectedPlant = null },
-                    onEdit = { showEditor = true }
+                    onEdit = { onOpenPlant(current.id) }
                 )
             }
 

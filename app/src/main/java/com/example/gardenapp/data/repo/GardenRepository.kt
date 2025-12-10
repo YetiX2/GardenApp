@@ -25,6 +25,7 @@ class GardenRepository @Inject constructor(
 
     fun plants(gardenId: String): Flow<List<PlantEntity>> = db.plantDao().observeByGarden(gardenId)
     fun observeAllPlants(): Flow<List<PlantEntity>> = db.plantDao().observeAllPlants()
+    fun observePlant(id: String): Flow<PlantEntity?> = db.plantDao().observePlant(id)
     suspend fun upsertPlant(p: PlantEntity) = db.plantDao().upsert(p)
     suspend fun deletePlant(p: PlantEntity) = db.plantDao().delete(p)
 
@@ -111,6 +112,7 @@ class GardenRepository @Inject constructor(
         val cucumberVarieties = allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2)
         val greenhousePlants = tomatoVarieties + cucumberVarieties
         val greenhouseVarieties = tomatoVarieties + cucumberVarieties
+
         val greenhousePlantsEntities = greenhouseVarieties.mapIndexed { i, variety ->
              PlantEntity(
                 id = UUID.randomUUID().toString(),
