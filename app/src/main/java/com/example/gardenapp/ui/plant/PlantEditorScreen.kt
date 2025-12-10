@@ -1,6 +1,7 @@
 package com.example.gardenapp.ui.plant
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -89,7 +90,9 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             TabRow(selectedTabIndex = pagerState.currentPage) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
@@ -99,13 +102,25 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                     )
                 }
             }
-            HorizontalPager(state = pagerState) {
-                page ->
-                when (page) {
-                    0 -> InfoTab(plant = plant)
-                    1 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
-                    2 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
-                    3 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
+            HorizontalPager(state = pagerState) { page ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (page) {
+                        0 -> InfoTab(plant = plant)
+                        1 -> FertilizerLogTab(
+                            logs = fertilizerLogs,
+                            onAdd = { showAddFertilizerDialog = true },
+                            onDelete = { vm.deleteFertilizerLog(it) })
+
+                        2 -> HarvestLogTab(
+                            logs = harvestLogs,
+                            onAdd = { showAddHarvestDialog = true },
+                            onDelete = { vm.deleteHarvestLog(it) })
+
+                        3 -> CareRulesTab(
+                            rules = careRules,
+                            onAdd = { showAddCareRuleDialog = true },
+                            onDelete = { vm.deleteCareRule(it) })
+                    }
                 }
             }
         }
