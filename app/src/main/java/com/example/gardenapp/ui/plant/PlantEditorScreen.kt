@@ -81,7 +81,15 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
             }
         )
     }
-
+    if (showAddCareRuleDialog) {
+        AddCareRuleDialog(
+            onDismiss = { showAddCareRuleDialog = false },
+            onAddRule = { type, days ->
+                vm.addCareRule(type, LocalDate.now(), days)
+                showAddCareRuleDialog = false
+            }
+        )
+    }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -158,6 +166,26 @@ private fun HarvestLogTab(logs: List<HarvestLogEntity>, onAdd: () -> Unit, onDel
                     headlineContent = { Text("${log.weightKg}кг - ${log.date.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
                     supportingContent = { log.note?.let { Text(it) } },
                     trailingContent = { IconButton(onClick = { onDelete(log) }) { Icon(Icons.Default.Delete, null) } }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (CareRuleEntity) -> Unit) {
+    Scaffold(
+        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Default.Add, null) } }
+    ) {
+            padding ->
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp)) {
+            if (rules.isEmpty()) item { Text("Правил ухода пока нет.") }
+            items(rules, key = { it.id }) { rule ->
+                val everyText = rule.everyDays?.let { "каждые $it дней" } ?: ""
+                ListItem(
+                    headlineContent = { Text("${rule.type.toRussian()} $everyText") },
+                    supportingContent = { Text("Начиная с ${rule.start.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
+                    trailingContent = { IconButton(onClick = { onDelete(rule) }) { Icon(Icons.Default.Delete, null) } }
                 )
             }
         }
