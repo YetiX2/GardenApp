@@ -35,12 +35,11 @@ fun HarvestLogTab(logs: List<HarvestLogEntity>, onAdd: () -> Unit, onDelete: (Ha
             Text("Журнал сбора урожая", style = MaterialTheme.typography.titleMedium)
 
             // --- Log List ---
-            if (logs.isEmpty()) {
-                Text("Записей об урожае пока нет.")
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(logs, key = { it.id }) {
-                        log ->
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                if (logs.isEmpty()) {
+                    item { Text("Записей об урожае пока нет.") }
+                } else {
+                    items(logs, key = { it.id }) { log ->
                         ListItem(
                             headlineContent = { Text("${log.weightKg}кг - ${log.date.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
                             supportingContent = { log.note?.let { Text(it) } },
@@ -50,8 +49,6 @@ fun HarvestLogTab(logs: List<HarvestLogEntity>, onAdd: () -> Unit, onDelete: (Ha
                 }
             }
             
-            Spacer(modifier = Modifier.weight(1f))
-
             // --- Ad Block ---
             Card(modifier = Modifier.fillMaxWidth()) {
                 ListItem(
@@ -60,7 +57,7 @@ fun HarvestLogTab(logs: List<HarvestLogEntity>, onAdd: () -> Unit, onDelete: (Ha
                     trailingContent = { Icon(Icons.Outlined.Link, null) }
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp)) // Spacer for padding at the bottom
         }
     }
 }
