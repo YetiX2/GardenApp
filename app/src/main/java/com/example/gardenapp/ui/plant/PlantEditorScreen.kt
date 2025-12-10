@@ -32,6 +32,8 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     val fertilizerLogs by vm.fertilizerLogs.collectAsState(initial = emptyList())
     val harvestLogs by vm.harvestLogs.collectAsState(initial = emptyList())
     val careRules by vm.careRules.collectAsState(initial = emptyList())
+    val varietyDetails by vm.varietyDetails.collectAsState()
+    val varietyTags by vm.varietyTags.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
@@ -53,8 +55,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     if (showAddFertilizerDialog) {
         AddFertilizerLogDialog(
             onDismiss = { showAddFertilizerDialog = false },
-            onAddLog = {
-                grams, date, note ->
+            onAddLog = { grams, date, note ->
                 vm.addFertilizerLog(grams, date, note)
                 showAddFertilizerDialog = false
             }
@@ -63,8 +64,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     if (showAddHarvestDialog) {
         AddHarvestLogDialog(
             onDismiss = { showAddHarvestDialog = false },
-            onAddLog = {
-                weight, date, note ->
+            onAddLog = { weight, date, note ->
                 vm.addHarvestLog(weight, date, note)
                 showAddHarvestDialog = false
             }
@@ -73,8 +73,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     if (showAddCareRuleDialog) {
         AddCareRuleDialog(
             onDismiss = { showAddCareRuleDialog = false },
-            onAddRule = {
-                type, days ->
+            onAddRule = { type, days ->
                 vm.addCareRule(type, LocalDate.now(), days)
                 showAddCareRuleDialog = false
             }
@@ -90,9 +89,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
             )
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             TabRow(selectedTabIndex = pagerState.currentPage) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
@@ -102,24 +99,14 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                     )
                 }
             }
-            HorizontalPager(state = pagerState) { page ->
+            HorizontalPager(state = pagerState) {
+                page ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    when (page) {
-                        0 -> InfoTab(plant = plant)
-                        1 -> FertilizerLogTab(
-                            logs = fertilizerLogs,
-                            onAdd = { showAddFertilizerDialog = true },
-                            onDelete = { vm.deleteFertilizerLog(it) })
-
-                        2 -> HarvestLogTab(
-                            logs = harvestLogs,
-                            onAdd = { showAddHarvestDialog = true },
-                            onDelete = { vm.deleteHarvestLog(it) })
-
-                        3 -> CareRulesTab(
-                            rules = careRules,
-                            onAdd = { showAddCareRuleDialog = true },
-                            onDelete = { vm.deleteCareRule(it) })
+                     when (page) {
+                        0 -> InfoTab(plant = plant, variety = varietyDetails, tags = varietyTags)
+                        1 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
+                        2 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
+                        3 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
                     }
                 }
             }

@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.gardenapp.data.db.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -54,6 +55,10 @@ class ReferenceDataRepository @Inject constructor(
 ) {
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
+
+    // --- Methods to get reference data for UI ---
+    fun getVariety(id: String): Flow<ReferenceVarietyEntity?> = referenceDao.getVariety(id)
+    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
 
     suspend fun populateDatabaseIfEmpty() {
         if (referenceDao.getGroupsCount() > 0) {
