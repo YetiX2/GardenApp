@@ -16,7 +16,7 @@ class GardenRepository @Inject constructor(
 ) {
     fun gardens(): Flow<List<GardenEntity>> = db.gardenDao().observeGardens()
     suspend fun getGarden(id: String): GardenEntity? = db.gardenDao().getGarden(id)
-    
+
     suspend fun upsertGarden(garden: GardenEntity) {
         db.gardenDao().upsert(garden)
     }
@@ -81,70 +81,63 @@ class GardenRepository @Inject constructor(
         }
 
         val allVarieties = referenceDao.getAllVarietiesList()
-        if (allVarieties.isEmpty()) return 
+        if (allVarieties.isEmpty()) return
 
-        // 1. Create the 20x20m plot
+        // 1. Create Gardens and Plants
         val plotId = UUID.randomUUID().toString()
-        val plot = GardenEntity(plotId, "Участок", 2000, 2000, 50, 2)
-        db.gardenDao().upsert(plot)
-
-        val plotPlants = allVarieties.shuffled().take(5).map {
-            PlantEntity(
-                id = UUID.randomUUID().toString(),
-                gardenId = plotId,
-                title = it.title,
-                variety = it.title,
-                varietyId = it.id,
-                x = Random.nextInt(50, 1950).toFloat(),
-                y = Random.nextInt(50, 1950).toFloat(),
-                radius = Random.nextInt(20, 50).toFloat(),
-                plantedAt = LocalDate.now().minusDays(Random.nextLong(10, 365))
-            )
+        db.gardenDao().upsert(GardenEntity(plotId, "Участок", 2000, 2000, 50, 2))
+        val plotPlants = allVarieties.shuffled().take(5).map { v ->
+            PlantEntity(UUID.randomUUID().toString(), plotId, v.title, v.title, v.id,
+                Random.nextInt(50, 1950).toFloat(), Random.nextInt(50, 1950).toFloat(),
+                Random.nextInt(20, 50).toFloat(), LocalDate.now().minusDays(Random.nextLong(10, 365)))
         }
         plotPlants.forEach { db.plantDao().upsert(it) }
 
-        // 2. Create the 3x6m greenhouse
         val greenhouseId = UUID.randomUUID().toString()
-        val greenhouse = GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4)
-        db.gardenDao().upsert(greenhouse)
-        
-        val tomatoVarieties = allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2)
-        val cucumberVarieties = allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2)
-        val greenhousePlants = tomatoVarieties + cucumberVarieties
-        val greenhouseVarieties = tomatoVarieties + cucumberVarieties
+        db.gardenDao().upsert(GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4))
+        val greenhousePlants = (allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2) +
+                allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2))
+            .mapIndexed { i, v ->
+                PlantEntity(UUID.randomUUID().toString(), greenhouseId, v.title, v.title, v.id,
+                    (100 + i * 100).toFloat(), 150f, 40f, LocalDate.now().minusDays(Random.nextLong(10, 90)))
+            }
+        greenhousePlants.forEach { db.plantDao().upsert(it) }
 
-        val greenhousePlantsEntities = greenhouseVarieties.mapIndexed { i, variety ->
-             PlantEntity(
-                id = UUID.randomUUID().toString(),
-                gardenId = greenhouseId,
-                title = variety.title,
-                variety = variety.title,
-                varietyId = variety.id,
-                x = (100 + i * 100).toFloat(),
-                y = 150f,
-                radius = 40f,
-                plantedAt = LocalDate.now().minusDays(Random.nextLong(10, 90))
+        val allTestPlants = plotPlants + greenhousePlants
+
+        // 2. For EACH plant, create logs and rules
+        val taskTypes = TaskType.values()
+        allTestPlants.forEach {
+            plant ->
+            // 10 Fertilizer Logs
+            repeat(10) {
+                addFertilizerLog(
+                    plantId = plant.id,
+                    date = LocalDate.now().minusDays(Random.nextLong(1, 365)),
+                    amountGrams = Random.nextFloat() * 20 + 5, // 5 to 25g
+                    note = null
+                )
+            }
+
+            // 10 Harvest Logs
+            repeat(10) {
+                addHarvestLog(
+                    plantId = plant.id,
+                    date = LocalDate.now().minusDays(Random.nextLong(1, 365)),
+                    weightKg = Random.nextFloat() * 5 + 0.5f, // 0.5 to 5.5kg
+                    note = null
+                )
+            }
+
+            // 1 Care Rule
+            addCareRule(
+                plantId = plant.id,
+                type = taskTypes.random(),
+                start = LocalDate.now().minusWeeks(2),
+                everyDays = Random.nextInt(3, 30),
+                everyMonths = null
             )
         }
-        greenhousePlantsEntities.forEach { db.plantDao().upsert(it) }
-
-        // 3. Create test tasks
-        val beerPlantId = UUID.randomUUID().toString()
-        val beerPlant = PlantEntity(beerPlantId, plotId, "Пиво", null, null, 200f, 200f, 20f, LocalDate.now())
-        db.plantDao().upsert(beerPlant)
-
-        val tasks = listOf(
-            TaskInstanceEntity(UUID.randomUUID().toString(), null, beerPlantId, TaskType.OTHER, LocalDateTime.now(), true, TaskStatus.PENDING),
-            TaskInstanceEntity(UUID.randomUUID().toString(), null, plotPlants[0].id, TaskType.WATER, LocalDateTime.now().plusHours(1), true, TaskStatus.PENDING),
-            TaskInstanceEntity(UUID.randomUUID().toString(), null, greenhousePlantsEntities[0].id, TaskType.FERTILIZE, LocalDateTime.now().plusHours(2), true, TaskStatus.PENDING)
-        )
-        tasks.forEach { db.taskDao().upsert(it) }
-
-        // 4. Create test log entries
-        addFertilizerLog(plotPlants[1].id, LocalDate.now().minusDays(5), 15f, "Первая подкормка")
-        addHarvestLog(greenhousePlantsEntities[0].id, LocalDate.now().minusDays(2), 2.5f, "Собрали первые огурцы")
-        addFertilizerLog(greenhousePlantsEntities[1].id, LocalDate.now().minusDays(1), 10f, null)
-        addHarvestLog(plotPlants[0].id, LocalDate.now(), 5.1f, "Клубника пошла!")
     }
 
     // --- Logs ---
