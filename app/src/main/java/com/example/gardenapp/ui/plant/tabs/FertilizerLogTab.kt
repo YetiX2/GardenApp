@@ -20,7 +20,6 @@ fun FertilizerLogTab(logs: List<FertilizerLogEntity>, onAdd: () -> Unit, onDelet
         floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Default.Add, null) } }
     ) {
         padding ->
-        // Main column to hold recommendations, list, and ad
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -36,12 +35,11 @@ fun FertilizerLogTab(logs: List<FertilizerLogEntity>, onAdd: () -> Unit, onDelet
             Text("Журнал внесения удобрений", style = MaterialTheme.typography.titleMedium)
 
             // --- Log List ---
-            if (logs.isEmpty()) {
-                Text("Записей об удобрении пока нет.")
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(logs, key = { it.id }) {
-                        log ->
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                if (logs.isEmpty()) {
+                    item { Text("Записей об удобрении пока нет.") }
+                } else {
+                    items(logs, key = { it.id }) { log ->
                         ListItem(
                             headlineContent = { Text("${log.amountGrams}г - ${log.date.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
                             supportingContent = { log.note?.let { Text(it) } },
@@ -50,8 +48,6 @@ fun FertilizerLogTab(logs: List<FertilizerLogEntity>, onAdd: () -> Unit, onDelet
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.weight(1f))
 
             // --- Ad Block ---
             Card(modifier = Modifier.fillMaxWidth()) {
