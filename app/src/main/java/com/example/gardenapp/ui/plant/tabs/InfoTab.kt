@@ -43,7 +43,7 @@ fun InfoTab(plant: PlantEntity?, variety: ReferenceVarietyEntity?, tags: List<Re
                 Text("Тэги:", style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     tags.forEach { tag ->
-                        AssistChip(onClick = { }, label = { Text(tag.value) })
+                        AssistChip(onClick = { }, label = { Text(tag.key +" - "+tag.value) })
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
