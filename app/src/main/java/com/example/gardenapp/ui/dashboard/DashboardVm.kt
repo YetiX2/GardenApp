@@ -38,6 +38,9 @@ class DashboardVm @Inject constructor(
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val weatherState: StateFlow<WeatherUiState> = _weatherState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
@@ -56,10 +59,22 @@ class DashboardVm @Inject constructor(
 
     fun fetchWeather() {
         viewModelScope.launch {
-            _weatherState.value = WeatherUiState.Loading
+            _isRefreshing.value = true
+            // Show full-screen loading only on initial fetch
+            if (weatherState.value !is WeatherUiState.Success) {
+                _weatherState.value = WeatherUiState.Loading
+            }
             weatherRepo.getWeatherData()
-                .onSuccess { _weatherState.value = WeatherUiState.Success(it) }
-                .onFailure { _weatherState.value = WeatherUiState.Error(it.message ?: "Неизвестная ошибка") }
+                .onSuccess { response ->
+                    _weatherState.value = WeatherUiState.Success(response)
+                }
+                .onFailure { error ->
+                    // Don't show error over existing successful data during a refresh
+                    if (weatherState.value !is WeatherUiState.Success) {
+                        _weatherState.value = WeatherUiState.Error(error.message ?: "Неизвестная ошибка")
+                    }
+                }
+            _isRefreshing.value = false
         }
     }
 

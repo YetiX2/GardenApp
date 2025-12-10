@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,18 +17,18 @@ import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
-import com.example.gardenapp.ui.dashboard.widgets.AdCard
-import com.example.gardenapp.ui.dashboard.widgets.MyGardensCard
-import com.example.gardenapp.ui.dashboard.widgets.RecentEntriesCard
-import com.example.gardenapp.ui.dashboard.widgets.TodayTasksCard
-import com.example.gardenapp.ui.dashboard.widgets.WeatherCard
+import com.example.gardenapp.ui.dashboard.widgets.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -43,7 +44,8 @@ fun DashboardScreen(
     val recentActivity by vm.recentActivity.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     val weatherState by vm.weatherState.collectAsState()
-    
+    val isRefreshing by vm.isRefreshing.collectAsState()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -72,15 +74,18 @@ fun DashboardScreen(
     var showAddHarvestDialog by remember { mutableStateOf(false) }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-/*
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
+
+
+
+    
+    // -- Pull to Refresh Logic (using the API compatible with your project) --
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
             vm.fetchWeather()
         }
     }
-*/
+
     LaunchedEffect(Unit) {
         permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
@@ -118,6 +123,14 @@ fun DashboardScreen(
         )
     }
 
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -136,22 +149,23 @@ fun DashboardScreen(
             }
         }
     ) { pad ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(pad),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { 
-                WeatherCard(
-                    state = weatherState, 
-                    onRetry = { vm.fetchWeather() },
-                    onGrantPermission = { permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }
-                )
+        Box(modifier = Modifier.padding(pad).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item { WeatherCard(state = weatherState, onRetry = { vm.fetchWeather() }, onGrantPermission = { permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }) }
+                item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
+                item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
+                item { RecentEntriesCard(activityItems = recentActivity) }
+                item { AdCard() }
             }
-            item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
-            item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
-            item { RecentEntriesCard(activityItems = recentActivity) }
-            item { AdCard() }
+
+            PullToRefreshContainer(
+                modifier = Modifier.align(Alignment.TopCenter),
+                state = pullToRefreshState
+            )
         }
 
         if (showAddMenu) {
