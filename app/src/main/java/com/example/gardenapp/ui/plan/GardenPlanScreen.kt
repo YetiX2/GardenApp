@@ -2,7 +2,6 @@ package com.example.gardenapp.ui.plan
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -118,22 +117,13 @@ fun GardenPlanScreen(
 
         Box(Modifier.fillMaxSize().padding(pad)) {
             Canvas(
-                modifier = Modifier.fillMaxSize().pointerInput(plants, dragging, snapToGrid, scale, offset) {
-                    detectTapGestures(
-                        onTap = {
-                            val world = screenToWorld(it)
-                            val hit = plants.minByOrNull { p -> hypot(p.x - world.x, p.y - world.y) - p.radius }
-                            val hitOk = hit != null && hypot(hit.x - world.x, hit.y - world.y) <= hit.radius + 16
-                            if (hitOk) {
-                                selectedPlant = hit
-                            } else {
-                                selectedPlant = null
-                            }
-                        },
-                        onDoubleTap = {
-                            selectedPlant?.let { plant -> onOpenPlant(plant.id) }
+                modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        if (!dragging) {
+                            scale = (scale * zoom).coerceIn(0.5f, 6f)
+                            offset += pan
                         }
-                    )
+                    }
                 }.pointerInput(plants, selectedPlant, dragging, snapToGrid, scale, offset) {
                     awaitPointerEventScope {
                         while (true) {
