@@ -59,6 +59,7 @@ class ReferenceDataRepository @Inject constructor(
     // --- Methods to get reference data for UI ---
     fun getVariety(id: String): Flow<ReferenceVarietyEntity?> = referenceDao.getVariety(id)
     fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
+    fun getCulture(id: String): Flow<ReferenceCultureEntity?> = referenceDao.getCulture(id)
 
     suspend fun populateDatabaseIfEmpty() {
         if (referenceDao.getGroupsCount() > 0) {

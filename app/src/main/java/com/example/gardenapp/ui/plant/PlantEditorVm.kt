@@ -28,21 +28,16 @@ class PlantEditorVm @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val varietyDetails: StateFlow<ReferenceVarietyEntity?> = plant.flatMapLatest { p ->
-        if (p?.varietyId != null) {
-            referenceRepo.getVariety(p.varietyId!!)
-        } else {
-            flowOf(null)
-        }
+        p?.varietyId?.let { referenceRepo.getVariety(it) } ?: flowOf(null)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val culture: StateFlow<ReferenceCultureEntity?> = varietyDetails.flatMapLatest { variety ->
+        variety?.cultureId?.let { referenceRepo.getCulture(it) } ?: flowOf(null)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val varietyTags: StateFlow<List<ReferenceTagEntity>> = plant.flatMapLatest { p ->
-        if (p?.varietyId != null) {
-            referenceRepo.getTagsForVariety(p.varietyId!!)
-        } else {
-            flowOf(emptyList())
-        }
+        p?.varietyId?.let { referenceRepo.getTagsForVariety(it) } ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
 
     val fertilizerLogs: Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
     val harvestLogs: Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)

@@ -124,6 +124,7 @@ interface ReferenceDao {
     @Query("SELECT COUNT(*) FROM ref_groups") suspend fun getGroupsCount(): Int
     @Query("SELECT * FROM ref_groups ORDER BY title") fun getGroups(): Flow<List<ReferenceGroupEntity>>
     @Query("SELECT * FROM ref_cultures") fun getAllCultures(): Flow<List<ReferenceCultureEntity>>
+    @Query("SELECT * FROM ref_cultures WHERE id = :id")  fun getCulture(id: String): Flow<ReferenceCultureEntity?>
     @Query("SELECT * FROM ref_varieties") fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>>
     @Query("SELECT * FROM ref_varieties") suspend fun getAllVarietiesList(): List<ReferenceVarietyEntity>
     

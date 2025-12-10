@@ -34,6 +34,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     val careRules by vm.careRules.collectAsState(initial = emptyList())
     val varietyDetails by vm.varietyDetails.collectAsState()
     val varietyTags by vm.varietyTags.collectAsState()
+    val culture by vm.culture.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
@@ -103,7 +104,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                 page ->
                 Box(modifier = Modifier.fillMaxSize()) {
                      when (page) {
-                        0 -> InfoTab(plant = plant, variety = varietyDetails, tags = varietyTags)
+                        0 -> InfoTab(plant = plant, variety = varietyDetails, tags = varietyTags, culture = culture)
                         1 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
                         2 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
                         3 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
