@@ -21,12 +21,22 @@ import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.FertilizerLogEntity
 import com.example.gardenapp.data.db.HarvestLogEntity
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.ui.dashboard.UiEvent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+// TODO: Move to a shared file
+private fun TaskType.toRussian(): String = when (this) {
+    TaskType.FERTILIZE -> "Подкормить"
+    TaskType.PRUNE -> "Обрезать"
+    TaskType.TREAT -> "Обработать"
+    TaskType.WATER -> "Полить"
+    TaskType.OTHER -> "Другое"
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -51,6 +61,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
 
     var showAddFertilizerDialog by remember { mutableStateOf(false) }
     var showAddHarvestDialog by remember { mutableStateOf(false) }
+    var showAddCareRuleDialog by remember { mutableStateOf(false) }
 
     if (showAddFertilizerDialog) {
         AddFertilizerLogDialogForPlant(
@@ -61,7 +72,6 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
             }
         )
     }
-
     if (showAddHarvestDialog) {
         AddHarvestLogDialogForPlant(
             onDismiss = { showAddHarvestDialog = false },
@@ -97,7 +107,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                     0 -> InfoTab(plant = plant)
                     1 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
                     2 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
-                    3 -> CareRulesTab(rules = careRules, onAdd = { /* TODO */ }, onDelete = { vm.deleteCareRule(it) })
+                    3 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
                 }
             }
         }
@@ -156,10 +166,6 @@ private fun HarvestLogTab(logs: List<HarvestLogEntity>, onAdd: () -> Unit, onDel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddFertilizerLogDialogForPlant(onDismiss: () -> Unit, onAddLog: (grams: Float, date: LocalDate, note: String?) -> Unit) { /* ... */ }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun AddHarvestLogDialogForPlant(
     onDismiss: () -> Unit,
     onAddLog: (weight: Float, date: LocalDate, note: String?) -> Unit
@@ -196,3 +202,94 @@ private fun AddHarvestLogDialogForPlant(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddFertilizerLogDialogForPlant(
+    onDismiss: () -> Unit,
+    onAddLog: (grams: Float, date: LocalDate, note: String?) -> Unit
+) {
+    var amount by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) { /* Date Picker Dialog */ }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Новая запись об удобрении") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = amount, onValueChange = { amount = it.filter(Char::isDigit) }, label = { Text("Количество (г)") })
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (необязательно)") })
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(value = selectedDate.toString(), onValueChange = {}, readOnly = true, label = { Text("Дата") }, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val amountFloat = amount.toFloatOrNull()
+                    if (amountFloat != null) {
+                        onAddLog(amountFloat, selectedDate, note.ifBlank { null })
+                    }
+                },
+                enabled = amount.isNotBlank()
+            ) { Text("Добавить") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddCareRuleDialog(
+    onDismiss: () -> Unit,
+    onAddRule: (TaskType, Int) -> Unit
+) {
+    var selectedType by remember { mutableStateOf(TaskType.WATER) }
+    var typeMenuExpanded by remember { mutableStateOf(false) }
+    var days by remember { mutableStateOf("3") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Новое правило ухода") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
+                    OutlinedTextField(
+                        value = selectedType.toRussian(), // Assuming TaskType has toRussian()
+                        onValueChange = {}, 
+                        readOnly = true,
+                        label = { Text("Тип задачи") },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
+                    )
+                    ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
+                        TaskType.values().forEach {
+                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { selectedType = it; typeMenuExpanded = false })
+                        }
+                    }
+                }
+                OutlinedTextField(value = days, onValueChange = { days = it.filter(Char::isDigit) }, label = { Text("Повторять каждые (дней)") })
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val daysInt = days.toIntOrNull()
+                    if (daysInt != null) {
+                        onAddRule(selectedType, daysInt)
+                    }
+                },
+                enabled = days.isNotBlank()
+            ) { Text("Добавить") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+    )
+}
