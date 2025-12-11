@@ -1,40 +1,24 @@
 package com.example.gardenapp.ui.tasks
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskStatus
-import com.example.gardenapp.data.db.TaskType
-import com.example.gardenapp.data.db.TaskWithPlantInfo
+import com.example.gardenapp.ui.common.TaskList
 import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-
-private fun TaskType.toRussian(): String = when (this) {
-    TaskType.FERTILIZE -> "Подкормить"
-    TaskType.PRUNE -> "Обрезать"
-    TaskType.TREAT -> "Обработать"
-    TaskType.WATER -> "Полить"
-    TaskType.OTHER -> "Другое"
-}
 
 private fun TaskStatus.toRussian(): String = when (this) {
     TaskStatus.PENDING -> "Новые"
@@ -43,7 +27,7 @@ private fun TaskStatus.toRussian(): String = when (this) {
     TaskStatus.REJECTED -> "Нафиг"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
@@ -51,13 +35,10 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     var showAddTaskDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(Unit) {
         vm.eventFlow.collectLatest { event ->
             when (event) {
-                is UiEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(message = event.message)
-                }
+                is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(message = event.message)
             }
         }
     }
@@ -89,7 +70,7 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
                 }
             )
         },
-                floatingActionButton = {
+        floatingActionButton = {
             FloatingActionButton(onClick = { showAddTaskDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить задачу")
             }
@@ -108,71 +89,8 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
             HorizontalPager(state = pagerState) {
                 pageIndex ->
                 val tasksToShow = allTasks.filter { it.task.status == taskStatuses[pageIndex] }
-                TaskList(tasks = tasksToShow, vm = vm)
+                TaskList(tasks = tasksToShow, onStatusChange = vm::updateTaskStatus)
             }
         }
     }
-}
-
-@Composable
-private fun TaskList(tasks: List<TaskWithPlantInfo>, vm: TaskListVm) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (tasks.isEmpty()) {
-            item { Text("Задач в этом статусе нет.", modifier = Modifier.padding(16.dp)) }
-        } else {
-            items(tasks, key = { it.task.id }) { taskInfo ->
-                TaskItem(
-                    taskInfo = taskInfo,
-                    onStatusChange = { newStatus -> vm.updateTaskStatus(taskInfo.task.id, newStatus) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) -> Unit) {
-    val taskDescription = taskInfo.task.type.toRussian()
-    val taskText = "$taskDescription \"${taskInfo.plantName}\""
-    
-    ListItem(
-        headlineContent = { Text(taskText) },
-        trailingContent = {
-            Row {
-                // Show buttons only if the task is not already in that state
-                if (taskInfo.task.status != TaskStatus.DONE) {
-                    IconButton(onClick = { onStatusChange(TaskStatus.DONE) }) {
-                        Icon(Icons.Default.Check, contentDescription = "Выполнено", tint = Color.Green)
-                    }
-                }else{
-                    IconButton(onClick = { }, enabled = false) {
-                        Icon(Icons.Default.Check, contentDescription = "Выполнено")
-                    }
-                }
-                if (taskInfo.task.status != TaskStatus.SNOOZED) {
-                    IconButton(onClick = { onStatusChange(TaskStatus.SNOOZED) }) {
-                        Icon(Icons.Default.Pause, contentDescription = "Отложить", tint = Color(0xFFE69A1B)) // Amber
-                    }
-                }else{
-                    IconButton(onClick = { }, enabled = false) {
-                        Icon(Icons.Default.Pause, contentDescription = "Отложено")
-                    }
-                }
-                if (taskInfo.task.status != TaskStatus.REJECTED) {
-                    IconButton(onClick = { onStatusChange(TaskStatus.REJECTED) }) {
-                        Icon(Icons.Default.Close, contentDescription = "Отклонить", tint = MaterialTheme.colorScheme.error)
-                    }
-                }else{
-                    IconButton(onClick = { }, enabled = false) {
-                        Icon(Icons.Default.Close, contentDescription = "Отклонено")
-                    }
-                }
-            }
-        }
-    )
-    Divider()
 }

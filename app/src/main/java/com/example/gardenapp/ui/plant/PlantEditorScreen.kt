@@ -17,11 +17,7 @@ import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import com.example.gardenapp.ui.plant.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.plant.dialogs.AddHarvestLogDialog
-import com.example.gardenapp.ui.plant.tabs.CareRulesTab
-import com.example.gardenapp.ui.plant.tabs.FertilizerLogTab
-import com.example.gardenapp.ui.plant.tabs.HarvestLogTab
-import com.example.gardenapp.ui.plant.tabs.InfoTab
-import com.example.gardenapp.ui.plant.tabs.TasksTab
+import com.example.gardenapp.ui.plant.tabs.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -107,7 +103,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                 Box(modifier = Modifier.fillMaxSize()) {
                      when (page) {
                         0 -> InfoTab(plant = plant, variety = varietyDetails, tags = varietyTags, culture = culture)
-                        1 -> TasksTab(tasks = tasks)
+                        1 -> TasksTab(tasks = tasks, onStatusChange = vm::updateTaskStatus)
                         2 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
                         3 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
                         4 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })

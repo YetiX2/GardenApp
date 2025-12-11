@@ -39,7 +39,6 @@ class PlantEditorVm @Inject constructor(
         p?.varietyId?.let { referenceRepo.getTagsForVariety(it) } ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-
     val tasks: Flow<List<TaskWithPlantInfo>> = repo.observeTasksForPlant(plantId)
 
     val fertilizerLogs: Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
@@ -48,6 +47,12 @@ class PlantEditorVm @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    fun updateTaskStatus(taskId: String, newStatus: TaskStatus) {
+        viewModelScope.launch {
+            repo.setTaskStatus(taskId, newStatus)
+        }
+    }
 
     fun addFertilizerLog(grams: Float, date: LocalDate, note: String?) {
         viewModelScope.launch {
