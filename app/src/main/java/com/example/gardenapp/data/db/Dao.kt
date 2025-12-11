@@ -61,6 +61,15 @@ interface TaskDao {
     """)
     fun observeAllWithPlantInfo(): Flow<List<TaskWithPlantInfo>>
 
+    @Query("""
+        SELECT t.*, p.title as plantName 
+        FROM TaskInstanceEntity as t
+        INNER JOIN PlantEntity as p ON t.plantId = p.id
+        WHERE t.plantId = :plantId
+        ORDER BY t.due ASC
+    """)
+    fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> // ADDED THIS
+
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(task: TaskInstanceEntity)
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
     suspend fun setStatus(id: String, status: TaskStatus)

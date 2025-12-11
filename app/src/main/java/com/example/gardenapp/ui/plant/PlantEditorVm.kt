@@ -39,6 +39,9 @@ class PlantEditorVm @Inject constructor(
         p?.varietyId?.let { referenceRepo.getTagsForVariety(it) } ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+
+    val tasks: Flow<List<TaskWithPlantInfo>> = repo.observeTasksForPlant(plantId)
+
     val fertilizerLogs: Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
     val harvestLogs: Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)
     val careRules: Flow<List<CareRuleEntity>> = repo.careRules(plantId)

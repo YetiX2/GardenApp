@@ -36,6 +36,8 @@ class GardenRepository @Inject constructor(
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
 
     fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()
+    fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeTasksForPlant(plantId)
+
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
     suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
         db.taskDao().upsert(

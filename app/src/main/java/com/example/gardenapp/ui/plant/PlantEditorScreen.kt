@@ -21,6 +21,7 @@ import com.example.gardenapp.ui.plant.tabs.CareRulesTab
 import com.example.gardenapp.ui.plant.tabs.FertilizerLogTab
 import com.example.gardenapp.ui.plant.tabs.HarvestLogTab
 import com.example.gardenapp.ui.plant.tabs.InfoTab
+import com.example.gardenapp.ui.plant.tabs.TasksTab
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -32,6 +33,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     val fertilizerLogs by vm.fertilizerLogs.collectAsState(initial = emptyList())
     val harvestLogs by vm.harvestLogs.collectAsState(initial = emptyList())
     val careRules by vm.careRules.collectAsState(initial = emptyList())
+    val tasks by vm.tasks.collectAsState(initial = emptyList())
     val varietyDetails by vm.varietyDetails.collectAsState()
     val varietyTags by vm.varietyTags.collectAsState()
     val culture by vm.culture.collectAsState()
@@ -45,7 +47,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
         }
     }
 
-    val tabTitles = listOf("Инфо", "Удобрения", "Урожай", "Уход")
+    val tabTitles = listOf("Инфо", "Задачи", "Удобрения", "Урожай", "Уход")
     val pagerState = rememberPagerState { tabTitles.size }
     val scope = rememberCoroutineScope()
 
@@ -105,9 +107,10 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                 Box(modifier = Modifier.fillMaxSize()) {
                      when (page) {
                         0 -> InfoTab(plant = plant, variety = varietyDetails, tags = varietyTags, culture = culture)
-                        1 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
-                        2 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
-                        3 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
+                        1 -> TasksTab(tasks = tasks)
+                        2 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
+                        3 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
+                        4 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
                     }
                 }
             }
