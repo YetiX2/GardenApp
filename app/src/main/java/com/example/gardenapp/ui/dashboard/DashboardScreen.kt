@@ -1,6 +1,9 @@
 package com.example.gardenapp.ui.dashboard
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -23,6 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
@@ -48,13 +52,12 @@ fun DashboardScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         vm.eventFlow.collectLatest { event ->
             when (event) {
-                is UiEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(message = event.message)
-                }
+                is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(message = event.message)
             }
         }
     }
@@ -77,7 +80,7 @@ fun DashboardScreen(
 
 
 
-    
+
     // -- Pull to Refresh Logic (using the API compatible with your project) --
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -131,6 +134,12 @@ fun DashboardScreen(
         }
     }
 
+
+
+    val settingsIntent = remember {
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -155,7 +164,13 @@ fun DashboardScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { WeatherCard(state = weatherState, onRetry = { vm.fetchWeather() }, onGrantPermission = { permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) }) }
+                item { 
+                    WeatherCard(
+                        state = weatherState, 
+                        onRetry = { vm.fetchWeather() }, 
+                        onGrantPermission = { context.startActivity(settingsIntent) }
+                    ) 
+                }
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
                 item { RecentEntriesCard(activityItems = recentActivity) }
