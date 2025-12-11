@@ -111,7 +111,12 @@ fun AddTaskDialog(
                     }
                 }
 
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Заметка (необязательно)") }) // ADDED
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Заметка (необязательно)") },
+                    minLines = 3 // ADDED THIS
+                )
 
             }
         },
