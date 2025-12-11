@@ -4,6 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
+// Import all DAOs and Entities that were moved
+
 @Database(
     entities = [
         GardenEntity::class, PlantEntity::class, CareRuleEntity::class, TaskInstanceEntity::class, 
