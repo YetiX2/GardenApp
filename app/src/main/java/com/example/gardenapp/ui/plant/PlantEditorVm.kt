@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,6 +48,15 @@ class PlantEditorVm @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    fun addTask(type: TaskType, due: LocalDateTime) {
+        viewModelScope.launch {
+            plant.value?.let {
+                repo.addTask(it, type, due)
+                _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
+            }
+        }
+    }
 
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus) {
         viewModelScope.launch {
