@@ -60,6 +60,10 @@ internal fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) 
 
     ListItem(
         headlineContent = { Text(taskText) },
+        supportingContent = { 
+            // Show note if it exists
+            taskInfo.task.notes?.let { Text(it) } 
+        },
         trailingContent = {
             Row {
                 if (taskInfo.task.status != TaskStatus.DONE) {

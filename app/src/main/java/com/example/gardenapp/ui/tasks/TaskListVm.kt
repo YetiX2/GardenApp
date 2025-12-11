@@ -16,6 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TaskListVm @Inject constructor(private val repo: GardenRepository) : ViewModel() {
+
     val allTasks = repo.allTasksWithPlantInfo()
     val allPlants = repo.observeAllPlants()
 
@@ -28,9 +29,9 @@ class TaskListVm @Inject constructor(private val repo: GardenRepository) : ViewM
         }
     }
 
-    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
+    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
         viewModelScope.launch {
-            repo.addTask(plant, type, due)
+            repo.addTask(plant, type, due, notes) // MODIFIED
             _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
         }
     }

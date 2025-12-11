@@ -23,10 +23,11 @@ private fun TaskType.toRussian(): String = when (this) {
 @Composable
 fun AddTaskDialogForPlant(
     onDismiss: () -> Unit,
-    onAddTask: (type: TaskType, due: LocalDateTime) -> Unit
+    onAddTask: (type: TaskType, due: LocalDateTime, notes: String?) -> Unit // MODIFIED
 ) {
     var selectedType by remember { mutableStateOf(TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
+    var notes by remember { mutableStateOf("") } // ADDED
     // TODO: Add a date/time picker instead of hardcoding
     val dueDate = LocalDateTime.now().plusDays(1)
 
@@ -35,6 +36,7 @@ fun AddTaskDialogForPlant(
         title = { Text("Новая задача") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Task Type selection dropdown
                 ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
                     OutlinedTextField(
                         value = selectedType.toRussian(),
@@ -53,12 +55,15 @@ fun AddTaskDialogForPlant(
                         }
                     }
                 }
-                // Placeholder for date/time selection
+
+                // Notes field
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Заметка (необязательно)") }) // ADDED
+
                 Text("Срок выполнения: ${dueDate.toLocalDate()}")
             }
         },
         confirmButton = {
-            Button(onClick = { onAddTask(selectedType, dueDate) }) { Text("Добавить") }
+            Button(onClick = { onAddTask(selectedType, dueDate, notes.ifBlank { null }) }) { Text("Добавить") } // MODIFIED
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
     )

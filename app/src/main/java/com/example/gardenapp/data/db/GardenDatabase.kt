@@ -1,10 +1,9 @@
 package com.example.gardenapp.data.db
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-
-// Import all DAOs and Entities that were moved
 
 @Database(
     entities = [
@@ -13,8 +12,11 @@ import androidx.room.TypeConverters
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 15,
-    exportSchema = false
+    version = 1, // BUMPED VERSION
+    exportSchema = true, // Set to true to export schema for auto-migration
+    autoMigrations = [
+        //AutoMigration(from = 0, to = 0) // ADDED THIS
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class GardenDatabase : RoomDatabase() {

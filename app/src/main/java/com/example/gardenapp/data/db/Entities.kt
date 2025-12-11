@@ -44,28 +44,29 @@ data class PlantEntity(
     val plantedAt: LocalDate
 )
 
-enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, OTHER }
-enum class TaskStatus { PENDING, DONE, SNOOZED, REJECTED }
-
 @Entity
 data class CareRuleEntity(
     @PrimaryKey val id: String,
     val plantId: String,
     val type: TaskType,
     val start: LocalDate,
-    val everyDays: Int? = null,
+    val everyDays: Int?,
     val everyMonths: Int? = null
 )
 
-@Entity
+enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, OTHER }
+enum class TaskStatus { PENDING, DONE, SNOOZED, REJECTED }
+
+@Entity(tableName = "TaskInstanceEntity")
 data class TaskInstanceEntity(
     @PrimaryKey val id: String,
     val ruleId: String?,
     val plantId: String,
-    val type: TaskType, // Added type directly to the task
+    val type: TaskType,
     val due: LocalDateTime,
     val exact: Boolean,
-    val status: TaskStatus
+    val status: TaskStatus,
+    val notes: String? = null // ADDED THIS
 )
 
 @Entity(indices = [Index("plantId")])

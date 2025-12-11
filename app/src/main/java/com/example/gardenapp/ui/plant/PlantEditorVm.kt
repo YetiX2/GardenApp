@@ -49,10 +49,10 @@ class PlantEditorVm @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    fun addTask(type: TaskType, due: LocalDateTime) {
+    fun addTask(type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
         viewModelScope.launch {
             plant.value?.let {
-                repo.addTask(it, type, due)
+                repo.addTask(it, type, due, notes) // MODIFIED
                 _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
             }
         }

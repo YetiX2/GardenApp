@@ -39,7 +39,8 @@ class GardenRepository @Inject constructor(
     fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeTasksForPlant(plantId)
 
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
-    suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime) {
+
+    suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String? = null) { // MODIFIED
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -48,12 +49,13 @@ class GardenRepository @Inject constructor(
                 type = type,
                 due = due,
                 exact = true,
-                status = TaskStatus.PENDING
+                status = TaskStatus.PENDING,
+                notes = notes // ADDED
             )
         )
     }
 
-    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
+    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime, notes: String? = null) { // MODIFIED
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -62,7 +64,8 @@ class GardenRepository @Inject constructor(
                 type = rule.type,
                 due = due,
                 exact = true,
-                status = TaskStatus.PENDING
+                status = TaskStatus.PENDING,
+                notes = notes // ADDED
             )
         )
     }

@@ -56,8 +56,8 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     if (showAddTaskDialog) {
         AddTaskDialogForPlant(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { type, due ->
-                vm.addTask(type, due)
+            onAddTask = { type, due, notes ->
+                vm.addTask(type, due, notes)
                 showAddTaskDialog = false
             }
         )

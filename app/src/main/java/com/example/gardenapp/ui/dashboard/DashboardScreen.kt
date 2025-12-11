@@ -97,8 +97,8 @@ fun DashboardScreen(
     if (showAddTaskDialog) {
         AddTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { plant, type, due ->
-                vm.addTask(plant, type, due)
+            onAddTask = { plant, type, due, notes -> // MODIFIED
+                vm.addTask(plant, type, due, notes) // MODIFIED
                 showAddTaskDialog = false
             },
             plants = allPlants

@@ -30,12 +30,12 @@ private fun TaskType.toRussian(): String = when (this) {
 @Composable
 fun AddTaskDialog(
     onDismiss: () -> Unit,
-    onAddTask: (PlantEntity, TaskType, LocalDateTime) -> Unit,
+    onAddTask: (plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?) -> Unit, // MODIFIED
     plants: List<PlantEntity>
 ) {
-    var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
+    var selectedPlant by remember { mutableStateOf(plants.firstOrNull()) }
     var plantMenuExpanded by remember { mutableStateOf(false) }
-
+    var notes by remember { mutableStateOf("") } // ADDED
     var selectedType by remember { mutableStateOf(TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
     
@@ -69,31 +69,38 @@ fun AddTaskDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExposedDropdownMenuBox(expanded = plantMenuExpanded, onExpandedChange = { plantMenuExpanded = !plantMenuExpanded }) {
                     OutlinedTextField(
-                        value = selectedPlant?.title ?: "",
-                        onValueChange = {}, 
+                        value = selectedPlant?.title ?: "Выберите растение",
+                        onValueChange = {},
                         readOnly = true,
                         label = { Text("Растение") },
                         modifier = Modifier.menuAnchor().fillMaxWidth(),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = plantMenuExpanded) }
                     )
                     ExposedDropdownMenu(expanded = plantMenuExpanded, onDismissRequest = { plantMenuExpanded = false }) {
-                        plants.forEach {
-                            DropdownMenuItem(text = { Text(it.title) }, onClick = { selectedPlant = it; plantMenuExpanded = false })
+                        plants.forEach { plant ->
+                            DropdownMenuItem(
+                                text = { Text(plant.title) },
+                                onClick = { selectedPlant = plant; plantMenuExpanded = false }
+                            )
                         }
                     }
                 }
+
                 ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
                     OutlinedTextField(
                         value = selectedType.toRussian(),
-                        onValueChange = {}, 
+                        onValueChange = {},
                         readOnly = true,
                         label = { Text("Тип задачи") },
                         modifier = Modifier.menuAnchor().fillMaxWidth(),
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
                     )
                     ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                        TaskType.values().forEach {
-                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { selectedType = it; typeMenuExpanded = false })
+                        TaskType.values().forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.toRussian()) },
+                                onClick = { selectedType = type; typeMenuExpanded = false }
+                            )
                         }
                     }
                 }
@@ -103,17 +110,18 @@ fun AddTaskDialog(
                         Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
                     }
                 }
+
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Заметка (необязательно)") }) // ADDED
+
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    selectedPlant?.let { onAddTask(it, selectedType, selectedDate.atStartOfDay()) }
+                    selectedPlant?.let { onAddTask(it, selectedType, selectedDate.atStartOfDay(), notes) }
                 },
                 enabled = selectedPlant != null
-            ) {
-                Text("Добавить")
-            }
+            ) { Text("Добавить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
     )
