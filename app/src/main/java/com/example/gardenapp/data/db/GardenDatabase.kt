@@ -1,7 +1,9 @@
 package com.example.gardenapp.data.db
 
+import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
@@ -27,4 +29,21 @@ abstract class GardenDatabase : RoomDatabase() {
     abstract fun fertilizerLogDao(): FertilizerLogDao
     abstract fun harvestLogDao(): HarvestLogDao
     abstract fun referenceDao(): ReferenceDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: GardenDatabase? = null
+
+        fun getDatabase(context: Context): GardenDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    GardenDatabase::class.java,
+                    "garden_db"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }

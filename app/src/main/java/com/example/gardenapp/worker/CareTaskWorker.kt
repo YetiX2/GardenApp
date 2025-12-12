@@ -2,25 +2,27 @@ package com.example.gardenapp.worker
 
 import android.content.Context
 import android.util.Log
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.repo.GardenRepository
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
-@HiltWorker
-class CareTaskWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val repository: GardenRepository
+// NO @HiltWorker annotation
+class CareTaskWorker(
+    private val context: Context,
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
+
+    // Manually create dependencies
+    private val db = GardenDatabase.getDatabase(context) // We will add getDatabase static method
+    private val repository = GardenRepository(db, db.referenceDao())
 
     override suspend fun doWork(): Result {
         Log.d("CareTaskWorker", "Worker starting...")
         return try {
-            val allRules = repository.getAllCareRules() // MODIFIED THIS
+            val allRules = repository.getAllCareRules()
             if (allRules.isEmpty()) {
                 Log.d("CareTaskWorker", "No care rules found. Exiting.")
                 return Result.success()
@@ -37,7 +39,6 @@ class CareTaskWorker @AssistedInject constructor(
                         repository.createTaskFromRule(rule, nextTaskDate.atStartOfDay())
                     }
                 }
-                // TODO: Implement logic for monthly rules (everyMonths)
             }
 
             Log.d("CareTaskWorker", "Worker finished successfully.")
