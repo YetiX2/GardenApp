@@ -1,5 +1,6 @@
 package com.example.gardenapp.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -20,7 +21,9 @@ sealed interface RecentActivity {
 }
 
 
-// --- Original App Entities ---
+enum class GardenType { PLOT, GREENHOUSE, BED } // ADDED
+
+
 @Entity
 data class GardenEntity(
     @PrimaryKey val id: String,
@@ -28,6 +31,9 @@ data class GardenEntity(
     val widthCm: Int,
     val heightCm: Int,
     val gridStepCm: Int,
+    @ColumnInfo(defaultValue = "PLOT")
+    val type: GardenType = GardenType.PLOT, // ADDED
+    val parentId: String? = null, // ADDED
     val climateZone: Int? = null
 )
 

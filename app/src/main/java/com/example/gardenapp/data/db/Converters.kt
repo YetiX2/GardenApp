@@ -18,4 +18,11 @@ class Converters {
     @TypeConverter
     fun toEpochMillis(dt: LocalDateTime?): Long? =
         dt?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli()
+
+    // ADDED THESE
+    @TypeConverter
+    fun toGardenType(value: String) = enumValueOf<GardenType>(value)
+
+    @TypeConverter
+    fun fromGardenType(value: GardenType) = value.name
 }

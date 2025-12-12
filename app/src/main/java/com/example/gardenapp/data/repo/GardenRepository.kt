@@ -97,7 +97,7 @@ class GardenRepository @Inject constructor(
 
         // 1. Create Gardens and Plants
         val plotId = UUID.randomUUID().toString()
-        db.gardenDao().upsert(GardenEntity(plotId, "Участок", 2000, 2000, 50, 2))
+        db.gardenDao().upsert(GardenEntity(plotId, "Участок", 2000, 2000, 50, GardenType.PLOT, null,2))
         val plotPlants = allVarieties.shuffled().take(5).map { v ->
             PlantEntity(UUID.randomUUID().toString(), plotId, v.title, v.title, v.id,
                 Random.nextInt(50, 1950).toFloat(), Random.nextInt(50, 1950).toFloat(),
@@ -106,7 +106,7 @@ class GardenRepository @Inject constructor(
         plotPlants.forEach { db.plantDao().upsert(it) }
 
         val greenhouseId = UUID.randomUUID().toString()
-        db.gardenDao().upsert(GardenEntity(greenhouseId, "Теплица", 300, 600, 50, 4))
+        db.gardenDao().upsert(GardenEntity(greenhouseId, "Теплица", 300, 600, 50, GardenType.GREENHOUSE,plotId, 4))
         val greenhousePlants = (allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2) +
                 allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2))
             .mapIndexed { i, v ->

@@ -1,5 +1,6 @@
 package com.example.gardenapp.data.db
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -11,10 +12,10 @@ import androidx.room.TypeConverters
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 1, // BUMPED VERSION
-    exportSchema = true, // Set to true to export schema for auto-migration
+    version = 2, // BUMPED VERSION
+    exportSchema = true,
     autoMigrations = [
-        //AutoMigration(from = 0, to = 0) // ADDED THIS
+        AutoMigration(from = 1, to = 2) // ADDED THIS
     ]
 )
 @TypeConverters(Converters::class)
@@ -26,6 +27,4 @@ abstract class GardenDatabase : RoomDatabase() {
     abstract fun fertilizerLogDao(): FertilizerLogDao
     abstract fun harvestLogDao(): HarvestLogDao
     abstract fun referenceDao(): ReferenceDao
-
-    // COMPANION OBJECT REMOVED
 }
