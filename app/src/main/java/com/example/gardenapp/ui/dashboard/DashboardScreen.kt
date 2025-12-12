@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -42,6 +43,7 @@ import kotlinx.coroutines.launch
 fun DashboardScreen(
     onOpenGardens: () -> Unit,
     onOpenTasks: () -> Unit,
+    onOpenSettings: () -> Unit, // ADDED
     vm: DashboardVm = hiltViewModel()
 ) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
@@ -147,7 +149,9 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Сегодня на даче") },
                 actions = {
-                    // ADDED THIS BUTTON
+                    IconButton(onClick = onOpenSettings) { // ADDED
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
+                    }
                     IconButton(onClick = { vm.runCareTaskWorkerNow() }) {
                         Icon(Icons.Default.BugReport, contentDescription = "Запустить CareTaskWorker")
                     }

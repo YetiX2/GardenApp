@@ -10,7 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.gardenapp.ui.nav.AppNav
+import com.example.gardenapp.nav.AppNav
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
