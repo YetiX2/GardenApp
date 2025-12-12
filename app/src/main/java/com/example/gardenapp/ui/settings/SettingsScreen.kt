@@ -44,9 +44,38 @@ fun SettingsScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+            // Theme Section
             Text("Тема оформления", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             ThemeSwitcher(selectedTheme = currentTheme, onThemeChange = { vm.setTheme(it) })
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val disabledColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+
+            // Language Section (Placeholder)
+            Text("Язык", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            ListItem(
+                headlineContent = { Text("Выбор языка", color = disabledColor) },
+                supportingContent = { Text("В разработке", color = disabledColor) }//TODO
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Database Section (Placeholders)
+            Text("База данных", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            ListItem(
+                headlineContent = { Text("Экспорт базы данных", color = disabledColor) }//TODO
+            )
+            ListItem(
+                headlineContent = { Text("Импорт базы данных", color = disabledColor) }//TODO
+            )
         }
     }
 }
