@@ -2,25 +2,23 @@ package com.example.gardenapp.worker
 
 import android.content.Context
 import android.util.Log
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.repo.GardenRepository
-import kotlinx.coroutines.flow.first
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import java.time.LocalDate
 
-// NO @HiltWorker annotation
-class CareTaskWorker(
-    private val context: Context,
-    workerParams: WorkerParameters,
+@HiltWorker
+class CareTaskWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val repository: GardenRepository
 ) : CoroutineWorker(context, workerParams) {
 
-    // Manually create dependencies
-    private val db = GardenDatabase.getDatabase(context) // We will add getDatabase static method
-    private val repository = GardenRepository(db, db.referenceDao())
-
     override suspend fun doWork(): Result {
-        Log.d("CareTaskWorker", "Worker starting...")
+        Log.d("CareTaskWorker", "Worker starting with Hilt...")
         return try {
             val allRules = repository.getAllCareRules()
             if (allRules.isEmpty()) {
