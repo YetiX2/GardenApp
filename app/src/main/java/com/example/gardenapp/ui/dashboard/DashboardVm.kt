@@ -1,11 +1,15 @@
 package com.example.gardenapp.ui.dashboard
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.gardenapp.data.db.PlantEntity
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.WeatherRepository
+import com.example.gardenapp.worker.CareTaskWorker
 import com.example.gardenapp.data.weather.WeatherResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,6 +35,7 @@ sealed interface UiEvent {
 
 @HiltViewModel
 class DashboardVm @Inject constructor(
+    private val application: Application, // ADDED
     private val repo: GardenRepository,
     private val weatherRepo: WeatherRepository
 ) : ViewModel() {
@@ -105,6 +110,13 @@ class DashboardVm @Inject constructor(
     fun createTestData() {
         viewModelScope.launch {
             repo.populateWithTestData()
+        }
+    }
+    fun runCareTaskWorkerNow() { // ADDED THIS
+        val workRequest = OneTimeWorkRequestBuilder<CareTaskWorker>().build()
+        WorkManager.getInstance(application).enqueue(workRequest)
+        viewModelScope.launch {
+            _eventFlow.emit(UiEvent.ShowSnackbar("Запуск фоновой проверки правил..."))
         }
     }
 }

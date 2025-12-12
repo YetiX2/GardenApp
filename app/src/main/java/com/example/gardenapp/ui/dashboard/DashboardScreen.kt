@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
@@ -146,6 +147,10 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Сегодня на даче") },
                 actions = {
+                    // ADDED THIS BUTTON
+                    IconButton(onClick = { vm.runCareTaskWorkerNow() }) {
+                        Icon(Icons.Default.BugReport, contentDescription = "Запустить CareTaskWorker")
+                    }
                     IconButton(onClick = { vm.createTestData() }) {
                         Icon(Icons.Default.Science, contentDescription = "Заполнить тестовыми данными")
                     }
