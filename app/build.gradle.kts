@@ -57,6 +57,9 @@ dependencies {
     // Splash Screen API
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    // DataStore for Preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.1") // ADDED THIS
+
     // Hilt
     implementation("com.google.dagger:hilt-android:2.52")
     kapt("com.google.dagger:hilt-compiler:2.52")
