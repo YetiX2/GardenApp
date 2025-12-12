@@ -31,10 +31,16 @@ interface TaskDao {
 
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
     suspend fun setStatus(id: String, status: TaskStatus)
+
+    @Query("SELECT * FROM TaskInstanceEntity WHERE ruleId = :ruleId ORDER BY due DESC LIMIT 1")
+    suspend fun getLatestTaskForRule(ruleId: String): TaskInstanceEntity?
 }
 
 @Dao
 interface RuleDao {
+    @Query("SELECT * FROM CareRuleEntity")
+    fun getAllCareRules(): List<CareRuleEntity> // MODIFIED THIS
+
     @Query("SELECT * FROM CareRuleEntity WHERE plantId = :plantId")
     fun observeRulesForPlant(plantId: String): Flow<List<CareRuleEntity>>
 

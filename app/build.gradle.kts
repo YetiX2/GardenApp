@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
-    id("androidx.room") version "2.6.1" // MODIFIED THIS
+    id("androidx.room") version "2.6.1"
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.kotlin.plugin.compose")
 }
@@ -61,6 +61,8 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.52")
     kapt("com.google.dagger:hilt-compiler:2.52")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    kapt("androidx.hilt:hilt-compiler:1.2.0")
 
     // Room
     implementation("androidx.room:room-ktx:2.6.1")
