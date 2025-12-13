@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.GridOff
@@ -50,18 +51,9 @@ fun GardenPlanScreen(
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
     var showEditor by remember { mutableStateOf(false) }
     var isCreating by remember { mutableStateOf(false) }
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // When a plant is selected by dragging, open the editor
-    // This is a side-effect that connects the state to the UI action
-    LaunchedEffect(state.selectedPlant) {
-        if (state.selectedPlant != null && !isCreating) {
-            // Decide if you want to open the bottom sheet directly
-            // or navigate to a new screen via onOpenPlant
-            // For now, let's just log it.
-            // onOpenPlant(state.selectedPlant!!.id)
-        }
-    }
+    var showPlantList by remember { mutableStateOf(false) }
+    val editorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val plantListSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -69,6 +61,9 @@ fun GardenPlanScreen(
                 title = { Text(garden?.name ?: "План сада") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад") } },
                 actions = {
+                    IconButton(onClick = { showPlantList = true }) {
+                        Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = "Список растений")
+                    }
                     IconButton({ state.snapToGrid = !state.snapToGrid }) { Icon(imageVector = if (state.snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, contentDescription = "Привязка к сетке") }
                     IconButton({ state.resetView() }) { Icon(imageVector = Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
                 }
@@ -97,20 +92,27 @@ fun GardenPlanScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            state.selectedPlant?.let { currentPlant ->
+            state.selectedPlant?.let {
                 if (!isCreating) {
                     ActionBarForPlant(
-                        plant = currentPlant,
-                        onRadiusMinus = { scope.launch { vm.upsertPlant(currentPlant.copy(radius = (currentPlant.radius - 5f).coerceAtLeast(10f))) } },
-                        onRadiusPlus = { scope.launch { vm.upsertPlant(currentPlant.copy(radius = (currentPlant.radius + 5f).coerceAtMost(300f))) } },
+                        plant = it,
+                        onRadiusMinus = { scope.launch { vm.upsertPlant(it.copy(radius = (it.radius - 5f).coerceAtLeast(10f))) } },
+                        onRadiusPlus = { scope.launch { vm.upsertPlant(it.copy(radius = (it.radius + 5f).coerceAtMost(300f))) } },
                         onDelete = { 
-                            scope.launch { vm.deletePlant(currentPlant) } 
+                            scope.launch { vm.deletePlant(it) } 
                             state.selectedPlant = null
                         },
-                        onEdit = {
-                            onOpenPlant(currentPlant.id)
-                        }
+                        onEdit = { onOpenPlant(it.id) }
                     )
+                }
+            }
+
+            if (showPlantList) {
+                ModalBottomSheet(
+                    onDismissRequest = { showPlantList = false },
+                    sheetState = plantListSheetState
+                ) {
+                    PlantListSheet(plants = plants)
                 }
             }
 
@@ -119,7 +121,7 @@ fun GardenPlanScreen(
                     showEditor = false
                     if (isCreating) { state.selectedPlant = null }
                     isCreating = false
-                }, sheetState = bottomSheetState) {
+                }, sheetState = editorSheetState) {
                     PlantEditor(
                         plant = state.selectedPlant!!,
                         vm = vm,
@@ -127,7 +129,7 @@ fun GardenPlanScreen(
                             scope.launch { vm.upsertPlant(updated) }
                             showEditor = false
                             isCreating = false
-                            state.selectedPlant = updated // Keep it selected after saving
+                            state.selectedPlant = updated
                         },
                         onCancel = {
                             showEditor = false
@@ -140,7 +142,6 @@ fun GardenPlanScreen(
                         onDeleteHarvest = { item -> scope.launch { vm.deleteHarvest(item) } },
                         onAddCareRule = { type, start, everyDays, everyMonths -> scope.launch { vm.addCareRule(state.selectedPlant!!.id, type, start, everyDays, everyMonths) } },
                         onDeleteCareRule = { rule -> scope.launch { vm.deleteCareRule(rule) } }
-
                     )
                 }
             }
