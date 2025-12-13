@@ -29,6 +29,7 @@ class GardenPlanState(
     var dragging by mutableStateOf(false)
     var canvasSize by mutableStateOf(IntSize.Zero)
 
+    var isLocked by mutableStateOf(false)
     val baseGridPx: Float
         get() = garden?.gridStepCm?.toFloat() ?: 50f
 

@@ -31,13 +31,13 @@ fun GardenCanvas(
     val plantColor = Color(0xFF4CAF50)
     val bedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
     val greenhouseColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-    val buildingColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) // ADDED
+    val buildingColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
     Canvas(modifier = modifier
         .fillMaxSize()
-        .pointerInput(plants, childGardens, state.dragging) {
+        .pointerInput(plants, childGardens, state.dragging, state.isLocked) { // ADDED isLocked to key
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent()
@@ -57,7 +57,10 @@ fun GardenCanvas(
                         val hitOk = hitPlant != null && hypot(hitPlant.x - worldPos.x, hitPlant.y - worldPos.y) <= hitPlant.radius + 16 / state.scale
 
                         onPlantSelect(if (hitOk) hitPlant else null)
-                        if (state.selectedPlant != null) state.dragging = true
+                        // ONLY START DRAGGING IF NOT LOCKED
+                        if (state.selectedPlant != null && !state.isLocked) {
+                            state.dragging = true
+                        }
                     }
 
                     if (state.dragging && state.selectedPlant != null) {

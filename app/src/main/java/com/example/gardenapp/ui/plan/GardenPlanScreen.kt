@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatListBulleted
@@ -61,6 +63,12 @@ fun GardenPlanScreen(
                 title = { Text(garden?.name ?: "План сада") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад") } },
                 actions = {
+                    IconButton(onClick = { state.isLocked = !state.isLocked }) {
+                        Icon(
+                            imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
+                            contentDescription = "Заблокировать перемещение"
+                        )
+                    }
                     IconButton(onClick = { showPlantList = true }) {
                         Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = "Список растений")
                     }
