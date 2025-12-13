@@ -80,7 +80,6 @@ private fun WeatherSuccessContent(data: WeatherResponse) {
         Text("${data.current.tempC.roundToInt()}°", style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Light))
         Spacer(Modifier.width(16.dp))
         Column {
-            // TODO: Use real frost warnings based on forecast data
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 data.forecast.forecastDay.forEach {

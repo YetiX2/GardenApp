@@ -1,6 +1,13 @@
 package com.example.gardenapp.ui.gardenlist
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -14,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.GardenType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,9 +56,9 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                 ElevatedCard(onClick = { onOpen(g.id) }) {
                     ListItem(
                         headlineContent = { Text(g.name) },
-                        supportingContent = { 
-                            val zoneText = g.climateZone?.let { "(зона $it)" } ?: ""
-                            Text("${g.widthCm}×${g.heightCm} см • шаг ${g.gridStepCm} см $zoneText") 
+                        supportingContent = {
+                            val typeText = g.type.toRussian()
+                            Text("$typeText • ${g.widthCm}×${g.heightCm} см")
                         },
                         trailingContent = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -67,14 +75,13 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
     if (showEditDialog) {
         GardenEditDialog(
             initial = editTarget,
+            allGardens = gardens,
             onDismiss = { showEditDialog = false },
-            onSave = { name, w, h, step, zone ->
+            onSave = { name, w, h, step, zone, type, parentId ->
                 scope.launch {
-                    val newGardenId = vm.upsert(editTarget?.id, name, w, h, step, zone)
+                    val newGardenId = vm.upsert(editTarget?.id, name, w, h, step, zone, type, parentId)
                     showEditDialog = false
-                    if (editTarget == null) { // Only navigate if it's a new garden
-                        onOpen(newGardenId)
-                    }
+                    if (editTarget == null) { onOpen(newGardenId) }
                 }
             }
         )
@@ -91,46 +98,86 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                         scope.launch { vm.delete(gardenToDelete) }
                         showDeleteConfirm = null
                     }
-                ) {
-                    Text("Удалить")
-                }
+                ) { Text("Удалить") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = null }) {
-                    Text("Отмена")
-                }
-            }
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = null }) { Text("Отмена") } }
         )
     }
 }
 
+private fun GardenType.toRussian(): String = when (this) {
+    GardenType.PLOT -> "Участок"
+    GardenType.GREENHOUSE -> "Теплица"
+    GardenType.BED -> "Грядка"
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GardenEditDialog(
     initial: GardenEntity?,
+    allGardens: List<GardenEntity>,
     onDismiss: () -> Unit,
-    onSave: (String, Int, Int, Int, Int?) -> Unit
+    onSave: (String, Int, Int, Int, Int?, GardenType, String?) -> Unit
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "Мой сад") }
     var w by remember { mutableStateOf((initial?.widthCm ?: 1000).toString()) }
     var h by remember { mutableStateOf((initial?.heightCm ?: 600).toString()) }
     var step by remember { mutableStateOf((initial?.gridStepCm ?: 50).toString()) }
-    var zone by remember { mutableStateOf((initial?.climateZone ?: "").toString()) }
+    var type by remember { mutableStateOf(initial?.type ?: GardenType.PLOT) }
+    var parentId by remember { mutableStateOf(initial?.parentId) }
+    var typeMenuExpanded by remember { mutableStateOf(false) }
+    var parentMenuExpanded by remember { mutableStateOf(false) }
+
+    val plots = allGardens.filter { it.type == GardenType.PLOT && it.id != initial?.id }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Новый сад" else "Редактировать сад") },
+        title = { Text(if (initial == null) "Новый участок" else "Редактировать участок") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(name, { name = it }, label = { Text("Название") })
-                OutlinedTextField(w, { w = it.filter { c -> c.isDigit() } }, label = { Text("Ширина (см)") })
-                OutlinedTextField(h, { h = it.filter { c -> c.isDigit() } }, label = { Text("Высота (см)") })
-                OutlinedTextField(step, { step = it.filter { c -> c.isDigit() } }, label = { Text("Шаг сетки (см)") })
-                OutlinedTextField(zone, { zone = it.filter { c -> c.isDigit() } }, label = { Text("Зона зимостойкости (1-9)") })
+
+                ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
+                    OutlinedTextField(type.toRussian(), {}, readOnly = true, label = { Text("Тип") }, modifier = Modifier.menuAnchor().fillMaxWidth(), trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) })
+                    ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
+                        GardenType.values().forEach { 
+                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { 
+                                type = it
+                                typeMenuExpanded = false
+                                if (it == GardenType.PLOT) parentId = null // Reset parent if type is PLOT
+                            })
+                        }
+                    }
+                }
+
+                if (type != GardenType.PLOT) {
+                    Spacer(Modifier.height(8.dp))
+                    ExposedDropdownMenuBox(expanded = parentMenuExpanded, onExpandedChange = { parentMenuExpanded = !parentMenuExpanded }) {
+                        val selectedParentName = plots.find { it.id == parentId }?.name ?: ""
+                        OutlinedTextField(value = selectedParentName, onValueChange = {}, readOnly = true, label = { Text("Родительский участок") }, modifier = Modifier.menuAnchor().fillMaxWidth(), trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = parentMenuExpanded) })
+                        ExposedDropdownMenu(expanded = parentMenuExpanded, onDismissRequest = { parentMenuExpanded = false }) {
+                            if (plots.isEmpty()) {
+                                DropdownMenuItem(text = { Text("Нет доступных участков") }, onClick = {}, enabled = false)
+                            } else {
+                                plots.forEach { plot ->
+                                    DropdownMenuItem(text = { Text(plot.name) }, onClick = { 
+                                        parentId = plot.id
+                                        parentMenuExpanded = false 
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(w, { w = it.filter(Char::isDigit) }, label = { Text("Ширина (см)") })
+                OutlinedTextField(h, { h = it.filter(Char::isDigit) }, label = { Text("Высота (см)") })
+                OutlinedTextField(step, { step = it.filter(Char::isDigit) }, label = { Text("Шаг сетки (см)") })
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, zone.toIntOrNull())
+                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, null, type, parentId)
             }) { Text("Сохранить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }

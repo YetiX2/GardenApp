@@ -9,8 +9,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GardenDao {
+    @Query("SELECT * FROM GardenEntity WHERE parentId = :parentId")
+    fun getChildGardens(parentId: String): Flow<List<GardenEntity>>
+
     @Query("SELECT * FROM GardenEntity")
     fun observeGardens(): Flow<List<GardenEntity>>
+
+    @Query("SELECT * FROM GardenEntity WHERE id = :id")
+    fun observeGardenById(id: String): Flow<GardenEntity?> // MODIFIED THIS
 
     @Query("SELECT * FROM GardenEntity WHERE id = :id")
     suspend fun getGarden(id: String): GardenEntity?

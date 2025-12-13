@@ -31,9 +31,10 @@ data class GardenEntity(
     val widthCm: Int,
     val heightCm: Int,
     val gridStepCm: Int,
-    @ColumnInfo(defaultValue = "PLOT")
-    val type: GardenType = GardenType.PLOT, // ADDED
-    val parentId: String? = null, // ADDED
+    @ColumnInfo(defaultValue = "PLOT") val type: GardenType = GardenType.PLOT,
+    val parentId: String? = null,
+    val x: Int? = null, // ADDED
+    val y: Int? = null, // ADDED
     val climateZone: Int? = null
 )
 

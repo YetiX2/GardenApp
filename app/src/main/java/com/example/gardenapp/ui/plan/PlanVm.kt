@@ -8,6 +8,7 @@ import com.example.gardenapp.data.db.*
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -22,11 +23,14 @@ class PlanVm @Inject constructor(
 
     fun loadGarden(gardenId: String) {
         viewModelScope.launch {
-            repo.getGarden(gardenId)?.let { _currentGarden.value = it }
+            // Use the Flow-based method and take the first result
+            _currentGarden.value = repo.observeGardenById(gardenId).first()
         }
     }
 
     fun plantsFlow(gardenId: String): Flow<List<PlantEntity>> = repo.plants(gardenId)
+    fun childGardensFlow(gardenId: String): Flow<List<GardenEntity>> = repo.getChildGardens(gardenId)
+    
     suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
     suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
 

@@ -19,6 +19,10 @@ class GardenRepository @Inject constructor(
     fun gardens(): Flow<List<GardenEntity>> = db.gardenDao().observeGardens()
     suspend fun getGarden(id: String): GardenEntity? = db.gardenDao().getGarden(id)
 
+    fun getChildGardens(parentId: String): Flow<List<GardenEntity>> = db.gardenDao().getChildGardens(parentId)
+    fun observeGardenById(id: String): Flow<GardenEntity?> = db.gardenDao().observeGardenById(id) // ADDED THIS
+    suspend fun getGardenByName(name: String): GardenEntity? = db.gardenDao().getGardenByName(name)
+
     suspend fun upsertGarden(garden: GardenEntity) {
         db.gardenDao().upsert(garden)
     }
