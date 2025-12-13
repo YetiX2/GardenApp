@@ -36,7 +36,7 @@ fun GardenCanvas(
 
     Canvas(modifier = modifier
         .fillMaxSize()
-        .pointerInput(plants, childGardens, state.dragging) { 
+        .pointerInput(plants, childGardens, state.dragging) {
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent()
@@ -62,7 +62,6 @@ fun GardenCanvas(
                     if (state.dragging && state.selectedPlant != null) {
                         if (change.pressed) {
                             val world = state.screenToWorld(change.position)
-                            // USE THE NEW METHOD HERE
                             val newPos = state.getConstrainedPosition(world, state.selectedPlant!!.radius)
                             val current = state.selectedPlant
                             if (current != null && (current.x != newPos.x || current.y != newPos.y)) {
@@ -78,8 +77,7 @@ fun GardenCanvas(
         .pointerInput(Unit) {
             detectTransformGestures { _, pan, zoom, _ ->
                 if (!state.dragging) {
-                    state.scale = (state.scale * zoom).coerceIn(0.2f, 5f)
-                    state.offset += pan
+                    state.updateViewWithConstraints(pan, zoom)
                 }
             }
         }
@@ -118,6 +116,7 @@ private fun DrawScope.drawChildGarden(garden: GardenEntity, bedColor: Color, gre
     drawRect(color, topLeft = rect.topLeft, size = rect.size)
     drawRect(Color.Black.copy(alpha = 0.7f), topLeft = rect.topLeft, size = rect.size, style = Stroke(1f))
 }
+
 private fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
     return Rect(
         topLeft = rect.topLeft * scale + offset,
@@ -135,7 +134,7 @@ private fun DrawScope.drawGrid(garden: GardenEntity, color: Color, step: Float, 
     var currentX = startX
     while (currentX < size.width) {
         if (currentX >= gardenRect.left && currentX <= gardenRect.right) {
-            drawLine(color, Offset(currentX, gardenRect.top), Offset(currentX, gardenRect.bottom))
+            drawLine(color, Offset(currentX, gardenRect.top.coerceAtLeast(0f)), Offset(currentX, gardenRect.bottom.coerceAtMost(size.height)))
         }
         currentX += scaledStep
     }
@@ -144,7 +143,7 @@ private fun DrawScope.drawGrid(garden: GardenEntity, color: Color, step: Float, 
     var currentY = startY
     while (currentY < size.height) {
         if (currentY >= gardenRect.top && currentY <= gardenRect.bottom) {
-            drawLine(color, Offset(gardenRect.left, currentY), Offset(gardenRect.right, currentY))
+            drawLine(color, Offset(gardenRect.left.coerceAtLeast(0f), currentY), Offset(gardenRect.right.coerceAtMost(size.width), currentY))
         }
         currentY += scaledStep
     }

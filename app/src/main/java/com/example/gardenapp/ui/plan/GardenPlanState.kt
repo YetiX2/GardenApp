@@ -56,6 +56,36 @@ class GardenPlanState(
         }
         return snapped
     }
+    
+    fun updateViewWithConstraints(pan: Offset, zoom: Float) {
+        scale = (scale * zoom).coerceIn(0.2f, 5f)
+
+        val newOffset = offset + pan
+
+        val gardenWidth = (garden?.widthCm?.toFloat() ?: 0f) * scale
+        val gardenHeight = (garden?.heightCm?.toFloat() ?: 0f) * scale
+
+        // Allow panning a bit outside the garden, e.g., by half the canvas size
+        val marginX = canvasSize.width * 0.5f
+        val marginY = canvasSize.height * 0.5f
+
+        val minOffsetX = -gardenWidth + canvasSize.width - marginX
+        val maxOffsetX = marginX
+        val minOffsetY = -gardenHeight + canvasSize.height - marginY
+        val maxOffsetY = marginY
+
+        offset = if (gardenWidth < canvasSize.width) {
+            Offset(x = (canvasSize.width - gardenWidth) / 2f, y = newOffset.y)
+        } else {
+            Offset(x = newOffset.x.coerceIn(minOffsetX, maxOffsetX), y = newOffset.y)
+        }
+
+        offset = if (gardenHeight < canvasSize.height) {
+            Offset(x = offset.x, y = (canvasSize.height - gardenHeight) / 2f)
+        } else {
+            Offset(x = offset.x, y = newOffset.y.coerceIn(minOffsetY, maxOffsetY))
+        }
+    }
 
     fun resetView() {
         scale = 1f
