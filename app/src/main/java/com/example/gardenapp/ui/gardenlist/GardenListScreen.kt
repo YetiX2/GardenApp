@@ -128,7 +128,21 @@ private fun GardenEditDialog(
     var typeMenuExpanded by remember { mutableStateOf(false) }
     var parentMenuExpanded by remember { mutableStateOf(false) }
 
-    val plots = allGardens.filter { it.type == GardenType.PLOT && it.id != initial?.id }
+    // DYNAMICALLY FILTER POSSIBLE PARENTS
+    val possibleParents = remember(type, allGardens) {
+        when (type) {
+            GardenType.GREENHOUSE -> allGardens.filter { it.type == GardenType.PLOT && it.id != initial?.id }
+            GardenType.BED -> allGardens.filter { (it.type == GardenType.PLOT || it.type == GardenType.GREENHOUSE) && it.id != initial?.id }
+            else -> emptyList()
+        }
+    }
+
+    // Auto-clear parent if it becomes invalid
+    LaunchedEffect(possibleParents) {
+        if (parentId != null && possibleParents.none { it.id == parentId }) {
+            parentId = null
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -153,13 +167,13 @@ private fun GardenEditDialog(
                 if (type != GardenType.PLOT) {
                     Spacer(Modifier.height(8.dp))
                     ExposedDropdownMenuBox(expanded = parentMenuExpanded, onExpandedChange = { parentMenuExpanded = !parentMenuExpanded }) {
-                        val selectedParentName = plots.find { it.id == parentId }?.name ?: ""
+                        val selectedParentName = possibleParents.find { it.id == parentId }?.name ?: ""
                         OutlinedTextField(value = selectedParentName, onValueChange = {}, readOnly = true, label = { Text("Родительский участок") }, modifier = Modifier.menuAnchor().fillMaxWidth(), trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = parentMenuExpanded) })
                         ExposedDropdownMenu(expanded = parentMenuExpanded, onDismissRequest = { parentMenuExpanded = false }) {
-                            if (plots.isEmpty()) {
+                            if (possibleParents.isEmpty()) {
                                 DropdownMenuItem(text = { Text("Нет доступных участков") }, onClick = {}, enabled = false)
                             } else {
-                                plots.forEach { plot ->
+                                possibleParents.forEach { plot ->
                                     DropdownMenuItem(text = { Text(plot.name) }, onClick = { 
                                         parentId = plot.id
                                         parentMenuExpanded = false 
