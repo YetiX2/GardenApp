@@ -50,7 +50,13 @@ fun GardenPlanScreen(
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
 
+
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
+    LaunchedEffect(plants) {
+        state.selectedPlant?.let { currentSelected ->
+            state.selectedPlant = plants.find { p -> p.id == currentSelected.id }
+        }
+    }
     var showEditor by remember { mutableStateOf(false) }
     var isCreating by remember { mutableStateOf(false) }
     var showPlantList by remember { mutableStateOf(false) }
