@@ -36,7 +36,7 @@ fun GardenCanvas(
 
     Canvas(modifier = modifier
         .fillMaxSize()
-        .pointerInput(plants, childGardens, state.dragging) {
+        .pointerInput(plants, childGardens, state.dragging) { 
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent()
@@ -62,10 +62,11 @@ fun GardenCanvas(
                     if (state.dragging && state.selectedPlant != null) {
                         if (change.pressed) {
                             val world = state.screenToWorld(change.position)
-                            val newWorld = state.snapToGrid(world)
+                            // USE THE NEW METHOD HERE
+                            val newPos = state.getConstrainedPosition(world, state.selectedPlant!!.radius)
                             val current = state.selectedPlant
-                            if (current != null && (current.x != newWorld.x || current.y != newWorld.y)) {
-                                onPlantUpdate(current.copy(x = newWorld.x, y = newWorld.y))
+                            if (current != null && (current.x != newPos.x || current.y != newPos.y)) {
+                                onPlantUpdate(current.copy(x = newPos.x, y = newPos.y))
                             }
                         } else {
                             state.dragging = false

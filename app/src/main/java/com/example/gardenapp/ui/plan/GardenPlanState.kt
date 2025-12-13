@@ -27,7 +27,7 @@ class GardenPlanState(
     var snapToGrid by mutableStateOf(true)
     var selectedPlant by mutableStateOf<PlantEntity?>(null)
     var dragging by mutableStateOf(false)
-    var canvasSize by mutableStateOf(IntSize.Zero) // ADDED THIS
+    var canvasSize by mutableStateOf(IntSize.Zero)
 
     val baseGridPx: Float
         get() = garden?.gridStepCm?.toFloat() ?: 50f
@@ -35,12 +35,26 @@ class GardenPlanState(
     fun screenToWorld(screen: Offset): Offset = (screen - offset) / scale
     fun worldToScreen(world: Offset): Offset = world * scale + offset
 
-    fun snapToGrid(world: Offset): Offset {
-        if (!snapToGrid) return world
-        return Offset(
-            x = (round(world.x / baseGridPx) * baseGridPx),
-            y = (round(world.y / baseGridPx) * baseGridPx)
-        )
+    fun getConstrainedPosition(worldPos: Offset, plantRadius: Float): Offset {
+        val gardenWidth = garden?.widthCm?.toFloat()
+        val gardenHeight = garden?.heightCm?.toFloat()
+
+        val snapped = if (snapToGrid) {
+            Offset(
+                x = (round(worldPos.x / baseGridPx) * baseGridPx),
+                y = (round(worldPos.y / baseGridPx) * baseGridPx)
+            )
+        } else {
+            worldPos
+        }
+
+        if (gardenWidth != null && gardenHeight != null) {
+            return Offset(
+                x = snapped.x.coerceIn(plantRadius, gardenWidth - plantRadius),
+                y = snapped.y.coerceIn(plantRadius, gardenHeight - plantRadius)
+            )
+        }
+        return snapped
     }
 
     fun resetView() {
