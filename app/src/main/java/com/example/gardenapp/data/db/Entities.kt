@@ -21,7 +21,7 @@ sealed interface RecentActivity {
 }
 
 
-enum class GardenType { PLOT, GREENHOUSE, BED } // ADDED
+enum class GardenType { PLOT, GREENHOUSE, BED , BUILDING } // ADDED
 
 
 @Entity

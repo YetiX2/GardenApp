@@ -31,6 +31,7 @@ fun GardenCanvas(
     val plantColor = Color(0xFF4CAF50)
     val bedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
     val greenhouseColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+    val buildingColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f) // ADDED
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
@@ -88,7 +89,7 @@ fun GardenCanvas(
             drawGrid(garden = it, color = gridColor, step = state.baseGridPx, scale = state.scale, offset = state.offset)
         }
 
-        childGardens.forEach { child -> drawChildGarden(child, bedColor, greenhouseColor, state) }
+        childGardens.forEach { child -> drawChildGarden(child, bedColor, greenhouseColor, buildingColor, state) }
 
         plants.forEach { p ->
             val center = state.worldToScreen(Offset(p.x, p.y))
@@ -106,11 +107,12 @@ private fun GardenEntity.toRect(): Rect {
     return Rect(left, top, left + this.widthCm, top + this.heightCm)
 }
 
-private fun DrawScope.drawChildGarden(garden: GardenEntity, bedColor: Color, greenhouseColor: Color, state: GardenPlanState) {
+private fun DrawScope.drawChildGarden(garden: GardenEntity, bedColor: Color, greenhouseColor: Color,  buildingColor: Color,state: GardenPlanState) {
     val rect = worldToScreen(garden.toRect(), state.scale, state.offset)
     val color = when (garden.type) {
         GardenType.BED -> bedColor
         GardenType.GREENHOUSE -> greenhouseColor
+        GardenType.BUILDING -> buildingColor
         else -> Color.Transparent
     }
     drawRect(color, topLeft = rect.topLeft, size = rect.size)

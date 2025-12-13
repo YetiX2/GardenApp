@@ -109,6 +109,7 @@ private fun GardenType.toRussian(): String = when (this) {
     GardenType.PLOT -> "Участок"
     GardenType.GREENHOUSE -> "Теплица"
     GardenType.BED -> "Грядка"
+    GardenType.BUILDING -> "Строение"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,8 +132,10 @@ private fun GardenEditDialog(
     // DYNAMICALLY FILTER POSSIBLE PARENTS
     val possibleParents = remember(type, allGardens) {
         when (type) {
-            GardenType.GREENHOUSE -> allGardens.filter { it.type == GardenType.PLOT && it.id != initial?.id }
-            GardenType.BED -> allGardens.filter { (it.type == GardenType.PLOT || it.type == GardenType.GREENHOUSE) && it.id != initial?.id }
+            GardenType.GREENHOUSE, GardenType.BUILDING -> // MODIFIED
+                allGardens.filter { it.type == GardenType.PLOT && it.id != initial?.id }
+            GardenType.BED ->
+                allGardens.filter { (it.type == GardenType.PLOT || it.type == GardenType.GREENHOUSE) && it.id != initial?.id }
             else -> emptyList()
         }
     }
