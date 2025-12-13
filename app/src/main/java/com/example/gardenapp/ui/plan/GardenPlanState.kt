@@ -20,7 +20,7 @@ fun rememberGardenPlanState(
 
 class GardenPlanState(
     val garden: GardenEntity?,
-    private val scope: CoroutineScope
+    val scope: CoroutineScope
 ) {
     var scale by mutableStateOf(1f)
     var offset by mutableStateOf(Offset.Zero)

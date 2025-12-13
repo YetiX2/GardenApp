@@ -86,7 +86,9 @@ fun GardenCanvas(
     ) {
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
-        drawGrid(color = gridColor, step = state.baseGridPx, scale = state.scale, offset = state.offset)
+        state.garden?.let {
+            drawGrid(garden = it, color = gridColor, step = state.baseGridPx, scale = state.scale, offset = state.offset)
+        }
 
         childGardens.forEach { child -> drawChildGarden(child, bedColor, greenhouseColor, state) }
 
@@ -116,7 +118,6 @@ private fun DrawScope.drawChildGarden(garden: GardenEntity, bedColor: Color, gre
     drawRect(color, topLeft = rect.topLeft, size = rect.size)
     drawRect(Color.Black.copy(alpha = 0.7f), topLeft = rect.topLeft, size = rect.size, style = Stroke(1f))
 }
-
 private fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
     return Rect(
         topLeft = rect.topLeft * scale + offset,
@@ -124,21 +125,27 @@ private fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
     )
 }
 
-private fun DrawScope.drawGrid(color: Color, step: Float, scale: Float, offset: Offset) {
+private fun DrawScope.drawGrid(garden: GardenEntity, color: Color, step: Float, scale: Float, offset: Offset) {
     val scaledStep = step * scale
     if (scaledStep < 10) return
+
+    val gardenRect = worldToScreen(Rect(0f, 0f, garden.widthCm.toFloat(), garden.heightCm.toFloat()), scale, offset)
 
     val startX = (-offset.x % scaledStep)
     var currentX = startX
     while (currentX < size.width) {
-        drawLine(color, Offset(currentX, 0f), Offset(currentX, size.height))
+        if (currentX >= gardenRect.left && currentX <= gardenRect.right) {
+            drawLine(color, Offset(currentX, gardenRect.top), Offset(currentX, gardenRect.bottom))
+        }
         currentX += scaledStep
     }
 
     val startY = (-offset.y % scaledStep)
     var currentY = startY
     while (currentY < size.height) {
-        drawLine(color, Offset(0f, currentY), Offset(size.width, currentY))
+        if (currentY >= gardenRect.top && currentY <= gardenRect.bottom) {
+            drawLine(color, Offset(gardenRect.left, currentY), Offset(gardenRect.right, currentY))
+        }
         currentY += scaledStep
     }
 }
