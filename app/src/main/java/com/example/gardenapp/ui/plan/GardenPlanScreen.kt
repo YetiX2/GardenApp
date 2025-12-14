@@ -12,9 +12,14 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.Grass
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.LabelOff
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material.icons.filled.TextDecrease
+import androidx.compose.material.icons.filled.TextIncrease
 import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.GridOff
 import androidx.compose.material.icons.outlined.GridOn
@@ -46,7 +51,7 @@ fun GardenPlanScreen(
     val scope = rememberCoroutineScope()
     val garden by vm.currentGarden
     var plants by remember { mutableStateOf(emptyList<PlantEntity>()) }
-    var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
+    var childGardens by remember { mutableStateOf<List<GardenEntity>>(emptyList()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
 
@@ -75,8 +80,9 @@ fun GardenPlanScreen(
                 title = { Text(garden?.name ?: "План сада") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад") } },
                 actions = {
+                    IconButton(onClick = { state.showNames = !state.showNames }) { Icon(imageVector = if (state.showNames) Icons.Default.TextDecrease else Icons.Default.TextIncrease, contentDescription = "Показать/скрыть названия") }
                     IconButton(onClick = { state.isLocked = !state.isLocked }) { Icon(imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen, contentDescription = "Заблокировать перемещение") }
-                    IconButton(onClick = { showPlantList = true }) { Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = "Список растений") }
+                    IconButton(onClick = { showPlantList = true }) { Icon(imageVector = Icons.Default.Grass, contentDescription = "Список растений") }
                     IconButton({ state.snapToGrid = !state.snapToGrid }) { Icon(imageVector = if (state.snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, contentDescription = "Привязка к сетке") }
                     IconButton({ state.resetView() }) { Icon(imageVector = Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
                 }

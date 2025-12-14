@@ -25,14 +25,14 @@ class GardenPlanState(
     var scale by mutableStateOf(1f)
     var offset by mutableStateOf(Offset.Zero)
     var snapToGrid by mutableStateOf(true)
+    var showGrid by mutableStateOf(true)
+    var showNames by mutableStateOf(true) // ADDED
     var isLocked by mutableStateOf(false)
     var canvasSize by mutableStateOf(IntSize.Zero)
 
-    // State for selected items
     var selectedPlant by mutableStateOf<PlantEntity?>(null)
     var selectedChildGarden by mutableStateOf<GardenEntity?>(null)
     
-    // State for dragging gesture
     var dragging by mutableStateOf(false)
     var dragStartOffset by mutableStateOf(Offset.Zero)
 

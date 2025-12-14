@@ -43,16 +43,16 @@ internal fun DrawScope.drawChildGarden(
         drawRect(selectedColor, topLeft = rect.topLeft, size = rect.size, style = Stroke(width = 3f * state.scale))
     }
 
-    val textLayoutResult = textMeasurer.measure(
-        text = garden.name,
-        style = TextStyle(fontSize = 14.sp, color = textColor)
-    )
-    //if (rect.width > textLayoutResult.size.width && rect.height > textLayoutResult.size.height) {
+    if (state.showNames) { // ADDED CHECK
+        val textLayoutResult = textMeasurer.measure(
+            text = garden.name,
+            style = TextStyle(fontSize = 14.sp, color = textColor)
+        )
         drawText(
             textLayoutResult,
             topLeft = rect.center - Offset(textLayoutResult.size.width / 2f, textLayoutResult.size.height / 2f)
         )
-   // }
+    }
 }
 
 internal fun DrawScope.drawPlant(
@@ -77,33 +77,33 @@ internal fun DrawScope.drawPlant(
         )
     }
 
-    val textToDraw = buildAnnotatedString {
-        val hasTitle = !plant.title.isNullOrBlank()
-        val hasVariety = !plant.variety.isNullOrBlank()
-        if (hasTitle) {
-            append(plant.title)
-        }
-        if(plant.title != plant.variety) {
-            if (hasTitle && hasVariety) {
-                append("\n")
+    if (state.showNames) { // ADDED CHECK
+        val textToDraw = buildAnnotatedString {
+            val hasTitle = !plant.title.isNullOrBlank()
+            val hasVariety = !plant.variety.isNullOrBlank()
+            if (hasTitle) {
+                append(plant.title)
             }
-            if (hasVariety) {
-                append(plant.variety)
+            if(plant.title != plant.variety) {
+                if (hasTitle && hasVariety) {
+                    append("\n")
+                }
+                if (hasVariety) {
+                    append(plant.variety)
+                }
             }
         }
-    }
 
-    if (textToDraw.isNotBlank()) {
-        val textLayoutResult = textMeasurer.measure(
-            text = textToDraw,
-            style = TextStyle(fontSize = 12.sp, color = textColor)
-        )
-        //if (radius * 2 > textLayoutResult.size.width) {
+        if (textToDraw.isNotBlank()) {
+            val textLayoutResult = textMeasurer.measure(
+                text = textToDraw,
+                style = TextStyle(fontSize = 12.sp, color = textColor)
+            )
             drawText(
                 textLayoutResult,
                 topLeft = center - Offset(textLayoutResult.size.width / 2f, textLayoutResult.size.height / 2f)
             )
-       // }
+        }
     }
 }
 
