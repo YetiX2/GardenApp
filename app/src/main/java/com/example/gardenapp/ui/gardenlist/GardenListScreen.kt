@@ -124,6 +124,7 @@ private fun GardenEditDialog(
     var w by remember { mutableStateOf((initial?.widthCm ?: 1000).toString()) }
     var h by remember { mutableStateOf((initial?.heightCm ?: 600).toString()) }
     var step by remember { mutableStateOf((initial?.gridStepCm ?: 50).toString()) }
+    var climateZone by remember { mutableStateOf(initial?.climateZone?.toString() ?: "") } // ADDED
     var type by remember { mutableStateOf(initial?.type ?: GardenType.PLOT) }
     var parentId by remember { mutableStateOf(initial?.parentId) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
@@ -190,11 +191,12 @@ private fun GardenEditDialog(
                 OutlinedTextField(w, { w = it.filter(Char::isDigit) }, label = { Text("Ширина (см)") })
                 OutlinedTextField(h, { h = it.filter(Char::isDigit) }, label = { Text("Высота (см)") })
                 OutlinedTextField(step, { step = it.filter(Char::isDigit) }, label = { Text("Шаг сетки (см)") })
+                OutlinedTextField(climateZone, { climateZone = it.filter(Char::isDigit) }, label = { Text("Зона морозостойкости (USDA)") }) // ADDED
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, null, type, parentId)
+                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, climateZone.toIntOrNull(), type, parentId)
             }) { Text("Сохранить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
