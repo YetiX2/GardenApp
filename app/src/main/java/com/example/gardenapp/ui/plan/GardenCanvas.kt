@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.GardenType // NEW
 import com.example.gardenapp.data.db.PlantEntity
 import kotlin.math.hypot
 
-// NEW: таймаут двойного тапа (мс)
 private const val DOUBLE_TAP_TIMEOUT = 300L
 
 @Composable
@@ -44,7 +44,6 @@ fun GardenCanvas(
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
-    // Актуальные данные внутри pointerInput
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
 
@@ -52,10 +51,9 @@ fun GardenCanvas(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(state.isLocked) {
-                // NEW: состояние для двойного тапа, живёт между жестами
                 var lastTapTime = 0L
                 var lastTapWorldPos: Offset? = null
-                var lastTappedGardenId: String? = null  // предполагаем, что у GardenEntity есть поле id: Long
+                var lastTappedGardenId: String? = null // CHANGED: String?
 
                 awaitEachGesture {
                     val down = awaitFirstDown()
@@ -102,11 +100,10 @@ fun GardenCanvas(
                         }
                     }
 
-                    val initialPos = down.position // NEW: точка начала
+                    val initialPos = down.position
                     var lastPos = down.position
-                    var hasMoved = false           // NEW: двигался ли палец вообще
+                    var hasMoved = false
 
-                    // Основной цикл жеста
                     while (true) {
                         val event = awaitPointerEvent()
 
@@ -114,7 +111,7 @@ fun GardenCanvas(
 
                         val pressedChanges = event.changes.filter { it.pressed }
 
-                        // --- PINCH-ZOOM / ДВУХПАЛЬЦЕВЫЙ ЖЕСТ ---
+                        // PINCH-ZOOM
                         if (pressedChanges.size > 1 || isTransform) {
                             isTransform = true
                             val zoom = event.calculateZoom()
@@ -124,11 +121,9 @@ fun GardenCanvas(
                             continue
                         }
 
-                        // --- ОДИН ПАЛЕЦ: DRAG ИЛИ PAN ---
                         val change = pressedChanges.first()
                         val pos = change.position
 
-                        // NEW: проверяем, был ли сдвиг от исходной точки
                         if (!hasMoved && (pos - initialPos).getDistance() > 8f) {
                             hasMoved = true
                         }
@@ -173,18 +168,18 @@ fun GardenCanvas(
                         change.consume()
                     }
 
-                    // Если действительно двигали объект — зафиксируем изменения
                     if (isDraggingObject && !isTransform && !state.isLocked && hasMoved) {
                         state.selectedPlant?.let { onPlantUpdate(it) }
                         state.selectedChildGarden?.let { onGardenUpdate(it) }
                     }
 
-                    // NEW: обработка двойного тапа по garden (tap без движения)
+                    // ===== ДВОЙНОЙ ТАП ПО GARDEN, КРОМЕ BUILDING =====
                     val tappedGarden = hitGarden
                     val isTapOnGarden =
                         tappedGarden != null &&
+                                tappedGarden.type != GardenType.BUILDING && // NEW: запрет на BUILDING
                                 !isTransform &&
-                                !hasMoved &&         // не двигали палец
+                                !hasMoved &&
                                 !state.isLocked
 
                     if (isTapOnGarden && tappedGarden != null) {
@@ -199,14 +194,11 @@ fun GardenCanvas(
                                     (startWorld - lastPos).getDistance() < 16f
 
                         if (isSameGarden && isWithinTime && isCloseEnough) {
-                            // ДВОЙНОЙ ТАП
                             onGardenOpen(tappedGarden)
-                            // сброс, чтобы третий тап не считался тройным кликом
                             lastTapTime = 0L
                             lastTapWorldPos = null
                             lastTappedGardenId = null
                         } else {
-                            // Первый тап или слишком далеко/поздно — запоминаем
                             lastTapTime = tapTime
                             lastTapWorldPos = startWorld
                             lastTappedGardenId = tappedGarden.id
