@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.sp
 import com.example.gardenapp.data.db.GardenEntity
@@ -51,7 +52,7 @@ internal fun DrawScope.drawChildGarden(
             textLayoutResult,
             topLeft = rect.center - Offset(textLayoutResult.size.width / 2f, textLayoutResult.size.height / 2f)
         )
-    //}
+   // }
 }
 
 internal fun DrawScope.drawPlant(
@@ -70,27 +71,40 @@ internal fun DrawScope.drawPlant(
     if (plant.id == state.selectedPlant?.id) {
         drawCircle(
             color = selectedColor,
-            radius = radius + 6f, // Use float for consistency
+            radius = radius + 6f,
             center = center,
             style = Stroke(width = 3f * state.scale)
         )
     }
 
-    val textLayoutResult = textMeasurer.measure(
-        if(!plant.title.isBlank()){
-            plant.title + "\n" + plant.variety
-        } else {
-            plant.variety.toString()
-        },
-        //text = plant.title,
-        style = TextStyle(fontSize = 12.sp, color = textColor)
-    )
-    //if (radius * 2 > textLayoutResult.size.width) {
-        drawText(
-            textLayoutResult,
-            topLeft = center - Offset(textLayoutResult.size.width / 2f, textLayoutResult.size.height / 2f)
+    val textToDraw = buildAnnotatedString {
+        val hasTitle = !plant.title.isNullOrBlank()
+        val hasVariety = !plant.variety.isNullOrBlank()
+        if (hasTitle) {
+            append(plant.title)
+        }
+        if(plant.title != plant.variety) {
+            if (hasTitle && hasVariety) {
+                append("\n")
+            }
+            if (hasVariety) {
+                append(plant.variety)
+            }
+        }
+    }
+
+    if (textToDraw.isNotBlank()) {
+        val textLayoutResult = textMeasurer.measure(
+            text = textToDraw,
+            style = TextStyle(fontSize = 12.sp, color = textColor)
         )
-    //}
+        //if (radius * 2 > textLayoutResult.size.width) {
+            drawText(
+                textLayoutResult,
+                topLeft = center - Offset(textLayoutResult.size.width / 2f, textLayoutResult.size.height / 2f)
+            )
+       // }
+    }
 }
 
 internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
