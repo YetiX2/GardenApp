@@ -3,8 +3,8 @@ package com.example.gardenapp.ui.plan
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -27,8 +27,8 @@ fun GardenCanvas(
     childGardens: List<GardenEntity>,
     onPlantSelect: (PlantEntity?) -> Unit,
     onGardenSelect: (GardenEntity?) -> Unit,
-    onPlantDrag: (PlantEntity) -> Unit, // ADDED
-    onGardenDrag: (GardenEntity) -> Unit, // ADDED
+    onPlantDrag: (PlantEntity) -> Unit,
+    onGardenDrag: (GardenEntity) -> Unit,
     onPlantUpdate: (PlantEntity) -> Unit,
     onGardenUpdate: (GardenEntity) -> Unit,
     onGardenOpen: (GardenEntity) -> Unit,
@@ -41,87 +41,168 @@ fun GardenCanvas(
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
+    // Актуальные данные внутри pointerInput без его пересоздания
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
 
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .pointerInput(state.isLocked) { 
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown()
-                        val worldPos = state.screenToWorld(down.position)
+            .pointerInput(state.isLocked) {
+                awaitEachGesture {
+                    // Мы уже в AwaitPointerEventScope, дополнительный scope не нужен
+                    val down = awaitFirstDown()
+                    val startWorld = state.screenToWorld(down.position)
 
-                        val hitGarden = currentChildGardens.find { it.toRect().contains(worldPos) }
-                        val hitPlant = currentPlants.find {
-                            hypot(it.x - worldPos.x, it.y - worldPos.y) <= it.radius + 16 / state.scale
-                        }
+                    val currentPlants = currentPlants   // локальные ссылки на снапшоты
+                    val currentChildGardens = currentChildGardens
 
-                        if (hitGarden != null) {
-                            if (!state.isLocked) {
+                    val hitGarden = currentChildGardens.find { it.toRect().contains(startWorld) }
+                    val hitPlant = currentPlants.find {
+                        hypot(it.x - startWorld.x, it.y - startWorld.y) <=
+                                it.radius + 16 / state.scale
+                    }
+
+                    var isDraggingObject = false
+                    var isPanning = false
+                    var isTransform = false
+
+                    if (!state.isLocked) {
+                        when {
+                            hitGarden != null -> {
                                 onGardenSelect(hitGarden)
                                 onPlantSelect(null)
-                                state.dragStartOffset = worldPos - Offset((hitGarden.x ?: 0).toFloat(), (hitGarden.y ?: 0).toFloat())
-                                state.dragging = true
+                                state.dragStartOffset = startWorld - Offset(
+                                    (hitGarden.x ?: 0).toFloat(),
+                                    (hitGarden.y ?: 0).toFloat()
+                                )
+                                isDraggingObject = true
                             }
-                        } else if (hitPlant != null) {
-                            if (!state.isLocked) {
+
+                            hitPlant != null -> {
                                 onPlantSelect(hitPlant)
                                 onGardenSelect(null)
-                                state.dragStartOffset = worldPos - Offset(hitPlant.x, hitPlant.y)
-                                state.dragging = true
+                                state.dragStartOffset =
+                                    startWorld - Offset(hitPlant.x, hitPlant.y)
+                                isDraggingObject = true
                             }
-                        } else {
-                            onPlantSelect(null)
-                            onGardenSelect(null)
-                            state.dragging = false
-                        }
 
-                        if (state.dragging) {
-                            drag(down.id) {
-                                val currentPointerPos = state.screenToWorld(it.position)
-                                state.selectedPlant?.let { plant ->
-                                    val newCenter = currentPointerPos - state.dragStartOffset
-                                    val constrainedPos = state.getConstrainedPlantPosition(newCenter, plant.radius)
-                                    onPlantDrag(plant.copy(x = constrainedPos.x, y = constrainedPos.y)) // USE onPlantDrag
-                                }
-                                state.selectedChildGarden?.let { garden ->
-                                    val newTopLeft = currentPointerPos - state.dragStartOffset
-                                    val constrainedPos = state.getConstrainedGardenPosition(newTopLeft, garden.widthCm.toFloat(), garden.heightCm.toFloat())
-                                    onGardenDrag(garden.copy(x = constrainedPos.x.toInt(), y = constrainedPos.y.toInt())) // USE onGardenDrag
-                                }
-                                it.consume()
-                            }
-                            // After drag ends
-                            state.selectedPlant?.let { onPlantUpdate(it) }
-                            state.selectedChildGarden?.let { onGardenUpdate(it) }
-                            state.dragging = false
-                        } else {
-                             // This is a pan gesture on empty space
-                            drag(down.id) {
-                                val pan = (it.position - it.previousPosition) / state.scale
-                                state.updateViewWithConstraints(pan, 1f)
-                                it.consume()
+                            else -> {
+                                onPlantSelect(null)
+                                onGardenSelect(null)
+                                isPanning = true
                             }
                         }
                     }
+
+                    var lastPos = down.position
+
+                    // Основной цикл жеста
+                    while (true) {
+                        val event = awaitPointerEvent()
+
+                        // Если все отпустили пальцы — жест закончился
+                        if (event.changes.all { !it.pressed }) break
+
+                        // Сколько пальцев сейчас реально нажато
+                        val pressedChanges = event.changes.filter { it.pressed }
+
+                        // --- PINCH-ZOOM / ДВУХПАЛЬЦЕВЫЙ ЖЕСТ ---
+                        if (pressedChanges.size > 1 || isTransform) {
+                            isTransform = true
+                            val zoom = event.calculateZoom()
+                            val pan = event.calculatePan()
+                            state.updateViewWithConstraints(pan, zoom)
+                            event.changes.forEach { it.consume() }
+                            continue
+                        }
+
+                        // --- ОДИН ПАЛЕЦ: DRAG ИЛИ PAN ---
+                        val change = pressedChanges.first()
+                        val pos = change.position
+
+                        if (isDraggingObject && !state.isLocked) {
+                            val currentWorld = state.screenToWorld(pos)
+
+                            state.selectedPlant?.let { plant ->
+                                val newCenter = currentWorld - state.dragStartOffset
+                                val constrainedPos = state.getConstrainedPlantPosition(
+                                    newCenter,
+                                    plant.radius
+                                )
+                                onPlantDrag(
+                                    plant.copy(
+                                        x = constrainedPos.x,
+                                        y = constrainedPos.y
+                                    )
+                                )
+                            }
+
+                            state.selectedChildGarden?.let { garden ->
+                                val newTopLeft = currentWorld - state.dragStartOffset
+                                val constrainedPos = state.getConstrainedGardenPosition(
+                                    newTopLeft,
+                                    garden.widthCm.toFloat(),
+                                    garden.heightCm.toFloat()
+                                )
+                                onGardenDrag(
+                                    garden.copy(
+                                        x = constrainedPos.x.toInt(),
+                                        y = constrainedPos.y.toInt()
+                                    )
+                                )
+                            }
+                        } else if (isPanning && !state.isLocked) {
+                            val pan = (pos - lastPos) / state.scale
+                            state.updateViewWithConstraints(pan, 1f)
+                        }
+
+                        lastPos = pos
+                        change.consume()
+                    }
+
+                    // Если тащили объект и НЕ переходили в режим зума — зафиксировать изменения
+                    if (isDraggingObject && !isTransform && !state.isLocked) {
+                        state.selectedPlant?.let { onPlantUpdate(it) }
+                        state.selectedChildGarden?.let { onGardenUpdate(it) }
+                    }
                 }
             }
-    ) {
+    )
+    {
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
         state.garden?.let {
-            drawGrid(garden = it, color = gridColor, step = state.baseGridPx, scale = state.scale, offset = state.offset)
+            drawGrid(
+                garden = it,
+                color = gridColor,
+                step = state.baseGridPx,
+                scale = state.scale,
+                offset = state.offset
+            )
         }
 
-        childGardens.forEach { child -> drawChildGarden(child, bedColor, greenhouseColor, buildingColor, selectedStroke, state) }
+        childGardens.forEach { child ->
+            drawChildGarden(
+                child,
+                bedColor,
+                greenhouseColor,
+                buildingColor,
+                selectedStroke,
+                state
+            )
+        }
 
         plants.forEach { p ->
             val center = state.worldToScreen(Offset(p.x, p.y))
             drawCircle(color = plantColor, radius = p.radius * state.scale, center = center)
             if (p.id == state.selectedPlant?.id) {
-                drawCircle(color = selectedStroke, radius = (p.radius + 6) * state.scale, center = center, style = Stroke(width = 3f))
+                drawCircle(
+                    color = selectedStroke,
+                    radius = (p.radius + 6) * state.scale,
+                    center = center,
+                    style = Stroke(width = 3f)
+                )
             }
         }
     }
