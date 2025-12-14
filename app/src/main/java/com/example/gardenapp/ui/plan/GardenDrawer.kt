@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
+import kotlin.math.floor
 
 internal fun GardenEntity.toRect(): Rect {
     val left = (this.x ?: 0).toFloat()
@@ -114,27 +115,70 @@ internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
     )
 }
 
-internal fun DrawScope.drawGrid(garden: GardenEntity, color: Color, step: Float, scale: Float, offset: Offset) {
-    val scaledStep = step * scale
-    if (scaledStep < 10) return
+internal fun DrawScope.drawGrid(
+    garden: GardenEntity,
+    color: Color,
+    step: Float,      // шаг сетки в "мировых" единицах (как и x/y, widthCm/heightCm)
+    scale: Float,
+    offset: Offset
+) {
+    val stepWorld = step
+    val stepScreen = stepWorld * scale
+    if (stepScreen < 10f) return   // слишком частая сетка — не рисуем
 
-    val gardenRect = worldToScreen(Rect(0f, 0f, garden.widthCm.toFloat(), garden.heightCm.toFloat()), scale, offset)
+    val gardenWidthWorld = garden.widthCm.toFloat()
+    val gardenHeightWorld = garden.heightCm.toFloat()
 
-    val startX = (-offset.x % scaledStep)
-    var currentX = startX
-    while (currentX < size.width) {
-        if (currentX >= gardenRect.left && currentX <= gardenRect.right) {
-            drawLine(color, Offset(currentX, gardenRect.top.coerceAtLeast(0f)), Offset(currentX, gardenRect.bottom.coerceAtMost(size.height)))
-        }
-        currentX += scaledStep
+    // Видимая область в МИРОВЫХ координатах (0..gardenWidth/Height)
+    val leftWorldVisible = ((0f - offset.x) / scale)
+        .coerceIn(0f, gardenWidthWorld)
+    val rightWorldVisible = ((size.width - offset.x) / scale)
+        .coerceIn(0f, gardenWidthWorld)
+    val topWorldVisible = ((0f - offset.y) / scale)
+        .coerceIn(0f, gardenHeightWorld)
+    val bottomWorldVisible = ((size.height - offset.y) / scale)
+        .coerceIn(0f, gardenHeightWorld)
+
+    if (leftWorldVisible >= rightWorldVisible || topWorldVisible >= bottomWorldVisible) return
+
+    fun snapWorldStart(originWorld: Float, stepWorld: Float): Float {
+        val k = floor(originWorld / stepWorld)
+        return k * stepWorld
     }
 
-    val startY = (-offset.y % scaledStep)
-    var currentY = startY
-    while (currentY < size.height) {
-        if (currentY >= gardenRect.top && currentY <= gardenRect.bottom) {
-            drawLine(color, Offset(gardenRect.left.coerceAtLeast(0f), currentY), Offset(gardenRect.right.coerceAtMost(size.width), currentY))
-        }
-        currentY += scaledStep
+    // --- Вертикальные линии (фиксируем x в мировых координатах) ---
+    var xWorld = snapWorldStart(leftWorldVisible, stepWorld)
+    while (xWorld <= rightWorldVisible) {
+        val xScreen = xWorld * scale + offset.x
+
+        val topScreen = topWorldVisible * scale + offset.y
+        val bottomScreen = bottomWorldVisible * scale + offset.y
+
+        drawLine(
+            color = color,
+            start = Offset(xScreen, topScreen.coerceAtLeast(0f)),
+            end = Offset(xScreen, bottomScreen.coerceAtMost(size.height))
+        )
+
+        xWorld += stepWorld
+    }
+
+    // --- Горизонтальные линии ---
+    var yWorld = snapWorldStart(topWorldVisible, stepWorld)
+    while (yWorld <= bottomWorldVisible) {
+        val yScreen = yWorld * scale + offset.y
+
+        val leftScreen = leftWorldVisible * scale + offset.x
+        val rightScreen = rightWorldVisible * scale + offset.x
+
+        drawLine(
+            color = color,
+            start = Offset(leftScreen.coerceAtLeast(0f), yScreen),
+            end = Offset(rightScreen.coerceAtMost(size.width), yScreen)
+        )
+
+        yWorld += stepWorld
     }
 }
+
+

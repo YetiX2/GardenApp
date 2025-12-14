@@ -37,7 +37,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("Мои сады") },
+                title = { Text("Мои грядки / участок") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
