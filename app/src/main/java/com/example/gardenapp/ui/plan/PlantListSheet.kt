@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.plan
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,7 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.PlantEntity
 
 @Composable
-fun PlantListSheet(plants: List<PlantEntity>, modifier: Modifier = Modifier) {
+fun PlantListSheet(
+    plants: List<PlantEntity>,
+    onPlantClick: (PlantEntity) -> Unit, // ADDED
+    modifier: Modifier = Modifier
+) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(bottom = 32.dp)
@@ -39,7 +44,8 @@ fun PlantListSheet(plants: List<PlantEntity>, modifier: Modifier = Modifier) {
                     headlineContent = { Text(plant.title) },
                     supportingContent = { 
                         plant.variety?.let { Text(it) } 
-                    }
+                    },
+                    modifier = Modifier.clickable { onPlantClick(plant) } // ADDED
                 )
             }
         }

@@ -51,7 +51,7 @@ fun GardenPlanScreen(
     val scope = rememberCoroutineScope()
     val garden by vm.currentGarden
     var plants by remember { mutableStateOf(emptyList<PlantEntity>()) }
-    var childGardens by remember { mutableStateOf<List<GardenEntity>>(emptyList()) }
+    var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
 
@@ -137,8 +137,17 @@ fun GardenPlanScreen(
             }
 
             if (showPlantList) {
-                ModalBottomSheet(onDismissRequest = { showPlantList = false }, sheetState = plantListSheetState) {
-                    PlantListSheet(plants = plants)
+                ModalBottomSheet(
+                    onDismissRequest = { showPlantList = false },
+                    sheetState = plantListSheetState
+                ) {
+                    PlantListSheet(
+                        plants = plants,
+                        onPlantClick = { plant ->
+                            showPlantList = false
+                            onOpenPlant(plant.id)
+                        }
+                    )
                 }
             }
 
