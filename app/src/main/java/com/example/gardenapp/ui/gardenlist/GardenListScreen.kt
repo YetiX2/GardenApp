@@ -196,7 +196,7 @@ private fun GardenEditDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, climateZone.toIntOrNull(), type, parentId)
+                onSave(name, w.toIntOrNull() ?: 1000, h.toIntOrNull() ?: 600, step.toIntOrNull() ?: 50, climateZone.toIntOrNull()?:4, type, parentId)
             }) { Text("Сохранить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
