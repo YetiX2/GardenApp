@@ -25,18 +25,23 @@ class GardenPlanState(
     var scale by mutableStateOf(1f)
     var offset by mutableStateOf(Offset.Zero)
     var snapToGrid by mutableStateOf(true)
-    var selectedPlant by mutableStateOf<PlantEntity?>(null)
-    var dragging by mutableStateOf(false)
+    var isLocked by mutableStateOf(false)
     var canvasSize by mutableStateOf(IntSize.Zero)
 
-    var isLocked by mutableStateOf(false)
-    val baseGridPx: Float
-        get() = garden?.gridStepCm?.toFloat() ?: 50f
+    // State for selected items
+    var selectedPlant by mutableStateOf<PlantEntity?>(null)
+    var selectedChildGarden by mutableStateOf<GardenEntity?>(null)
+    
+    // State for dragging gesture
+    var dragging by mutableStateOf(false)
+    var dragStartOffset by mutableStateOf(Offset.Zero)
+
+    val baseGridPx: Float get() = garden?.gridStepCm?.toFloat() ?: 50f
 
     fun screenToWorld(screen: Offset): Offset = (screen - offset) / scale
     fun worldToScreen(world: Offset): Offset = world * scale + offset
 
-    fun getConstrainedPosition(worldPos: Offset, plantRadius: Float): Offset {
+    fun getConstrainedPlantPosition(worldPos: Offset, plantRadius: Float): Offset {
         val gardenWidth = garden?.widthCm?.toFloat()
         val gardenHeight = garden?.heightCm?.toFloat()
 
@@ -57,34 +62,55 @@ class GardenPlanState(
         }
         return snapped
     }
-    
+
+    fun getConstrainedGardenPosition(worldPos: Offset, gardenWidth: Float, gardenHeight: Float): Offset {
+        val parentWidth = garden?.widthCm?.toFloat()
+        val parentHeight = garden?.heightCm?.toFloat()
+
+        val snapped = if (snapToGrid) {
+            Offset(
+                x = (round(worldPos.x / baseGridPx) * baseGridPx),
+                y = (round(worldPos.y / baseGridPx) * baseGridPx)
+            )
+        } else {
+            worldPos
+        }
+
+        if (parentWidth != null && parentHeight != null) {
+            return Offset(
+                x = snapped.x.coerceIn(0f, parentWidth - gardenWidth),
+                y = snapped.y.coerceIn(0f, parentHeight - gardenHeight)
+            )
+        }
+        return snapped
+    }
+
     fun updateViewWithConstraints(pan: Offset, zoom: Float) {
         scale = (scale * zoom).coerceIn(0.2f, 5f)
 
         val newOffset = offset + pan
 
-        val gardenWidth = (garden?.widthCm?.toFloat() ?: 0f) * scale
-        val gardenHeight = (garden?.heightCm?.toFloat() ?: 0f) * scale
+        val gardenWidthScaled = (garden?.widthCm?.toFloat() ?: 0f) * scale
+        val gardenHeightScaled = (garden?.heightCm?.toFloat() ?: 0f) * scale
 
-        // Allow panning a bit outside the garden, e.g., by half the canvas size
         val marginX = canvasSize.width * 0.5f
         val marginY = canvasSize.height * 0.5f
 
-        val minOffsetX = -gardenWidth + canvasSize.width - marginX
+        val minOffsetX = -gardenWidthScaled + canvasSize.width - marginX
         val maxOffsetX = marginX
-        val minOffsetY = -gardenHeight + canvasSize.height - marginY
+        val minOffsetY = -gardenHeightScaled + canvasSize.height - marginY
         val maxOffsetY = marginY
 
-        offset = if (gardenWidth < canvasSize.width) {
-            Offset(x = (canvasSize.width - gardenWidth) / 2f, y = newOffset.y)
+        val tempOffset = if (gardenWidthScaled < canvasSize.width) {
+            Offset(x = (canvasSize.width - gardenWidthScaled) / 2f, y = newOffset.y)
         } else {
             Offset(x = newOffset.x.coerceIn(minOffsetX, maxOffsetX), y = newOffset.y)
         }
 
-        offset = if (gardenHeight < canvasSize.height) {
-            Offset(x = offset.x, y = (canvasSize.height - gardenHeight) / 2f)
+        offset = if (gardenHeightScaled < canvasSize.height) {
+            Offset(x = tempOffset.x, y = (canvasSize.height - gardenHeightScaled) / 2f)
         } else {
-            Offset(x = offset.x, y = newOffset.y.coerceIn(minOffsetY, maxOffsetY))
+            Offset(x = tempOffset.x, y = newOffset.y.coerceIn(minOffsetY, maxOffsetY))
         }
     }
 

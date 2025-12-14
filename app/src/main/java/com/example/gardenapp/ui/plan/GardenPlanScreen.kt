@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.GridOff
@@ -46,17 +46,23 @@ fun GardenPlanScreen(
     val scope = rememberCoroutineScope()
     val garden by vm.currentGarden
     var plants by remember { mutableStateOf(emptyList<PlantEntity>()) }
-    var childGardens by remember { mutableStateOf<List<GardenEntity>>(emptyList()) }
+    var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
 
-
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
+    
     LaunchedEffect(plants) {
         state.selectedPlant?.let { currentSelected ->
             state.selectedPlant = plants.find { p -> p.id == currentSelected.id }
         }
     }
+    LaunchedEffect(childGardens) {
+        state.selectedChildGarden?.let { currentSelected ->
+            state.selectedChildGarden = childGardens.find { g -> g.id == currentSelected.id }
+        }
+    }
+    
     var showEditor by remember { mutableStateOf(false) }
     var isCreating by remember { mutableStateOf(false) }
     var showPlantList by remember { mutableStateOf(false) }
@@ -69,15 +75,8 @@ fun GardenPlanScreen(
                 title = { Text(garden?.name ?: "План сада") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад") } },
                 actions = {
-                    IconButton(onClick = { state.isLocked = !state.isLocked }) {
-                        Icon(
-                            imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
-                            contentDescription = "Заблокировать перемещение"
-                        )
-                    }
-                    IconButton(onClick = { showPlantList = true }) {
-                        Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = "Список растений")
-                    }
+                    IconButton(onClick = { state.isLocked = !state.isLocked }) { Icon(imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen, contentDescription = "Заблокировать перемещение") }
+                    IconButton(onClick = { showPlantList = true }) { Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = "Список растений") }
                     IconButton({ state.snapToGrid = !state.snapToGrid }) { Icon(imageVector = if (state.snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, contentDescription = "Привязка к сетке") }
                     IconButton({ state.resetView() }) { Icon(imageVector = Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
                 }
@@ -101,7 +100,17 @@ fun GardenPlanScreen(
                 plants = plants,
                 childGardens = childGardens,
                 onPlantSelect = { state.selectedPlant = it },
+                onGardenSelect = { state.selectedChildGarden = it },
+                onPlantDrag = { updatedPlant ->
+                    state.selectedPlant = updatedPlant
+                    plants = plants.map { if (it.id == updatedPlant.id) updatedPlant else it }
+                },
+                onGardenDrag = { updatedGarden ->
+                    state.selectedChildGarden = updatedGarden
+                    childGardens = childGardens.map { if (it.id == updatedGarden.id) updatedGarden else it }
+                },
                 onPlantUpdate = { scope.launch { vm.upsertPlant(it) } },
+                onGardenUpdate = { scope.launch { vm.upsertGarden(it) } },
                 onGardenOpen = { onOpenGarden(it.id) },
                 modifier = Modifier.fillMaxSize()
             )
@@ -122,10 +131,7 @@ fun GardenPlanScreen(
             }
 
             if (showPlantList) {
-                ModalBottomSheet(
-                    onDismissRequest = { showPlantList = false },
-                    sheetState = plantListSheetState
-                ) {
+                ModalBottomSheet(onDismissRequest = { showPlantList = false }, sheetState = plantListSheetState) {
                     PlantListSheet(plants = plants)
                 }
             }

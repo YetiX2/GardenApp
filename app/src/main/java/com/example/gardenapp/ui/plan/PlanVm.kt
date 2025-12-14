@@ -23,7 +23,6 @@ class PlanVm @Inject constructor(
 
     fun loadGarden(gardenId: String) {
         viewModelScope.launch {
-            // Use the Flow-based method and take the first result
             _currentGarden.value = repo.observeGardenById(gardenId).first()
         }
     }
@@ -33,6 +32,7 @@ class PlanVm @Inject constructor(
     
     suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
     suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
+    suspend fun upsertGarden(g: GardenEntity) = repo.upsertGarden(g) // ADDED THIS
 
     fun fertilizerLogsFlow(plantId: String): Flow<List<FertilizerLogEntity>> = repo.fertilizerLogs(plantId)
     fun harvestLogsFlow(plantId: String): Flow<List<HarvestLogEntity>> = repo.harvestLogs(plantId)

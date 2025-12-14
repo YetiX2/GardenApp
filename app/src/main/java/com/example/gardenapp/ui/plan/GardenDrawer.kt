@@ -1,0 +1,71 @@
+package com.example.gardenapp.ui.plan
+
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.GardenType
+
+// Final, clean version with no duplicates.
+
+internal fun GardenEntity.toRect(): Rect {
+    val left = (this.x ?: 0).toFloat()
+    val top = (this.y ?: 0).toFloat()
+    return Rect(left, top, left + this.widthCm, top + this.heightCm)
+}
+
+internal fun DrawScope.drawChildGarden(
+    garden: GardenEntity, 
+    bedColor: Color, 
+    greenhouseColor: Color, 
+    buildingColor: Color, 
+    selectedColor: Color,
+    state: GardenPlanState
+) {
+    val rect = worldToScreen(garden.toRect(), state.scale, state.offset)
+    val color = when (garden.type) {
+        GardenType.BED -> bedColor
+        GardenType.GREENHOUSE -> greenhouseColor
+        GardenType.BUILDING -> buildingColor
+        else -> Color.Transparent
+    }
+    drawRect(color, topLeft = rect.topLeft, size = rect.size)
+    drawRect(Color.Black.copy(alpha = 0.7f), topLeft = rect.topLeft, size = rect.size, style = Stroke(1f))
+    if(garden.id == state.selectedChildGarden?.id) {
+        drawRect(selectedColor, topLeft = rect.topLeft, size = rect.size, style = Stroke(width = 3f * state.scale))
+    }
+}
+
+internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
+    return Rect(
+        topLeft = rect.topLeft * scale + offset,
+        bottomRight = rect.bottomRight * scale + offset
+    )
+}
+
+internal fun DrawScope.drawGrid(garden: GardenEntity, color: Color, step: Float, scale: Float, offset: Offset) {
+    val scaledStep = step * scale
+    if (scaledStep < 10) return
+
+    val gardenRect = worldToScreen(Rect(0f, 0f, garden.widthCm.toFloat(), garden.heightCm.toFloat()), scale, offset)
+
+    val startX = (-offset.x % scaledStep)
+    var currentX = startX
+    while (currentX < size.width) {
+        if (currentX >= gardenRect.left && currentX <= gardenRect.right) {
+            drawLine(color, Offset(currentX, gardenRect.top.coerceAtLeast(0f)), Offset(currentX, gardenRect.bottom.coerceAtMost(size.height)))
+        }
+        currentX += scaledStep
+    }
+
+    val startY = (-offset.y % scaledStep)
+    var currentY = startY
+    while (currentY < size.height) {
+        if (currentY >= gardenRect.top && currentY <= gardenRect.bottom) {
+            drawLine(color, Offset(gardenRect.left.coerceAtLeast(0f), currentY), Offset(gardenRect.right.coerceAtMost(size.width), currentY))
+        }
+        currentY += scaledStep
+    }
+}
