@@ -85,7 +85,7 @@ fun GardenPlanScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = { 
                 val centerWorld = state.screenToWorld(Offset(state.canvasSize.width / 2f, state.canvasSize.height / 2f))
-                val newPlant = PlantEntity(UUID.randomUUID().toString(), gardenId, "Новое растение", null, null, centerWorld.x, centerWorld.y, 35f, LocalDate.now())
+                val newPlant = PlantEntity(UUID.randomUUID().toString(), gardenId, "", null, null, centerWorld.x, centerWorld.y, 35f, LocalDate.now())
                 state.selectedPlant = newPlant
                 isCreating = true
                 showEditor = true

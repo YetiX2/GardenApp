@@ -13,11 +13,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import com.example.gardenapp.data.db.GardenEntity
-import com.example.gardenapp.data.db.GardenType // NEW
+import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
 import kotlin.math.hypot
 
@@ -43,7 +43,9 @@ fun GardenCanvas(
     val buildingColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    val textColor = MaterialTheme.colorScheme.onSurface
 
+    val textMeasurer = rememberTextMeasurer()
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
 
@@ -210,37 +212,39 @@ fun GardenCanvas(
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
         state.garden?.let {
-            drawGrid(
-                garden = it,
-                color = gridColor,
-                step = state.baseGridPx,
-                scale = state.scale,
-                offset = state.offset
-            )
+            if (state.snapToGrid) {
+                drawGrid(
+                    garden = it,
+                    color = gridColor,
+                    step = state.baseGridPx,
+                    scale = state.scale,
+                    offset = state.offset
+                )
+            }
         }
 
         childGardens.forEach { child ->
             drawChildGarden(
-                child,
-                bedColor,
-                greenhouseColor,
-                buildingColor,
-                selectedStroke,
-                state
+                garden = child,
+                bedColor = bedColor,
+                greenhouseColor = greenhouseColor,
+                buildingColor = buildingColor,
+                selectedColor = selectedStroke,
+                textColor = textColor,
+                state = state,
+                textMeasurer = textMeasurer
             )
         }
 
         plants.forEach { p ->
-            val center = state.worldToScreen(Offset(p.x, p.y))
-            drawCircle(color = plantColor, radius = p.radius * state.scale, center = center)
-            if (p.id == state.selectedPlant?.id) {
-                drawCircle(
-                    color = selectedStroke,
-                    radius = (p.radius + 6) * state.scale,
-                    center = center,
-                    style = Stroke(width = 3f)
-                )
-            }
+            drawPlant(
+                plant = p,
+                plantColor = plantColor,
+                selectedColor = selectedStroke,
+                textColor = textColor,
+                state = state,
+                textMeasurer = textMeasurer
+            )
         }
     }
 }
