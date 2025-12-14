@@ -55,7 +55,7 @@ fun GardenCanvas(
             .pointerInput(state.isLocked) {
                 var lastTapTime = 0L
                 var lastTapWorldPos: Offset? = null
-                var lastTappedGardenId: String? = null // CHANGED: String?
+                var lastTappedGardenId: String? = null
 
                 awaitEachGesture {
                     val down = awaitFirstDown()
@@ -74,6 +74,7 @@ fun GardenCanvas(
                     var isPanning = false
                     var isTransform = false
 
+                    // ДВИГАТЬ ОБЪЕКТЫ МОЖНО ТОЛЬКО ЕСЛИ НЕ ЗАБЛОКИРОВАНО
                     if (!state.isLocked) {
                         when {
                             hitGarden != null -> {
@@ -97,9 +98,14 @@ fun GardenCanvas(
                             else -> {
                                 onPlantSelect(null)
                                 onGardenSelect(null)
-                                isPanning = true
+                                // здесь isPanning выставим ниже, чтобы панорама работала и в lock
                             }
                         }
+                    }
+
+                    // CHANGED: панорама разрешена ВСЕГДА, если не тащим объект
+                    if (!isDraggingObject) {
+                        isPanning = true
                     }
 
                     val initialPos = down.position
@@ -113,7 +119,7 @@ fun GardenCanvas(
 
                         val pressedChanges = event.changes.filter { it.pressed }
 
-                        // PINCH-ZOOM
+                        // PINCH-ZOOM — НЕ ЗАВИСИТ ОТ isLocked
                         if (pressedChanges.size > 1 || isTransform) {
                             isTransform = true
                             val zoom = event.calculateZoom()
@@ -161,7 +167,9 @@ fun GardenCanvas(
                                     )
                                 )
                             }
-                        } else if (isPanning && !state.isLocked) {
+                        }
+                        // CHANGED: pan не проверяет isLocked
+                        else if (isPanning) {
                             val pan = (pos - lastPos) / state.scale
                             state.updateViewWithConstraints(pan, 1f)
                         }
@@ -170,19 +178,20 @@ fun GardenCanvas(
                         change.consume()
                     }
 
+                    // Фиксировать перемещение объектов — только если не locked
                     if (isDraggingObject && !isTransform && !state.isLocked && hasMoved) {
                         state.selectedPlant?.let { onPlantUpdate(it) }
                         state.selectedChildGarden?.let { onGardenUpdate(it) }
                     }
 
-                    // ===== ДВОЙНОЙ ТАП ПО GARDEN, КРОМЕ BUILDING =====
+                    // ДВОЙНОЙ ТАП ПО GARDEN (кроме BUILDING) — РАБОТАЕТ ДАЖЕ В LOCK
                     val tappedGarden = hitGarden
                     val isTapOnGarden =
                         tappedGarden != null &&
-                                tappedGarden.type != GardenType.BUILDING && // NEW: запрет на BUILDING
+                                tappedGarden.type != GardenType.BUILDING &&
                                 !isTransform &&
-                                !hasMoved &&
-                                !state.isLocked
+                                !hasMoved
+                    // CHANGED: убрали !state.isLocked, чтобы double-tap работал в lock
 
                     if (isTapOnGarden && tappedGarden != null) {
                         val tapTime = down.uptimeMillis
