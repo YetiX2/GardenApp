@@ -25,11 +25,13 @@ import androidx.compose.material.icons.outlined.GridOff
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
@@ -63,13 +65,21 @@ fun GardenPlanScreen(
     val defaultBedColor = 0x99668B7E.toInt()
     val defaultGreenhouseColor = 0x99D1C4E9.toInt()
     val defaultBuildingColor = 0x99C2DEDC.toInt()
+    val defaulGridColor =  0x4D1C1B1F.toInt()
+    val defaulBackgroundColor = 0
+    val defaultTextColor = Color.Black.toArgb()
+    val defaulSelectedStroke = Color.Black.toArgb()
 
     val plantColor by vm.plantColor.collectAsState(initial = defaultPlantColor)
     val bedColor by vm.bedColor.collectAsState(initial = defaultBedColor)
     val greenhouseColor by vm.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
     val buildingColor by vm.buildingColor.collectAsState(initial = defaultBuildingColor)
-    val gridColor by vm.gridColor.collectAsState()
-    val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState()
+    val gridColor by vm.gridColor.collectAsState(initial = defaulGridColor)
+    val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState(initial = defaulBackgroundColor)
+    val textColor by vm.textColor.collectAsState(initial = defaultTextColor)
+    val selectedStroke by vm.gardenSelectedStrokeColor.collectAsState(initial = defaulSelectedStroke)
+
+
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
     
@@ -125,8 +135,10 @@ fun GardenPlanScreen(
                 bedColor = Color(bedColor ?: defaultBedColor),
                 greenhouseColor = Color(greenhouseColor ?: defaultGreenhouseColor),
                 buildingColor = Color(buildingColor ?: defaultBuildingColor),
-                gridColor = Color(gridColor),
-                gardenBackgroundColor = Color(gardenBackgroundColor),
+                gridColor = Color(gridColor?: defaulGridColor),
+                gardenBackgroundColor = Color(gardenBackgroundColor?: defaulBackgroundColor),
+                textColor = Color(textColor?: defaultTextColor),
+                selectedStrokeColor = Color(selectedStroke?: defaulSelectedStroke),
                 onPlantSelect = { state.selectedPlant = it },
                 onGardenSelect = { state.selectedChildGarden = it },
                 onPlantDrag = { updatedPlant ->

@@ -36,6 +36,8 @@ fun GardenCanvas(
     buildingColor: Color, // ADDED
     gridColor: Color, // ADDED
     gardenBackgroundColor: Color,
+    textColor: Color,
+    selectedStrokeColor: Color,
     onPlantSelect: (PlantEntity?) -> Unit,
     onGardenSelect: (GardenEntity?) -> Unit,
     onPlantDrag: (PlantEntity) -> Unit,
@@ -45,9 +47,6 @@ fun GardenCanvas(
     onGardenOpen: (GardenEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val selectedStroke = MaterialTheme.colorScheme.primary
-    val textColor = MaterialTheme.colorScheme.onSurface
-
     val textMeasurer = rememberTextMeasurer()
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
@@ -254,7 +253,7 @@ fun GardenCanvas(
                 bedColor = bedColor,
                 greenhouseColor = greenhouseColor,
                 buildingColor = buildingColor,
-                selectedColor = selectedStroke,
+                selectedColor = selectedStrokeColor,
                 textColor = textColor,
                 state = state,
                 textMeasurer = textMeasurer
@@ -265,7 +264,7 @@ fun GardenCanvas(
             drawPlant(
                 plant = p,
                 plantColor = plantColor,
-                selectedColor = selectedStroke,
+                selectedColor = selectedStrokeColor,
                 textColor = textColor,
                 state = state,
                 textMeasurer = textMeasurer

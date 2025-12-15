@@ -46,6 +46,15 @@ class PlanVm @Inject constructor(
 
     private val _gardenBackgroundColor = MutableStateFlow(0)
     val gardenBackgroundColor: StateFlow<Int> = _gardenBackgroundColor.asStateFlow()
+
+
+    private val _gardenTextColor = MutableStateFlow(0)
+    val textColor: StateFlow<Int> = _gardenTextColor.asStateFlow()
+
+
+    private val _gardenSelectedStrokeColor = MutableStateFlow(0)
+    val gardenSelectedStrokeColor: StateFlow<Int> = _gardenSelectedStrokeColor.asStateFlow()
+
     init {
         // Collect colors from repository and update local state
         colorSettingsRepo.plantColor.onEach { _plantColor.value = it ?: 0xFF4CAF50.toInt() }.launchIn(viewModelScope)
