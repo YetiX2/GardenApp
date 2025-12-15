@@ -38,6 +38,25 @@ class GardenPlanState(
 
     val baseGridPx: Float get() = garden?.gridStepCm?.toFloat() ?: 50f
 
+    var isViewportInitialized: Boolean by mutableStateOf(false)
+
+    fun ensureGardenCentered() {
+        if (isViewportInitialized) return
+
+        val g = garden ?: return
+        if (canvasSize.width == 0 || canvasSize.height == 0) return
+
+        val gardenWidthPx = g.widthCm * scale
+        val gardenHeightPx = g.heightCm * scale
+
+        offset = Offset(
+            x = (canvasSize.width - gardenWidthPx) / 2f,
+            y = (canvasSize.height - gardenHeightPx) / 2f
+        )
+
+        isViewportInitialized = true
+    }
+
     fun screenToWorld(screen: Offset): Offset = (screen - offset) / scale
     fun worldToScreen(world: Offset): Offset = world * scale + offset
 

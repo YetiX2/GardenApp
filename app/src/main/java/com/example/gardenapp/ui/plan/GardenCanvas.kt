@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -49,6 +50,10 @@ fun GardenCanvas(
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
 
+    // 📌 ОДНОРАЗОВАЯ ЦЕНТРОВКА ПРИ ПЕРВОЙ ОТРИСОВКЕ
+    LaunchedEffect(state.garden, state.canvasSize, state.scale) {
+        state.ensureGardenCentered()
+    }
     Canvas(
         modifier = modifier
             .fillMaxSize()
