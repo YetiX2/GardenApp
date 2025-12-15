@@ -70,4 +70,16 @@ class ColorSettingsRepository @Inject constructor(@ApplicationContext private va
         context.dataStore.edit { it[Keys.selectedStrokeColor] = color }
     }
 
+    suspend fun clearAllColors() { // ADDED
+        context.dataStore.edit {
+            it.remove(Keys.plantColor)
+            it.remove(Keys.bedColor)
+            it.remove(Keys.greenhouseColor)
+            it.remove(Keys.buildingColor)
+            it.remove(Keys.gridColor)
+            it.remove(Keys.gardenBackgroundColor)
+            it.remove(Keys.textColor)
+            it.remove(Keys.selectedStrokeColor)
+        }
+    }
 }

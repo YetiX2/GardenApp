@@ -45,6 +45,7 @@ fun ColorSettingsScreen(
     val gardenBackgroundColor by vm.settings.gardenBackgroundColor.collectAsState(initial = defaultBackgroundColor)
     val textColor by vm.settings.textColor.collectAsState(initial = defaultTextColor)
     val selectedStrokeColor by vm.settings.selectedStrokeColor.collectAsState(initial = defaultSelectedStrokeColor)
+    var showResetDialog by remember { mutableStateOf(false) } // ADDED
 
     Scaffold(
         topBar = {
@@ -97,7 +98,30 @@ fun ColorSettingsScreen(
                 color = Color(selectedStrokeColor ?: defaultSelectedStrokeColor),
                 onColorSelected = { newColor -> vm.saveSelectedStrokeColor(newColor.toArgb()) }
             )
+            Spacer(modifier = Modifier.weight(1f))
+            OutlinedButton(
+                onClick = { showResetDialog = true }, // ADDED
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Сбросить настройки")
+            }
         }
+    }
+    if (showResetDialog) { // ADDED
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Сбросить настройки") },
+            text = { Text("Вы уверены, что хотите сбросить все цветовые настройки до значений по умолчанию?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.resetColors()
+                        showResetDialog = false
+                    }
+                ) { Text("Сбросить") }
+            },
+            dismissButton = { TextButton(onClick = { showResetDialog = false }) { Text("Отмена") } }
+        )
     }
 }
 

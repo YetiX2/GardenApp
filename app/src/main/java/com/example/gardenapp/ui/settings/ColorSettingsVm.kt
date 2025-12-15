@@ -28,21 +28,23 @@ class ColorSettingsVm @Inject constructor(
         settings.saveBuildingColor(color)
     }
 
-    fun saveGridColor(color: Int) = viewModelScope.launch { // ADDED
+    fun saveGridColor(color: Int) = viewModelScope.launch {
         settings.saveGridColor(color)
     }
 
-    fun saveGardenBackgroundColor(color: Int) = viewModelScope.launch { // ADDED
+    fun saveGardenBackgroundColor(color: Int) = viewModelScope.launch {
         settings.saveGardenBackgroundColor(color)
     }
 
-    fun saveTextColor(color: Int) = viewModelScope.launch { // ADDED
+    fun saveTextColor(color: Int) = viewModelScope.launch {
         settings.saveTextColor(color)
     }
 
-    fun saveSelectedStrokeColor(color: Int) = viewModelScope.launch { // ADDED
+    fun saveSelectedStrokeColor(color: Int) = viewModelScope.launch {
         settings.saveSelectedStrokeColor(color)
     }
 
-
+    fun resetColors() = viewModelScope.launch { // ADDED
+        settings.clearAllColors()
+    }
 }
