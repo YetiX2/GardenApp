@@ -3,6 +3,8 @@ package com.example.gardenapp.ui.plan
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
@@ -19,7 +21,7 @@ import kotlinx.coroutines.flow.flowOf
 import java.time.LocalDate
 import kotlin.math.abs
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) // ADDED ExperimentalLayoutApi
 @Composable
 fun PlantEditor(
     plant: PlantEntity,
@@ -122,9 +124,16 @@ fun PlantEditor(
             DateRow(label = "Дата посадки", date = plantedAt, onPick = { plantedAt = it })
 
             if (tags.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 8.dp)) {
-                    tags.forEach { tag -> AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") }) }
+                // === MODIFIED BLOCK START ===
+                Box(modifier = Modifier.heightIn(max = 150.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 8.dp).verticalScroll(rememberScrollState())
+                    ) {
+                        tags.forEach { tag -> AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") }) }
+                    }
                 }
+                // === MODIFIED BLOCK END ===
             }
 
             Row {
