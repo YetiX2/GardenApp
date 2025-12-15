@@ -1,6 +1,7 @@
 package com.example.gardenapp.ui.gardenlist
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -33,6 +35,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
     var showEditDialog by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<GardenEntity?>(null) }
     var showDeleteConfirm by remember { mutableStateOf<GardenEntity?>(null) }
+    var expandedMenuGardenId by remember { mutableStateOf<String?>(null) } // ADDED
 
     Scaffold(
         topBar = { 
@@ -47,7 +50,7 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { editTarget = null; showEditDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(Icons.Default.Add, contentDescription = "Добавить")
             }
         }
     ) { pad ->
@@ -61,9 +64,33 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                             Text("$typeText • ${g.widthCm}×${g.heightCm} см")
                         },
                         trailingContent = {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                IconButton(onClick = { editTarget = g; showEditDialog = true }) { Icon(Icons.Default.Edit, contentDescription = null) }
-                                IconButton(onClick = { showDeleteConfirm = g }) { Icon(Icons.Default.Delete, contentDescription = null) }
+                            // REPLACED Row with Box and DropdownMenu
+                            Box {
+                                IconButton(onClick = { expandedMenuGardenId = g.id }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Дополнительно")
+                                }
+                                DropdownMenu(
+                                    expanded = expandedMenuGardenId == g.id,
+                                    onDismissRequest = { expandedMenuGardenId = null }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Редактировать") },
+                                        onClick = { 
+                                            editTarget = g
+                                            showEditDialog = true
+                                            expandedMenuGardenId = null 
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Удалить") },
+                                        onClick = { 
+                                            showDeleteConfirm = g
+                                            expandedMenuGardenId = null 
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
+                                    )
+                                }
                             }
                         }
                     )
@@ -158,8 +185,8 @@ private fun GardenEditDialog(
                 ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
                     OutlinedTextField(type.toRussian(), {}, readOnly = true, label = { Text("Тип") }, modifier = Modifier.menuAnchor().fillMaxWidth(), trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) })
                     ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                        GardenType.values().forEach { 
-                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { 
+                        GardenType.values().forEach {
+                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = {
                                 type = it
                                 typeMenuExpanded = false
                                 if (it == GardenType.PLOT) parentId = null // Reset parent if type is PLOT
@@ -178,9 +205,9 @@ private fun GardenEditDialog(
                                 DropdownMenuItem(text = { Text("Нет доступных участков") }, onClick = {}, enabled = false)
                             } else {
                                 possibleParents.forEach { plot ->
-                                    DropdownMenuItem(text = { Text(plot.name) }, onClick = { 
+                                    DropdownMenuItem(text = { Text(plot.name) }, onClick = {
                                         parentId = plot.id
-                                        parentMenuExpanded = false 
+                                        parentMenuExpanded = false
                                     })
                                 }
                             }
