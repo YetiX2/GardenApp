@@ -8,6 +8,7 @@ import com.example.gardenapp.ui.dashboard.DashboardScreen
 import com.example.gardenapp.ui.gardenlist.GardenListScreen
 import com.example.gardenapp.ui.plant.PlantEditorScreen
 import com.example.gardenapp.ui.plan.GardenPlanScreen
+import com.example.gardenapp.ui.settings.ColorSettingsScreen
 import com.example.gardenapp.ui.settings.SettingsScreen
 import com.example.gardenapp.ui.tasks.TaskListScreen
 
@@ -18,6 +19,7 @@ sealed class Route(val value: String) {
     data object PlantEditor : Route("plant/{plantId}")
     data object Tasks : Route("tasks")
     data object Settings : Route("settings")
+    data object ColorSettings : Route("colorSettings")
 }
 
 @Composable
@@ -43,7 +45,8 @@ fun AppNav() {
                 gardenId = id, 
                 onBack = { nav.popBackStack() },
                 onOpenPlant = { plantId -> nav.navigate("plant/$plantId") },
-                onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") } // ADDED THIS
+                onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") },
+                onOpenColorSettings = { nav.navigate(Route.ColorSettings.value) }
             )
         }
         composable(Route.PlantEditor.value) { backStack ->
@@ -54,6 +57,10 @@ fun AppNav() {
         }
         composable(Route.Settings.value) {
             SettingsScreen(onBack = { nav.popBackStack() })
+        }
+        // ADDED
+        composable(Route.ColorSettings.value) {
+            ColorSettingsScreen(onBack = { nav.popBackStack() })
         }
     }
 }

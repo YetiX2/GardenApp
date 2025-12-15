@@ -29,6 +29,10 @@ fun GardenCanvas(
     state: GardenPlanState,
     plants: List<PlantEntity>,
     childGardens: List<GardenEntity>,
+    plantColor: Color, // ADDED
+    bedColor: Color, // ADDED
+    greenhouseColor: Color, // ADDED
+    buildingColor: Color, // ADDED
     onPlantSelect: (PlantEntity?) -> Unit,
     onGardenSelect: (GardenEntity?) -> Unit,
     onPlantDrag: (PlantEntity) -> Unit,

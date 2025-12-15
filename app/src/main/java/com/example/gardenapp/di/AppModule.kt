@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.db.ReferenceDao
 import com.example.gardenapp.data.location.LocationTracker
+import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import com.example.gardenapp.data.repo.WeatherRepository
@@ -33,6 +34,13 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(@ApplicationContext context: Context): ColorSettingsRepository {
+        return ColorSettingsRepository(context)
+    }
+
     @Provides
     @Singleton
     fun provideDb(
@@ -77,6 +85,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideRepo(db: GardenDatabase, referenceDao: ReferenceDao, locationTracker: LocationTracker): GardenRepository {
+        return GardenRepository(db, referenceDao)
+    }
+
+    @Provides
+    @Singleton
     fun provideWeatherApi(retrofit: Retrofit): WeatherApi {
         return retrofit.create(WeatherApi::class.java)
     }
@@ -95,15 +109,10 @@ object AppModule {
     ): LocationTracker {
         return LocationTracker(locationClient, app)
     }
-    // -----------------------------
 
     @Provides
     @Singleton
     fun provideWeatherRepository(weatherApi: WeatherApi, locationTracker: LocationTracker) = WeatherRepository(weatherApi, locationTracker)
-
-    @Provides
-    @Singleton
-    fun provideRepo(db: GardenDatabase, referenceDao: ReferenceDao) = GardenRepository(db, referenceDao)
 
     // ... остальные DAO ...
     @Provides

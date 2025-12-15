@@ -1,0 +1,46 @@
+package com.example.gardenapp.data.repo
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "colorSettings")
+
+@Singleton
+class ColorSettingsRepository @Inject constructor(@ApplicationContext private val context: Context) {
+
+    private object Keys {
+        val plantColor = intPreferencesKey("plant_color")
+        val bedColor = intPreferencesKey("bed_color")
+        val greenhouseColor = intPreferencesKey("greenhouse_color")
+        val buildingColor = intPreferencesKey("building_color")
+    }
+
+    val plantColor = context.dataStore.data.map { it[Keys.plantColor] }
+    val bedColor = context.dataStore.data.map { it[Keys.bedColor] }
+    val greenhouseColor = context.dataStore.data.map { it[Keys.greenhouseColor] }
+    val buildingColor = context.dataStore.data.map { it[Keys.buildingColor] }
+
+    suspend fun savePlantColor(color: Int) {
+        context.dataStore.edit { it[Keys.plantColor] = color }
+    }
+
+    suspend fun saveBedColor(color: Int) {
+        context.dataStore.edit { it[Keys.bedColor] = color }
+    }
+
+    suspend fun saveGreenhouseColor(color: Int) {
+        context.dataStore.edit { it[Keys.greenhouseColor] = color }
+    }
+
+    suspend fun saveBuildingColor(color: Int) {
+        context.dataStore.edit { it[Keys.buildingColor] = color }
+    }
+}

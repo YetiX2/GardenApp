@@ -23,11 +23,13 @@ import androidx.compose.material.icons.filled.TextIncrease
 import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.GridOff
 import androidx.compose.material.icons.outlined.GridOn
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
@@ -44,6 +46,7 @@ fun GardenPlanScreen(
     onBack: () -> Unit,
     onOpenPlant: (String) -> Unit,
     onOpenGarden: (String) -> Unit,
+    onOpenColorSettings: () -> Unit, // ADDED
     vm: PlanVm = hiltViewModel()
 ) {
     LaunchedEffect(gardenId) { vm.loadGarden(gardenId) }
@@ -54,6 +57,18 @@ fun GardenPlanScreen(
     var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
+
+    // Collect colors from settings
+    val defaultPlantColor = 0xFF4CAF50.toInt()
+    val defaultBedColor = 0x99668B7E.toInt()
+    val defaultGreenhouseColor = 0x99D1C4E9.toInt()
+    val defaultBuildingColor = 0x99C2DEDC.toInt()
+
+    val plantColor by vm.settings.plantColor.collectAsState(initial = defaultPlantColor)
+    val bedColor by vm.settings.bedColor.collectAsState(initial = defaultBedColor)
+    val greenhouseColor by vm.settings.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
+    val buildingColor by vm.settings.buildingColor.collectAsState(initial = defaultBuildingColor)
+
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
     
@@ -78,13 +93,13 @@ fun GardenPlanScreen(
         topBar = {
             TopAppBar(
                 title = { Text(garden?.name ?: "План сада") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
                 actions = {
                     IconButton(onClick = { state.showNames = !state.showNames }) { Icon(imageVector = if (state.showNames) Icons.Default.TextDecrease else Icons.Default.TextIncrease, contentDescription = "Показать/скрыть названия") }
                     IconButton(onClick = { state.isLocked = !state.isLocked }) { Icon(imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen, contentDescription = "Заблокировать перемещение") }
                     IconButton(onClick = { showPlantList = true }) { Icon(imageVector = Icons.Default.Grass, contentDescription = "Список растений") }
                     IconButton({ state.snapToGrid = !state.snapToGrid }) { Icon(imageVector = if (state.snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, contentDescription = "Привязка к сетке") }
-                    IconButton({ state.resetView() }) { Icon(imageVector = Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
+                    IconButton(onClick = onOpenColorSettings) { Icon(Icons.Outlined.Settings, "Настройки") }
                 }
             )
         },
@@ -105,6 +120,10 @@ fun GardenPlanScreen(
                 state = state,
                 plants = plants,
                 childGardens = childGardens,
+                plantColor = Color(plantColor ?: defaultPlantColor),
+                bedColor = Color(bedColor ?: defaultBedColor),
+                greenhouseColor = Color(greenhouseColor ?: defaultGreenhouseColor),
+                buildingColor = Color(buildingColor ?: defaultBuildingColor),
                 onPlantSelect = { state.selectedPlant = it },
                 onGardenSelect = { state.selectedChildGarden = it },
                 onPlantDrag = { updatedPlant ->

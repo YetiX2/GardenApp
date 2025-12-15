@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
+import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PlanVm @Inject constructor(
     private val repo: GardenRepository,
-    private val referenceDao: ReferenceDao
+    private val referenceDao: ReferenceDao,
+    val settings: ColorSettingsRepository // ADDED
 ) : ViewModel() {
     private val _currentGarden = mutableStateOf<GardenEntity?>(null)
     val currentGarden: State<GardenEntity?> = _currentGarden
