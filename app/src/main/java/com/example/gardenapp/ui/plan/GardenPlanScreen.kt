@@ -64,10 +64,10 @@ fun GardenPlanScreen(
     val defaultGreenhouseColor = 0x99D1C4E9.toInt()
     val defaultBuildingColor = 0x99C2DEDC.toInt()
 
-    val plantColor by vm.settings.plantColor.collectAsState(initial = defaultPlantColor)
-    val bedColor by vm.settings.bedColor.collectAsState(initial = defaultBedColor)
-    val greenhouseColor by vm.settings.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
-    val buildingColor by vm.settings.buildingColor.collectAsState(initial = defaultBuildingColor)
+    val plantColor by vm.plantColor.collectAsState(initial = defaultPlantColor)
+    val bedColor by vm.bedColor.collectAsState(initial = defaultBedColor)
+    val greenhouseColor by vm.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
+    val buildingColor by vm.buildingColor.collectAsState(initial = defaultBuildingColor)
 
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)

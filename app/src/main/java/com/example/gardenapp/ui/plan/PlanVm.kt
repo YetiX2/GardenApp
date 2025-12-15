@@ -9,7 +9,12 @@ import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -18,10 +23,32 @@ import javax.inject.Inject
 class PlanVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceDao: ReferenceDao,
-    val settings: ColorSettingsRepository // ADDED
+    private val colorSettingsRepo: ColorSettingsRepository
 ) : ViewModel() {
     private val _currentGarden = mutableStateOf<GardenEntity?>(null)
     val currentGarden: State<GardenEntity?> = _currentGarden
+
+    // --- Color State ---
+    private val _plantColor = MutableStateFlow(0xFF4CAF50.toInt())
+    val plantColor: StateFlow<Int> = _plantColor.asStateFlow()
+
+    private val _bedColor = MutableStateFlow(0x99668B7E.toInt())
+    val bedColor: StateFlow<Int> = _bedColor.asStateFlow()
+
+    private val _greenhouseColor = MutableStateFlow(0x99D1C4E9.toInt())
+    val greenhouseColor: StateFlow<Int> = _greenhouseColor.asStateFlow()
+
+    private val _buildingColor = MutableStateFlow(0x99C2DEDC.toInt())
+    val buildingColor: StateFlow<Int> = _buildingColor.asStateFlow()
+
+    init {
+        // Collect colors from repository and update local state
+        colorSettingsRepo.plantColor.onEach { _plantColor.value = it ?: 0xFF4CAF50.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.bedColor.onEach { _bedColor.value = it ?: 0x99668B7E.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.greenhouseColor.onEach { _greenhouseColor.value = it ?: 0x99D1C4E9.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.buildingColor.onEach { _buildingColor.value = it ?: 0x99C2DEDC.toInt() }.launchIn(viewModelScope)
+    }
+
 
     fun loadGarden(gardenId: String) {
         viewModelScope.launch {

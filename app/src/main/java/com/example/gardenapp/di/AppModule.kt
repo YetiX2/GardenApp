@@ -37,7 +37,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(@ApplicationContext context: Context): ColorSettingsRepository {
+    fun provideColorSettingsRepository(@ApplicationContext context: Context): ColorSettingsRepository {
         return ColorSettingsRepository(context)
     }
 
