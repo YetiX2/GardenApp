@@ -41,12 +41,20 @@ class PlanVm @Inject constructor(
     private val _buildingColor = MutableStateFlow(0x99C2DEDC.toInt())
     val buildingColor: StateFlow<Int> = _buildingColor.asStateFlow()
 
+    private val _gridColor = MutableStateFlow(0x4D1C1B1F.toInt()) // outline with 0.3f alpha
+    val gridColor: StateFlow<Int> = _gridColor.asStateFlow()
+
+    private val _gardenBackgroundColor = MutableStateFlow(0)
+    val gardenBackgroundColor: StateFlow<Int> = _gardenBackgroundColor.asStateFlow()
     init {
         // Collect colors from repository and update local state
         colorSettingsRepo.plantColor.onEach { _plantColor.value = it ?: 0xFF4CAF50.toInt() }.launchIn(viewModelScope)
         colorSettingsRepo.bedColor.onEach { _bedColor.value = it ?: 0x99668B7E.toInt() }.launchIn(viewModelScope)
         colorSettingsRepo.greenhouseColor.onEach { _greenhouseColor.value = it ?: 0x99D1C4E9.toInt() }.launchIn(viewModelScope)
         colorSettingsRepo.buildingColor.onEach { _buildingColor.value = it ?: 0x99C2DEDC.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.gridColor.onEach { _gridColor.value = it ?: 0x4D1C1B1F.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.gardenBackgroundColor.onEach { _gardenBackgroundColor.value = it ?: 0 }.launchIn(viewModelScope)
+
     }
 
 

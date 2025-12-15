@@ -68,7 +68,8 @@ fun GardenPlanScreen(
     val bedColor by vm.bedColor.collectAsState(initial = defaultBedColor)
     val greenhouseColor by vm.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
     val buildingColor by vm.buildingColor.collectAsState(initial = defaultBuildingColor)
-
+    val gridColor by vm.gridColor.collectAsState()
+    val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState()
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
     
@@ -124,6 +125,8 @@ fun GardenPlanScreen(
                 bedColor = Color(bedColor ?: defaultBedColor),
                 greenhouseColor = Color(greenhouseColor ?: defaultGreenhouseColor),
                 buildingColor = Color(buildingColor ?: defaultBuildingColor),
+                gridColor = Color(gridColor),
+                gardenBackgroundColor = Color(gardenBackgroundColor),
                 onPlantSelect = { state.selectedPlant = it },
                 onGardenSelect = { state.selectedChildGarden = it },
                 onPlantDrag = { updatedPlant ->

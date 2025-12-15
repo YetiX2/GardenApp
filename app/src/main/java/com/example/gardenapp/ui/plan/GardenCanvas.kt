@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -33,6 +34,8 @@ fun GardenCanvas(
     bedColor: Color, // ADDED
     greenhouseColor: Color, // ADDED
     buildingColor: Color, // ADDED
+    gridColor: Color, // ADDED
+    gardenBackgroundColor: Color,
     onPlantSelect: (PlantEntity?) -> Unit,
     onGardenSelect: (GardenEntity?) -> Unit,
     onPlantDrag: (PlantEntity) -> Unit,
@@ -43,7 +46,6 @@ fun GardenCanvas(
     modifier: Modifier = Modifier
 ) {
     val selectedStroke = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
     val textColor = MaterialTheme.colorScheme.onSurface
 
     val textMeasurer = rememberTextMeasurer()
@@ -226,6 +228,15 @@ fun GardenCanvas(
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
         state.garden?.let {
+            // Draw background first
+            if (gardenBackgroundColor.alpha > 0) {
+                val backgroundRect = worldToScreen(
+                    Rect(0f, 0f, it.widthCm.toFloat(), it.heightCm.toFloat()),
+                    state.scale,
+                    state.offset
+                )
+                drawRect(color = gardenBackgroundColor, topLeft = backgroundRect.topLeft, size = backgroundRect.size)
+            }
             if (state.snapToGrid) {
                 drawGrid(
                     garden = it,

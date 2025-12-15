@@ -32,11 +32,15 @@ fun ColorSettingsScreen(
     val defaultBedColor = 0x99668B7E.toInt()
     val defaultGreenhouseColor = 0x99D1C4E9.toInt()
     val defaultBuildingColor = 0x99C2DEDC.toInt()
+    val defaultGridColor = 0x4D1C1B1F.toInt()
+    val defaultBackgroundColor = 0 // Transparent
 
     val plantColor by vm.settings.plantColor.collectAsState(initial = defaultPlantColor)
     val bedColor by vm.settings.bedColor.collectAsState(initial = defaultBedColor)
     val greenhouseColor by vm.settings.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
     val buildingColor by vm.settings.buildingColor.collectAsState(initial = defaultBuildingColor)
+    val gridColor by vm.settings.gridColor.collectAsState(initial = defaultGridColor)
+    val gardenBackgroundColor by vm.settings.gardenBackgroundColor.collectAsState(initial = defaultBackgroundColor)
 
     Scaffold(
         topBar = {
@@ -66,6 +70,17 @@ fun ColorSettingsScreen(
                 label = "Цвет строений",
                 color = Color(buildingColor ?: defaultBuildingColor),
                 onColorSelected = { newColor -> vm.saveBuildingColor(newColor.toArgb()) }
+            )
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            ColorSettingRow(
+                label = "Цвет сетки",
+                color = Color(gridColor ?: defaultGridColor),
+                onColorSelected = { newColor -> vm.saveGridColor(newColor.toArgb()) }
+            )
+            ColorSettingRow(
+                label = "Цвет фона участка",
+                color = Color(gardenBackgroundColor ?: defaultBackgroundColor),
+                onColorSelected = { newColor -> vm.saveGardenBackgroundColor(newColor.toArgb()) }
             )
         }
     }
