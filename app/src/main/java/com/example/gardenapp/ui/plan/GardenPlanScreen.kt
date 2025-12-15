@@ -77,7 +77,7 @@ fun GardenPlanScreen(
     val gridColor by vm.gridColor.collectAsState(initial = defaulGridColor)
     val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState(initial = defaulBackgroundColor)
     val textColor by vm.textColor.collectAsState(initial = defaultTextColor)
-    val selectedStroke by vm.gardenSelectedStrokeColor.collectAsState(initial = defaulSelectedStroke)
+    val selectedStroke by vm.selectedStrokeColor.collectAsState(initial = defaulSelectedStroke)
 
 
 

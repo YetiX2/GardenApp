@@ -34,6 +34,8 @@ fun ColorSettingsScreen(
     val defaultBuildingColor = 0x99C2DEDC.toInt()
     val defaultGridColor = 0x4D1C1B1F.toInt()
     val defaultBackgroundColor = 0 // Transparent
+    val defaultTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val defaultSelectedStrokeColor = MaterialTheme.colorScheme.primary.toArgb()
 
     val plantColor by vm.settings.plantColor.collectAsState(initial = defaultPlantColor)
     val bedColor by vm.settings.bedColor.collectAsState(initial = defaultBedColor)
@@ -41,6 +43,8 @@ fun ColorSettingsScreen(
     val buildingColor by vm.settings.buildingColor.collectAsState(initial = defaultBuildingColor)
     val gridColor by vm.settings.gridColor.collectAsState(initial = defaultGridColor)
     val gardenBackgroundColor by vm.settings.gardenBackgroundColor.collectAsState(initial = defaultBackgroundColor)
+    val textColor by vm.settings.textColor.collectAsState(initial = defaultTextColor)
+    val selectedStrokeColor by vm.settings.selectedStrokeColor.collectAsState(initial = defaultSelectedStrokeColor)
 
     Scaffold(
         topBar = {
@@ -81,6 +85,17 @@ fun ColorSettingsScreen(
                 label = "Цвет фона участка",
                 color = Color(gardenBackgroundColor ?: defaultBackgroundColor),
                 onColorSelected = { newColor -> vm.saveGardenBackgroundColor(newColor.toArgb()) }
+            )
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            ColorSettingRow(
+                label = "Цвет текста",
+                color = Color(textColor ?: defaultTextColor),
+                onColorSelected = { newColor -> vm.saveTextColor(newColor.toArgb()) }
+            )
+            ColorSettingRow(
+                label = "Цвет выделения",
+                color = Color(selectedStrokeColor ?: defaultSelectedStrokeColor),
+                onColorSelected = { newColor -> vm.saveSelectedStrokeColor(newColor.toArgb()) }
             )
         }
     }

@@ -1,7 +1,10 @@
 package com.example.gardenapp.ui.plan
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
@@ -52,8 +55,9 @@ class PlanVm @Inject constructor(
     val textColor: StateFlow<Int> = _gardenTextColor.asStateFlow()
 
 
-    private val _gardenSelectedStrokeColor = MutableStateFlow(0)
-    val gardenSelectedStrokeColor: StateFlow<Int> = _gardenSelectedStrokeColor.asStateFlow()
+    private val _selectedStrokeColor = MutableStateFlow(0)
+    val selectedStrokeColor: StateFlow<Int> = _selectedStrokeColor.asStateFlow()
+
 
     init {
         // Collect colors from repository and update local state
@@ -63,6 +67,8 @@ class PlanVm @Inject constructor(
         colorSettingsRepo.buildingColor.onEach { _buildingColor.value = it ?: 0x99C2DEDC.toInt() }.launchIn(viewModelScope)
         colorSettingsRepo.gridColor.onEach { _gridColor.value = it ?: 0x4D1C1B1F.toInt() }.launchIn(viewModelScope)
         colorSettingsRepo.gardenBackgroundColor.onEach { _gardenBackgroundColor.value = it ?: 0 }.launchIn(viewModelScope)
+        colorSettingsRepo.textColor.onEach { _gardenTextColor.value = it ?: Color.Black.toArgb() }.launchIn(viewModelScope)
+        colorSettingsRepo.selectedStrokeColor.onEach { _selectedStrokeColor.value = it ?:Color.Black.toArgb()  }.launchIn(viewModelScope)
 
     }
 

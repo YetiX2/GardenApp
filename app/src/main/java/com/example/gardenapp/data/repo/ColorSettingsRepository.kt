@@ -23,6 +23,9 @@ class ColorSettingsRepository @Inject constructor(@ApplicationContext private va
         val buildingColor = intPreferencesKey("building_color")
         val gridColor = intPreferencesKey("grid_color") // ADDED
         val gardenBackgroundColor = intPreferencesKey("garden_background_color") // ADDED
+
+        val textColor = intPreferencesKey("text_color") // ADDED
+        val selectedStrokeColor = intPreferencesKey("garden_selected_stroke_color") // ADDED
     }
 
     val plantColor = context.dataStore.data.map { it[Keys.plantColor] }
@@ -31,6 +34,9 @@ class ColorSettingsRepository @Inject constructor(@ApplicationContext private va
     val buildingColor = context.dataStore.data.map { it[Keys.buildingColor] }
     val gridColor = context.dataStore.data.map { it[Keys.gridColor] } // ADDED
     val gardenBackgroundColor = context.dataStore.data.map { it[Keys.gardenBackgroundColor] } // ADDED
+
+    val textColor = context.dataStore.data.map { it[Keys.textColor] } // ADDED
+    val selectedStrokeColor = context.dataStore.data.map { it[Keys.selectedStrokeColor] } // ADDED
 
     suspend fun savePlantColor(color: Int) {
         context.dataStore.edit { it[Keys.plantColor] = color }
@@ -55,4 +61,13 @@ class ColorSettingsRepository @Inject constructor(@ApplicationContext private va
     suspend fun saveGardenBackgroundColor(color: Int) { // ADDED
         context.dataStore.edit { it[Keys.gardenBackgroundColor] = color }
     }
+
+    suspend fun saveTextColor(color: Int) { // ADDED
+        context.dataStore.edit { it[Keys.textColor] = color }
+    }
+
+    suspend fun saveSelectedStrokeColor(color: Int) { // ADDED
+        context.dataStore.edit { it[Keys.selectedStrokeColor] = color }
+    }
+
 }
