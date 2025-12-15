@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.godaddy.android.colorpicker.ClassicColorPicker
+import com.godaddy.android.colorpicker.HsvColor
+
+private data class ColorPickerState(val label: String, val initialColor: Color, val onColorSelected: (Color) -> Unit)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +50,9 @@ fun ColorSettingsScreen(
     val gardenBackgroundColor by vm.settings.gardenBackgroundColor.collectAsState(initial = defaultBackgroundColor)
     val textColor by vm.settings.textColor.collectAsState(initial = defaultTextColor)
     val selectedStrokeColor by vm.settings.selectedStrokeColor.collectAsState(initial = defaultSelectedStrokeColor)
-    var showResetDialog by remember { mutableStateOf(false) } // ADDED
+    
+    var showResetDialog by remember { mutableStateOf(false) }
+    var colorPickerState by remember { mutableStateOf<ColorPickerState?>(null) }
 
     Scaffold(
         topBar = {
@@ -59,54 +66,50 @@ fun ColorSettingsScreen(
             ColorSettingRow(
                 label = "Цвет растений",
                 color = Color(plantColor ?: defaultPlantColor),
-                onColorSelected = { newColor -> vm.savePlantColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет растений", color) { vm.savePlantColor(it.toArgb()) } }
             )
             ColorSettingRow(
                 label = "Цвет грядок",
                 color = Color(bedColor ?: defaultBedColor),
-                onColorSelected = { newColor -> vm.saveBedColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет грядок", color) { vm.saveBedColor(it.toArgb()) } }
             )
             ColorSettingRow(
                 label = "Цвет теплиц",
                 color = Color(greenhouseColor ?: defaultGreenhouseColor),
-                onColorSelected = { newColor -> vm.saveGreenhouseColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет теплиц", color) { vm.saveGreenhouseColor(it.toArgb()) } }
             )
             ColorSettingRow(
                 label = "Цвет строений",
                 color = Color(buildingColor ?: defaultBuildingColor),
-                onColorSelected = { newColor -> vm.saveBuildingColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет строений", color) { vm.saveBuildingColor(it.toArgb()) } }
             )
             Divider(modifier = Modifier.padding(vertical = 8.dp))
             ColorSettingRow(
                 label = "Цвет сетки",
                 color = Color(gridColor ?: defaultGridColor),
-                onColorSelected = { newColor -> vm.saveGridColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет сетки", color) { vm.saveGridColor(it.toArgb()) } }
             )
             ColorSettingRow(
                 label = "Цвет фона участка",
                 color = Color(gardenBackgroundColor ?: defaultBackgroundColor),
-                onColorSelected = { newColor -> vm.saveGardenBackgroundColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет фона участка", color) { vm.saveGardenBackgroundColor(it.toArgb()) } }
             )
             Divider(modifier = Modifier.padding(vertical = 8.dp))
             ColorSettingRow(
                 label = "Цвет текста",
                 color = Color(textColor ?: defaultTextColor),
-                onColorSelected = { newColor -> vm.saveTextColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет текста", color) { vm.saveTextColor(it.toArgb()) } }
             )
             ColorSettingRow(
                 label = "Цвет выделения",
                 color = Color(selectedStrokeColor ?: defaultSelectedStrokeColor),
-                onColorSelected = { newColor -> vm.saveSelectedStrokeColor(newColor.toArgb()) }
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет выделения", color) { vm.saveSelectedStrokeColor(it.toArgb()) } }
             )
             Spacer(modifier = Modifier.weight(1f))
-            OutlinedButton(
-                onClick = { showResetDialog = true }, // ADDED
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Сбросить настройки")
-            }
+            OutlinedButton(onClick = { showResetDialog = true }, modifier = Modifier.fillMaxWidth()) { Text("Сбросить настройки") }
         }
     }
+
     if (showResetDialog) { // ADDED
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
@@ -123,21 +126,38 @@ fun ColorSettingsScreen(
             dismissButton = { TextButton(onClick = { showResetDialog = false }) { Text("Отмена") } }
         )
     }
+
+    colorPickerState?.let { state ->
+        var tempColor by remember { mutableStateOf(HsvColor.from(state.initialColor)) } 
+        AlertDialog(
+            onDismissRequest = { colorPickerState = null },
+            title = { Text("Выберите цвет для \"${state.label}\"") },
+            text = {
+                ClassicColorPicker(
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                    color = tempColor,
+                    onColorChanged = { hsvColor: HsvColor ->
+                        tempColor = hsvColor
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        state.onColorSelected(tempColor.toColor())
+                        colorPickerState = null
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { colorPickerState = null }) { Text("Отмена") } }
+        )
+    }
 }
 
 @Composable
-private fun ColorSettingRow(label: String, color: Color, onColorSelected: (Color) -> Unit) {
+private fun ColorSettingRow(label: String, color: Color, onClick: (Color) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { 
-            // TODO: Open a real color picker dialog here
-            val newColor = when(color.toArgb()) { // Compare ARGB values
-                Color.Red.toArgb() -> Color.Green
-                Color.Green.toArgb() -> Color.Blue
-                Color.Blue.toArgb() -> Color.Yellow
-                else -> Color.Red
-            }
-            onColorSelected(newColor)
-        },
+        modifier = Modifier.fillMaxWidth().clickable { onClick(color) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
