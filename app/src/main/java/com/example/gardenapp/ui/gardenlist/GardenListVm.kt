@@ -35,30 +35,22 @@ class GardenListVm @Inject constructor(private val repo: GardenRepository) : Vie
         type: GardenType,
         parentId: String?
     ): String {
-        val newId = id ?: UUID.randomUUID().toString()
-        val gardenToUpsert = (id?.let { repo.getGarden(it) } ?: GardenEntity(
-            id = newId,
-            name = name,
-            widthCm = w,
-            heightCm = h,
-            gridStepCm = step,
-            type = type,
-            parentId = parentId,
-            x = TODO(),
-            y = TODO(),
-            climateZone = zone
-        )) // Get existing or create new
+        val idToUse = id ?: UUID.randomUUID().toString()
+        
+        val existingGarden = id?.let { repo.getGarden(it) }
+        val gardenToUpsert = (existingGarden ?: GardenEntity(id = idToUse, name = name, widthCm = w, heightCm = h, gridStepCm = step, climateZone = zone))
             .copy(
                 name = name,
                 widthCm = w,
                 heightCm = h,
                 gridStepCm = step,
-                climateZone = zone, // CORRECTLY SETTING THE ZONE
                 type = type,
-                parentId = parentId
+                parentId = parentId,
+                climateZone = zone
             )
+
         repo.upsertGarden(gardenToUpsert)
-        return gardenToUpsert.id
+        return idToUse
     }
 
     fun delete(g: GardenEntity) = viewModelScope.launch {
