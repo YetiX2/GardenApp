@@ -42,10 +42,6 @@ fun GardenCanvas(
     onGardenOpen: (GardenEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val plantColor = Color(0xFF4CAF50)
-    val bedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-    val greenhouseColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-    val buildingColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
     val selectedStroke = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
     val textColor = MaterialTheme.colorScheme.onSurface
