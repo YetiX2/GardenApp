@@ -12,6 +12,7 @@ import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.db.ReferenceDao
 import com.example.gardenapp.data.db.TestDataGenerator
 import com.example.gardenapp.data.location.LocationTracker
+import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import com.example.gardenapp.data.repo.WeatherRepository
@@ -35,16 +36,14 @@ import retrofit2.Retrofit
 import javax.inject.Provider
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
     @Provides
     @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
-        return context.dataStore
+    fun provideColorSettingsRepository(@ApplicationContext context: Context): ColorSettingsRepository {
+        return ColorSettingsRepository(context)
     }
 
     @Provides

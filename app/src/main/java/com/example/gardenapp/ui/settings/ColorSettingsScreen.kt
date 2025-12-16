@@ -2,7 +2,16 @@ package com.example.gardenapp.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -13,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gardenapp.ui.DefaultColors
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
 
@@ -25,29 +33,26 @@ fun ColorSettingsScreen(
     onBack: () -> Unit,
     vm: ColorSettingsVm = hiltViewModel()
 ) {
-    // Collect nullable Ints from the ViewModel
-    val plantColorInt by vm.plantColor.collectAsState()
-    val bedColorInt by vm.bedColor.collectAsState()
-    val greenhouseColorInt by vm.greenhouseColor.collectAsState()
-    val buildingColorInt by vm.buildingColor.collectAsState()
-    val gridColorInt by vm.gridColor.collectAsState()
-    val gardenBackgroundColorInt by vm.gardenBackgroundColor.collectAsState()
-    val textColorInt by vm.textColor.collectAsState()
-    val selectedStrokeColorInt by vm.selectedStrokeColor.collectAsState()
-    
-    // State for dialogs
+    val defaultPlantColor = 0xFF4CAF50.toInt()
+    val defaultBedColor = 0x99668B7E.toInt()
+    val defaultGreenhouseColor = 0x99D1C4E9.toInt()
+    val defaultBuildingColor = 0x99C2DEDC.toInt()
+    val defaultGridColor = 0x4D1C1B1F.toInt()
+    val defaultBackgroundColor = 0x4DFED8C0.toInt()
+    val defaultTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val defaultSelectedStrokeColor = MaterialTheme.colorScheme.primary.toArgb()
+
+    val plantColor by vm.settings.plantColor.collectAsState(initial = defaultPlantColor)
+    val bedColor by vm.settings.bedColor.collectAsState(initial = defaultBedColor)
+    val greenhouseColor by vm.settings.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
+    val buildingColor by vm.settings.buildingColor.collectAsState(initial = defaultBuildingColor)
+    val gridColor by vm.settings.gridColor.collectAsState(initial = defaultGridColor)
+    val gardenBackgroundColor by vm.settings.gardenBackgroundColor.collectAsState(initial = defaultBackgroundColor)
+    val textColor by vm.settings.textColor.collectAsState(initial = defaultTextColor)
+    val selectedStrokeColor by vm.settings.selectedStrokeColor.collectAsState(initial = defaultSelectedStrokeColor)
+
     var showResetDialog by remember { mutableStateOf(false) }
     var colorPickerState by remember { mutableStateOf<ColorPickerState?>(null) }
-
-    // Use the collected Int or the theme-aware default to create the final Color object
-    val plantColor = Color(plantColorInt ?: DefaultColors.plantColor)
-    val bedColor = Color(bedColorInt ?: DefaultColors.bedColor)
-    val greenhouseColor = Color(greenhouseColorInt ?: DefaultColors.greenhouseColor)
-    val buildingColor = Color(buildingColorInt ?: DefaultColors.buildingColor)
-    val gridColor = Color(gridColorInt ?: DefaultColors.gridColor())
-    val gardenBackgroundColor = Color(gardenBackgroundColorInt ?: DefaultColors.backgroundColor)
-    val textColor = Color(textColorInt ?: DefaultColors.textColor())
-    val selectedStrokeColor = Color(selectedStrokeColorInt ?: DefaultColors.selectedStrokeColor())
 
     Scaffold(
         topBar = {
@@ -58,16 +63,48 @@ fun ColorSettingsScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ColorSettingRow("Цвет растений", plantColor) { color -> colorPickerState = ColorPickerState("Цвет растений", color) { vm.savePlantColor(it.toArgb()) } }
-            ColorSettingRow("Цвет грядок", bedColor) { color -> colorPickerState = ColorPickerState("Цвет грядок", color) { vm.saveBedColor(it.toArgb()) } }
-            ColorSettingRow("Цвет теплиц", greenhouseColor) { color -> colorPickerState = ColorPickerState("Цвет теплиц", color) { vm.saveGreenhouseColor(it.toArgb()) } }
-            ColorSettingRow("Цвет строений", buildingColor) { color -> colorPickerState = ColorPickerState("Цвет строений", color) { vm.saveBuildingColor(it.toArgb()) } }
+            ColorSettingRow(
+                label = "Цвет растений",
+                color = Color(plantColor ?: defaultPlantColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет растений", color) { vm.savePlantColor(it.toArgb()) } }
+            )
+            ColorSettingRow(
+                label = "Цвет грядок",
+                color = Color(bedColor ?: defaultBedColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет грядок", color) { vm.saveBedColor(it.toArgb()) } }
+            )
+            ColorSettingRow(
+                label = "Цвет теплиц",
+                color = Color(greenhouseColor ?: defaultGreenhouseColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет теплиц", color) { vm.saveGreenhouseColor(it.toArgb()) } }
+            )
+            ColorSettingRow(
+                label = "Цвет строений",
+                color = Color(buildingColor ?: defaultBuildingColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет строений", color) { vm.saveBuildingColor(it.toArgb()) } }
+            )
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            ColorSettingRow("Цвет сетки", gridColor) { color -> colorPickerState = ColorPickerState("Цвет сетки", color) { vm.saveGridColor(it.toArgb()) } }
-            ColorSettingRow("Цвет фона участка", gardenBackgroundColor) { color -> colorPickerState = ColorPickerState("Цвет фона участка", color) { vm.saveGardenBackgroundColor(it.toArgb()) } }
+            ColorSettingRow(
+                label = "Цвет сетки",
+                color = Color(gridColor ?: defaultGridColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет сетки", color) { vm.saveGridColor(it.toArgb()) } }
+            )
+            ColorSettingRow(
+                label = "Цвет фона участка",
+                color = Color(gardenBackgroundColor ?: defaultBackgroundColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет фона участка", color) { vm.saveGardenBackgroundColor(it.toArgb()) } }
+            )
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            ColorSettingRow("Цвет текста", textColor) { color -> colorPickerState = ColorPickerState("Цвет текста", color) { vm.saveTextColor(it.toArgb()) } }
-            ColorSettingRow("Цвет выделения", selectedStrokeColor) { color -> colorPickerState = ColorPickerState("Цвет выделения", color) { vm.saveSelectedStrokeColor(it.toArgb()) } }
+            ColorSettingRow(
+                label = "Цвет текста",
+                color = Color(textColor ?: defaultTextColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет текста", color) { vm.saveTextColor(it.toArgb()) } }
+            )
+            ColorSettingRow(
+                label = "Цвет выделения",
+                color = Color(selectedStrokeColor ?: defaultSelectedStrokeColor),
+                onClick = { color -> colorPickerState = ColorPickerState("Цвет выделения", color) { vm.saveSelectedStrokeColor(it.toArgb()) } }
+            )
             Spacer(modifier = Modifier.weight(1f))
             OutlinedButton(onClick = { showResetDialog = true }, modifier = Modifier.fillMaxWidth()) { Text("Сбросить настройки") }
         }
@@ -91,7 +128,7 @@ fun ColorSettingsScreen(
     }
 
     colorPickerState?.let { state ->
-        var tempColor by remember { mutableStateOf(HsvColor.from(state.initialColor)) } 
+        var tempColor by remember { mutableStateOf(HsvColor.from(state.initialColor)) }
         AlertDialog(
             onDismissRequest = { colorPickerState = null },
             title = { Text("Выберите цвет для \"${state.label}\"") },
@@ -117,7 +154,6 @@ fun ColorSettingsScreen(
     }
 }
 
-// Simplified signature for ColorSettingRow
 @Composable
 private fun ColorSettingRow(label: String, color: Color, onClick: (Color) -> Unit) {
     Row(

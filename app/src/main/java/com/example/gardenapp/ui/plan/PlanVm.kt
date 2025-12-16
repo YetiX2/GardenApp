@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.plan
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
@@ -7,8 +8,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
+import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
-import com.example.gardenapp.data.settings.SettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,13 +26,13 @@ import javax.inject.Inject
 class PlanVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceDao: ReferenceDao,
-    private val settingsManager: SettingsManager // FIXED
+    private val colorSettingsRepo: ColorSettingsRepository
 ) : ViewModel() {
     private val _currentGarden = mutableStateOf<GardenEntity?>(null)
     val currentGarden: State<GardenEntity?> = _currentGarden
 
     // --- Color State ---
-    private val _plantColor = MutableStateFlow(0)
+    private val _plantColor = MutableStateFlow(0xFF4CAF50.toInt())
     val plantColor: StateFlow<Int> = _plantColor.asStateFlow()
 
     private val _bedColor = MutableStateFlow(0x99668B7E.toInt())
@@ -60,14 +61,14 @@ class PlanVm @Inject constructor(
 
     init {
         // Collect colors from repository and update local state
-        settingsManager.plantColor.onEach { _plantColor.value = it ?: 0xFF4CAF50.toInt() }.launchIn(viewModelScope)
-        settingsManager.bedColor.onEach { _bedColor.value = it ?: 0x99668B7E.toInt() }.launchIn(viewModelScope)
-        settingsManager.greenhouseColor.onEach { _greenhouseColor.value = it ?: 0x99D1C4E9.toInt() }.launchIn(viewModelScope)
-        settingsManager.buildingColor.onEach { _buildingColor.value = it ?: 0x99C2DEDC.toInt() }.launchIn(viewModelScope)
-        settingsManager.gridColor.onEach { _gridColor.value = it ?: 0x4D1C1B1F.toInt() }.launchIn(viewModelScope)
-        settingsManager.gardenBackgroundColor.onEach { _gardenBackgroundColor.value = it ?: 0 }.launchIn(viewModelScope)
-        settingsManager.textColor.onEach { _gardenTextColor.value = it ?: Color.Black.toArgb() }.launchIn(viewModelScope)
-        settingsManager.selectedStrokeColor.onEach { _selectedStrokeColor.value = it ?:Color.Black.toArgb()  }.launchIn(viewModelScope)
+        colorSettingsRepo.plantColor.onEach { _plantColor.value = it ?: 0xFF4CAF50.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.bedColor.onEach { _bedColor.value = it ?: 0x99668B7E.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.greenhouseColor.onEach { _greenhouseColor.value = it ?: 0x99D1C4E9.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.buildingColor.onEach { _buildingColor.value = it ?: 0x99C2DEDC.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.gridColor.onEach { _gridColor.value = it ?: 0x4D1C1B1F.toInt() }.launchIn(viewModelScope)
+        colorSettingsRepo.gardenBackgroundColor.onEach { _gardenBackgroundColor.value = it ?: 0 }.launchIn(viewModelScope)
+        colorSettingsRepo.textColor.onEach { _gardenTextColor.value = it ?: Color.Black.toArgb() }.launchIn(viewModelScope)
+        colorSettingsRepo.selectedStrokeColor.onEach { _selectedStrokeColor.value = it ?:Color.Black.toArgb()  }.launchIn(viewModelScope)
 
     }
 
@@ -80,7 +81,7 @@ class PlanVm @Inject constructor(
 
     fun plantsFlow(gardenId: String): Flow<List<PlantEntity>> = repo.plants(gardenId)
     fun childGardensFlow(gardenId: String): Flow<List<GardenEntity>> = repo.getChildGardens(gardenId)
-    
+
     suspend fun upsertPlant(p: PlantEntity) = repo.upsertPlant(p)
     suspend fun deletePlant(p: PlantEntity) = repo.deletePlant(p)
     suspend fun upsertGarden(g: GardenEntity) = repo.upsertGarden(g) // ADDED THIS
