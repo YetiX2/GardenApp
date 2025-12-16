@@ -47,6 +47,23 @@ class TestDataGenerator @Inject constructor(
             }
         greenhousePlants.forEach { plantDao.upsert(it) }
 
+        // ADDED: House
+        val houseId = UUID.randomUUID().toString()
+        gardenDao.upsert(GardenEntity(houseId, "Дом", 600, 600, 50, GardenType.BUILDING, plotId, x=1300, y=1300, climateZone=null))
+
+        // ADDED: Apple Tree
+        val appleVariety = allVarieties.find { it.title.contains("Антоновка", ignoreCase = true) }
+        if (appleVariety != null) {
+            plantDao.upsert(
+                PlantEntity(
+                    UUID.randomUUID().toString(), plotId, "Антоновка", appleVariety.title, appleVariety.id,
+                    800f, 800f, // coordinates
+                    120f, // large radius
+                    LocalDate.now().minusYears(3)
+                )
+            )
+        }
+
         val allTestPlants = plotPlants + greenhousePlants
 
         // 2. For EACH plant, create logs and rules
