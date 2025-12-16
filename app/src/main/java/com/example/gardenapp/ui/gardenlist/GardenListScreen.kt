@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
+import com.example.gardenapp.data.db.icon
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +65,9 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, onOpenSetting
             items(gardens, key = { it.id }) { g ->
                 ElevatedCard(onClick = { onOpen(g.id) }) {
                     ListItem(
+                        leadingContent = {
+                            Icon(g.type.icon, contentDescription = null)
+                        },
                         headlineContent = { Text(g.name) },
                         supportingContent = {
                             val typeText = g.type.toRussian()
