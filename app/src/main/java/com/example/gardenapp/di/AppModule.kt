@@ -2,6 +2,9 @@ package com.example.gardenapp.di
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -9,10 +12,10 @@ import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.db.ReferenceDao
 import com.example.gardenapp.data.db.TestDataGenerator
 import com.example.gardenapp.data.location.LocationTracker
-import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
 import com.example.gardenapp.data.repo.WeatherRepository
+import com.example.gardenapp.data.settings.SettingsManager
 import com.example.gardenapp.data.weather.WeatherApi
 import com.google.android.gms.location.LocationServices
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -32,14 +35,16 @@ import retrofit2.Retrofit
 import javax.inject.Provider
 import javax.inject.Singleton
 
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
     @Provides
     @Singleton
-    fun provideColorSettingsRepository(@ApplicationContext context: Context): ColorSettingsRepository {
-        return ColorSettingsRepository(context)
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
+        return context.dataStore
     }
 
     @Provides

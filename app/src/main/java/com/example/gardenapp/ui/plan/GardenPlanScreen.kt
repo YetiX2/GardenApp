@@ -40,6 +40,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
+import com.example.gardenapp.ui.DefaultColors
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,26 +61,14 @@ fun GardenPlanScreen(
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
 
-    // Collect colors from settings
-    val defaultPlantColor = 0xFF4CAF50.toInt()
-    val defaultBedColor = 0x99668B7E.toInt()
-    val defaultGreenhouseColor = 0x99D1C4E9.toInt()
-    val defaultBuildingColor = 0x99C2DEDC.toInt()
-    val defaulGridColor =  0x4D1C1B1F.toInt()
-    val defaulBackgroundColor = 0
-    val defaultTextColor = Color.Black.toArgb()
-    val defaulSelectedStroke = Color.Black.toArgb()
-
-    val plantColor by vm.plantColor.collectAsState(initial = defaultPlantColor)
-    val bedColor by vm.bedColor.collectAsState(initial = defaultBedColor)
-    val greenhouseColor by vm.greenhouseColor.collectAsState(initial = defaultGreenhouseColor)
-    val buildingColor by vm.buildingColor.collectAsState(initial = defaultBuildingColor)
-    val gridColor by vm.gridColor.collectAsState(initial = defaulGridColor)
-    val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState(initial = defaulBackgroundColor)
-    val textColor by vm.textColor.collectAsState(initial = defaultTextColor)
-    val selectedStroke by vm.selectedStrokeColor.collectAsState(initial = defaulSelectedStroke)
-
-
+    val plantColor by vm.plantColor.collectAsState(initial = DefaultColors.plantColor)
+    val bedColor by vm.bedColor.collectAsState(initial = DefaultColors.bedColor)
+    val greenhouseColor by vm.greenhouseColor.collectAsState(initial = DefaultColors.greenhouseColor)
+    val buildingColor by vm.buildingColor.collectAsState(initial = DefaultColors.buildingColor)
+    val gridColor by vm.gridColor.collectAsState(initial = DefaultColors.gridColor())
+    val gardenBackgroundColor by vm.gardenBackgroundColor.collectAsState(initial = DefaultColors.backgroundColor)
+    val textColor by vm.textColor.collectAsState(initial = DefaultColors.textColor())
+    val selectedStroke by vm.selectedStrokeColor.collectAsState(initial = DefaultColors.selectedStrokeColor())
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
     
@@ -131,14 +121,14 @@ fun GardenPlanScreen(
                 state = state,
                 plants = plants,
                 childGardens = childGardens,
-                plantColor = Color(plantColor ?: defaultPlantColor),
-                bedColor = Color(bedColor ?: defaultBedColor),
-                greenhouseColor = Color(greenhouseColor ?: defaultGreenhouseColor),
-                buildingColor = Color(buildingColor ?: defaultBuildingColor),
-                gridColor = Color(gridColor?: defaulGridColor),
-                gardenBackgroundColor = Color(gardenBackgroundColor?: defaulBackgroundColor),
-                textColor = Color(textColor?: defaultTextColor),
-                selectedStrokeColor = Color(selectedStroke?: defaulSelectedStroke),
+                plantColor = Color(plantColor),
+                bedColor = Color(bedColor),
+                greenhouseColor = Color(greenhouseColor),
+                buildingColor = Color(buildingColor),
+                gridColor = Color(gridColor),
+                gardenBackgroundColor = Color(gardenBackgroundColor),
+                textColor = Color(textColor),
+                selectedStrokeColor = Color(selectedStroke),
                 onPlantSelect = { state.selectedPlant = it },
                 onGardenSelect = { state.selectedChildGarden = it },
                 onPlantDrag = { updatedPlant ->
