@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.data.db.icon
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import java.time.format.DateTimeFormatter
 
@@ -70,6 +71,9 @@ fun CareRulesTab(
                     items(rules, key = { it.id }) { rule ->
                         val everyText = rule.everyDays?.let { "каждые $it дней" } ?: ""
                         ListItem(
+                            leadingContent = { // ADDED
+                                Icon(rule.type.icon, contentDescription = null)
+                            },
                             headlineContent = { Text("${rule.type.toRussian()} $everyText") },
                             supportingContent = {
                                 Column {
