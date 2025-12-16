@@ -132,9 +132,4 @@ class GardenPlanState(
             Offset(x = tempOffset.x, y = newOffset.y.coerceIn(minOffsetY, maxOffsetY))
         }
     }
-
-    fun resetView() {
-        scale = 1f
-        offset = Offset.Zero
-    }
 }

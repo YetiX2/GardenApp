@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -28,14 +29,14 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenListVm = hiltViewModel()) {
+fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, onOpenSettings: () -> Unit, vm: GardenListVm = hiltViewModel()) {
     val scope = rememberCoroutineScope()
     val gardens by vm.gardens.collectAsState(initial = emptyList())
 
     var showEditDialog by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<GardenEntity?>(null) }
     var showDeleteConfirm by remember { mutableStateOf<GardenEntity?>(null) }
-    var expandedMenuGardenId by remember { mutableStateOf<String?>(null) } // ADDED
+    var expandedMenuGardenId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = { 
@@ -44,6 +45,11 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenSettings) { // ADDED
+                        Icon(Icons.Outlined.Settings, contentDescription = "Настройки")
                     }
                 }
             )
@@ -75,18 +81,18 @@ fun GardenListScreen(onOpen: (String) -> Unit, onBack: () -> Unit, vm: GardenLis
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Редактировать") },
-                                        onClick = { 
+                                        onClick = {
                                             editTarget = g
                                             showEditDialog = true
-                                            expandedMenuGardenId = null 
+                                            expandedMenuGardenId = null
                                         },
                                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Удалить") },
-                                        onClick = { 
+                                        onClick = {
                                             showDeleteConfirm = g
-                                            expandedMenuGardenId = null 
+                                            expandedMenuGardenId = null
                                         },
                                         leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
                                     )

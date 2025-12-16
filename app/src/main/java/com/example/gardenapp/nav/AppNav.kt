@@ -30,13 +30,14 @@ fun AppNav() {
             DashboardScreen(
                 onOpenGardens = { nav.navigate(Route.Gardens.value) },
                 onOpenTasks = { nav.navigate(Route.Tasks.value) },
-                onOpenSettings = { nav.navigate(Route.Settings.value) }
+                onOpenSettings = { nav.navigate(Route.Settings.value) } 
             )
         }
         composable(Route.Gardens.value) {
             GardenListScreen(
                 onOpen = { id -> nav.navigate("plan/$id") },
-                onBack = { nav.popBackStack() }
+                onBack = { nav.popBackStack() },
+                onOpenSettings = { nav.navigate(Route.ColorSettings.value) } // MOVED HERE
             )
         }
         composable(Route.Plan.value) { backStack ->
@@ -45,8 +46,8 @@ fun AppNav() {
                 gardenId = id, 
                 onBack = { nav.popBackStack() },
                 onOpenPlant = { plantId -> nav.navigate("plant/$plantId") },
-                onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") },
-                onOpenColorSettings = { nav.navigate(Route.ColorSettings.value) }
+                onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") }
+                // onOpenColorSettings is removed from here
             )
         }
         composable(Route.PlantEditor.value) { backStack ->
@@ -58,7 +59,6 @@ fun AppNav() {
         composable(Route.Settings.value) {
             SettingsScreen(onBack = { nav.popBackStack() })
         }
-        // ADDED
         composable(Route.ColorSettings.value) {
             ColorSettingsScreen(onBack = { nav.popBackStack() })
         }

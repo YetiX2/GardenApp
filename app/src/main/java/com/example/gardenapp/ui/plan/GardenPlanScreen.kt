@@ -48,7 +48,6 @@ fun GardenPlanScreen(
     onBack: () -> Unit,
     onOpenPlant: (String) -> Unit,
     onOpenGarden: (String) -> Unit,
-    onOpenColorSettings: () -> Unit, // ADDED
     vm: PlanVm = hiltViewModel()
 ) {
     LaunchedEffect(gardenId) { vm.loadGarden(gardenId) }
@@ -106,11 +105,12 @@ fun GardenPlanScreen(
                 title = { Text(garden?.name ?: "План сада") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Назад") } },
                 actions = {
-                    IconButton(onClick = { state.showNames = !state.showNames }) { Icon(imageVector = if (state.showNames) Icons.Default.TextDecrease else Icons.Default.TextIncrease, contentDescription = "Показать/скрыть названия") }
+                    IconButton(onClick = { state.showNames = !state.showNames }) { Icon(imageVector = if (state.showNames) Icons.Default.TextIncrease else Icons.Default.TextDecrease, contentDescription = "Показать/скрыть названия") }
                     IconButton(onClick = { state.isLocked = !state.isLocked }) { Icon(imageVector = if (state.isLocked) Icons.Default.Lock else Icons.Default.LockOpen, contentDescription = "Заблокировать перемещение") }
                     IconButton(onClick = { showPlantList = true }) { Icon(imageVector = Icons.Default.Grass, contentDescription = "Список растений") }
                     IconButton({ state.snapToGrid = !state.snapToGrid }) { Icon(imageVector = if (state.snapToGrid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, contentDescription = "Привязка к сетке") }
-                    IconButton(onClick = onOpenColorSettings) { Icon(Icons.Outlined.Settings, "Настройки") }
+                    //IconButton({ state.resetView() }) { Icon(imageVector = Icons.Outlined.CenterFocusStrong, contentDescription = "Сбросить вид") }
+                    // REMOVED Settings button from here
                 }
             )
         },
