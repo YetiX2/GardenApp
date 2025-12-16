@@ -36,7 +36,7 @@ class TestDataGenerator @Inject constructor(
         plotPlants.forEach { plantDao.upsert(it) }
 
         val greenhouseId = UUID.randomUUID().toString()
-        gardenDao.upsert(GardenEntity(greenhouseId, "Теплица", 300, 600, 50, GardenType.GREENHOUSE, plotId, 4))
+        gardenDao.upsert(GardenEntity(greenhouseId, "Теплица", 600, 300, 50, GardenType.GREENHOUSE, plotId, 4))
         val greenhousePlants = (allVarieties.filter { it.cultureId == "tomato" }.shuffled().take(2) +
                 allVarieties.filter { it.cultureId == "cucumber" }.shuffled().take(2))
             .mapIndexed { i, v ->
@@ -58,8 +58,8 @@ class TestDataGenerator @Inject constructor(
             val v = allVarieties.random()
             PlantEntity(
                 UUID.randomUUID().toString(), mayskiyBedId, v.title, v.title, v.id,
-                Random.nextInt(100 + 10, 100 + 400 - 10).toFloat(), // x within the bed
-                Random.nextInt(800 + 10, 800 + 100 - 10).toFloat(), // y within the bed
+                Random.nextInt(10, 400 - 10).toFloat(), // x RELATIVE to the bed
+                Random.nextInt(10, 100 - 10).toFloat(),
                 Random.nextInt(5, 10).toFloat(),
                 LocalDate.now().minusDays(Random.nextLong(1, 45))
             )
