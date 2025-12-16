@@ -51,6 +51,21 @@ class TestDataGenerator @Inject constructor(
         val houseId = UUID.randomUUID().toString()
         gardenDao.upsert(GardenEntity(houseId, "Дом", 600, 600, 50, GardenType.BUILDING, plotId, x=1300, y=1300, climateZone=null))
 
+        // ADDED: Mayskiy Bed
+        val mayskiyBedId = UUID.randomUUID().toString()
+        gardenDao.upsert(GardenEntity(mayskiyBedId, "Грядка", 400, 100, 50, GardenType.BED, plotId, x = 100, y = 800, climateZone = null))
+        val mayskiyBedPlants = (1..20).map {
+            val v = allVarieties.random()
+            PlantEntity(
+                UUID.randomUUID().toString(), mayskiyBedId, v.title, v.title, v.id,
+                Random.nextInt(100 + 10, 100 + 400 - 10).toFloat(), // x within the bed
+                Random.nextInt(800 + 10, 800 + 100 - 10).toFloat(), // y within the bed
+                Random.nextInt(5, 10).toFloat(),
+                LocalDate.now().minusDays(Random.nextLong(1, 45))
+            )
+        }
+        mayskiyBedPlants.forEach { plantDao.upsert(it) }
+
         // ADDED: Apple Tree
         val appleVariety = allVarieties.find { it.title.contains("Антоновка", ignoreCase = true) }
         if (appleVariety != null) {
