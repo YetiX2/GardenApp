@@ -6,6 +6,11 @@ import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.FilterVintage
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Yard
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Foundation
+import androidx.compose.material.icons.outlined.House
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Yard
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
@@ -29,7 +34,13 @@ sealed interface RecentActivity {
 
 
 enum class GardenType { PLOT, GREENHOUSE, BED , BUILDING } // ADDED
-
+val GardenType.icon: ImageVector // ADDED
+    get() = when (this) {
+        GardenType.PLOT -> Icons.Outlined.Map
+        GardenType.GREENHOUSE -> Icons.Outlined.Foundation
+        GardenType.BED -> Icons.Outlined.Yard
+        GardenType.BUILDING -> Icons.Outlined.House
+    }
 
 @Entity
 data class GardenEntity(
