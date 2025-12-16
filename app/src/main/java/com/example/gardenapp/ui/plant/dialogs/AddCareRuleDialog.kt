@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.data.db.icon // ADDED IMPORT
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -35,15 +36,20 @@ fun AddCareRuleDialog(
                 ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {
                     OutlinedTextField(
                         value = selectedType.toRussian(),
-                        onValueChange = {}, 
+                        onValueChange = {},
                         readOnly = true,
                         label = { Text("Тип задачи") },
                         modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        leadingIcon = { Icon(selectedType.icon, contentDescription = null) }, // ADDED
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
                     )
                     ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                        TaskType.values().forEach {
-                            DropdownMenuItem(text = { Text(it.toRussian()) }, onClick = { selectedType = it; typeMenuExpanded = false })
+                        TaskType.values().forEach { taskType ->
+                            DropdownMenuItem(
+                                text = { Text(taskType.toRussian()) },
+                                leadingIcon = { Icon(taskType.icon, contentDescription = null) }, // ADDED
+                                onClick = { selectedType = taskType; typeMenuExpanded = false }
+                            )
                         }
                     }
                 }

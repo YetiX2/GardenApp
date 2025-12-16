@@ -1,5 +1,12 @@
 package com.example.gardenapp.data.db
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.FilterVintage
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Yard
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -164,3 +171,12 @@ data class ReferenceCultivationEntity(
     val varietyId: String,
     val cultivationType: String
 )
+
+val TaskType.icon: ImageVector
+    get() = when (this) {
+        TaskType.FERTILIZE -> Icons.Default.Yard
+        TaskType.PRUNE -> Icons.Default.ContentCut
+        TaskType.TREAT -> Icons.Default.BugReport
+        TaskType.WATER -> Icons.Default.WaterDrop
+        TaskType.OTHER -> Icons.Default.FilterVintage
+    }
