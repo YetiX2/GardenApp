@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gardenapp.data.db.GardenDatabase
 import com.example.gardenapp.data.db.ReferenceDao
+import com.example.gardenapp.data.db.TestDataGenerator
 import com.example.gardenapp.data.location.LocationTracker
 import com.example.gardenapp.data.repo.ColorSettingsRepository
 import com.example.gardenapp.data.repo.GardenRepository
@@ -85,6 +86,11 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideTestDataGenerator(db: GardenDatabase, referenceDao: ReferenceDao): TestDataGenerator {
+        return TestDataGenerator(db, referenceDao)
+    }
+    @Provides
+    @Singleton
     fun provideRepo(db: GardenDatabase, referenceDao: ReferenceDao, locationTracker: LocationTracker): GardenRepository {
         return GardenRepository(db, referenceDao)
     }
@@ -100,7 +106,6 @@ object AppModule {
     fun provideFusedLocationProviderClient(app: Application): com.google.android.gms.location.FusedLocationProviderClient {
         return LocationServices.getFusedLocationProviderClient(app)
     }
-
     @Provides
     @Singleton
     fun provideLocationTracker(

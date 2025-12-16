@@ -7,6 +7,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.gardenapp.data.db.PlantEntity
 import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.data.db.TestDataGenerator
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.WeatherRepository
 import com.example.gardenapp.worker.CareTaskWorker
@@ -35,9 +36,10 @@ sealed interface UiEvent {
 
 @HiltViewModel
 class DashboardVm @Inject constructor(
-    private val application: Application, // ADDED
+    private val application: Application,
     private val repo: GardenRepository,
-    private val weatherRepo: WeatherRepository
+    private val weatherRepo: WeatherRepository,
+    private val testDataGenerator: TestDataGenerator // ADDED
 ) : ViewModel() {
 
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
@@ -109,7 +111,8 @@ class DashboardVm @Inject constructor(
 
     fun createTestData() {
         viewModelScope.launch {
-            repo.populateWithTestData()
+            testDataGenerator.seed() // FIXED
+            _eventFlow.emit(UiEvent.ShowSnackbar("Тестовые данные созданы"))
         }
     }
     fun runCareTaskWorkerNow() { // ADDED THIS
