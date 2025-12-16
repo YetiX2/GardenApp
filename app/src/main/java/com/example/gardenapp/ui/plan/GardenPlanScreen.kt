@@ -204,13 +204,7 @@ fun GardenPlanScreen(
                             showEditor = false
                             if (isCreating) { state.selectedPlant = null }
                             isCreating = false
-                        },
-                        onAddFertilizer = { date, grams, note -> scope.launch { vm.addFertilizer(state.selectedPlant!!.id, date, grams, note) } },
-                        onDeleteFertilizer = { item -> scope.launch { vm.deleteFertilizer(item) } },
-                        onAddHarvest = { date, kg, note -> scope.launch { vm.addHarvest(state.selectedPlant!!.id, date, kg, note) } },
-                        onDeleteHarvest = { item -> scope.launch { vm.deleteHarvest(item) } },
-                        onAddCareRule = { type, start, everyDays, everyMonths -> scope.launch { vm.addCareRule(state.selectedPlant!!.id, type, start, everyDays, everyMonths) } },
-                        onDeleteCareRule = { rule -> scope.launch { vm.deleteCareRule(rule) } }
+                        }
                     )
                 }
             }

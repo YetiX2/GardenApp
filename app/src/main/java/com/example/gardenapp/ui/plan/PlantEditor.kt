@@ -27,13 +27,7 @@ fun PlantEditor(
     plant: PlantEntity,
     vm: PlanVm,
     onSave: (PlantEntity) -> Unit,
-    onCancel: () -> Unit,
-    onAddFertilizer: (LocalDate, Float, String?) -> Unit,
-    onDeleteFertilizer: (FertilizerLogEntity) -> Unit,
-    onAddHarvest: (LocalDate, Float, String?) -> Unit,
-    onDeleteHarvest: (HarvestLogEntity) -> Unit,
-    onAddCareRule: (TaskType, LocalDate, Int?, Int?) -> Unit,
-    onDeleteCareRule: (CareRuleEntity) -> Unit
+    onCancel: () -> Unit
 ) {
     val garden by vm.currentGarden
     val gardenZone = garden?.climateZone
@@ -63,10 +57,6 @@ fun PlantEditor(
             selectedVariety = variety
         }
     }
-
-    val fertilizer by vm.fertilizerLogsFlow(plant.id).collectAsState(initial = emptyList())
-    val harvest by vm.harvestLogsFlow(plant.id).collectAsState(initial = emptyList())
-    val careRules by vm.careRulesFlow(plant.id).collectAsState(initial = emptyList())
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -218,42 +208,6 @@ private fun DateRow(label: String, date: LocalDate, onPick: (LocalDate) -> Unit)
     }
 }
 
-@Composable
-private fun AddCareRuleRow(onAdd: (TaskType, LocalDate, Int?, Int?) -> Unit) {
-    var type by remember { mutableStateOf(TaskType.WATER) }
-    var startDate by remember { mutableStateOf(LocalDate.now()) }
-    var every by remember { mutableStateOf("7") }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // TODO: Add UI for selecting TaskType, start date, and interval
-        Button(onClick = { onAdd(type, startDate, every.toIntOrNull(), null) }) { Text("Добавить правило") }
-    }
-}
-
-@Composable
-private fun AddFertilizerRow(onAdd: (LocalDate, Float, String?) -> Unit) {
-    var date by remember { mutableStateOf(LocalDate.now()) }
-    var grams by remember { mutableStateOf("100") }
-    var note by remember { mutableStateOf("") }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DateRow(label = "Дата", date = date, onPick = { date = it })
-        OutlinedTextField(value = grams, onValueChange = { grams = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Количество (г)") })
-        OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опц.)") })
-        Button(onClick = { onAdd(date, grams.toFloatOrNull() ?: 0f, note.ifBlank { null }) }) { Text("Добавить запись") }
-    }
-}
-
-@Composable
-private fun AddHarvestRow(onAdd: (LocalDate, Float, String?) -> Unit) {
-    var date by remember { mutableStateOf(LocalDate.now()) }
-    var kg by remember { mutableStateOf("1.0") }
-    var note by remember { mutableStateOf("") }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DateRow(label = "Дата", date = date, onPick = { date = it })
-        OutlinedTextField(value = kg, onValueChange = { kg = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Вес (кг)") })
-        OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опц.)") })
-        Button(onClick = { onAdd(date, kg.toFloatOrNull() ?: 0f, note.ifBlank { null }) }) { Text("Добавить запись") }
-    }
-}
 
 private fun checkRecommendation(gardenZone: Int?, varietyHardiness: HardinessEntity?): RecommendationLevel {
     if (gardenZone == null || varietyHardiness == null) {
