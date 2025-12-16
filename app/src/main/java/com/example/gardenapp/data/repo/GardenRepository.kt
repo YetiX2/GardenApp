@@ -11,6 +11,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
+import kotlin.toString
 
 class GardenRepository @Inject constructor(
     private val db: GardenDatabase,
@@ -41,8 +42,8 @@ class GardenRepository @Inject constructor(
         db.ruleDao().getAllCareRules()
     }
 
-    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) {
-        db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths))
+    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?, note: String? = null) {
+        db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths, note))
     }
 
     suspend fun updateCareRule(rule: CareRuleEntity) { // FIXED
@@ -70,7 +71,7 @@ class GardenRepository @Inject constructor(
         )
     }
 
-    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime, notes: String? = null) { // MODIFIED
+    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) { // MODIFIED - removed notes param
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -80,7 +81,7 @@ class GardenRepository @Inject constructor(
                 due = due,
                 exact = true,
                 status = TaskStatus.PENDING,
-                notes = notes // ADDED
+                notes = rule.note // FIXED - Use note from the rule
             )
         )
     }

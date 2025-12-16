@@ -65,7 +65,8 @@ data class CareRuleEntity(
     val type: TaskType,
     val start: LocalDate,
     val everyDays: Int?,
-    val everyMonths: Int? = null
+    val everyMonths: Int? = null,
+    val note: String? = null // ADDED
 )
 
 enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, OTHER }
@@ -115,9 +116,9 @@ data class ReferenceGroupEntity(
     foreignKeys = [ForeignKey(entity = ReferenceGroupEntity::class, parentColumns = ["id"], childColumns = ["groupId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceCultureEntity(
-    @PrimaryKey val id: String, 
-    val groupId: String,      
-    val title: String         
+    @PrimaryKey val id: String,
+    val groupId: String,
+    val title: String
 )
 
 @Entity(

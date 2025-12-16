@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
-import com.example.gardenapp.data.db.icon // ADDED IMPORT
+import com.example.gardenapp.data.db.icon
 
 private fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
@@ -22,13 +22,14 @@ private fun TaskType.toRussian(): String = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCareRuleDialog(
-    initialRule: CareRuleEntity? = null, // ADDED
+    initialRule: CareRuleEntity? = null,
     onDismiss: () -> Unit,
-    onAddRule: (TaskType, Int) -> Unit
+    onAddRule: (TaskType, Int, String?) -> Unit // UPDATED signature
 ) {
-    var selectedType by remember { mutableStateOf(initialRule?.type ?: TaskType.WATER) } // UPDATED
+    var selectedType by remember { mutableStateOf(initialRule?.type ?: TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
-    var days by remember { mutableStateOf(initialRule?.everyDays?.toString() ?: "3") } // UPDATED
+    var days by remember { mutableStateOf(initialRule?.everyDays?.toString() ?: "3") }
+    var note by remember { mutableStateOf(initialRule?.note ?: "") } // ADDED
 
     val title = if (initialRule == null) "Новое правило ухода" else "Редактировать правило"
 
@@ -58,6 +59,7 @@ fun AddCareRuleDialog(
                     }
                 }
                 OutlinedTextField(value = days, onValueChange = { days = it.filter(Char::isDigit) }, label = { Text("Повторять каждые (дней)") })
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опционально)") }) // ADDED
             }
         },
         confirmButton = {
@@ -65,7 +67,7 @@ fun AddCareRuleDialog(
                 onClick = {
                     val daysInt = days.toIntOrNull()
                     if (daysInt != null) {
-                        onAddRule(selectedType, daysInt)
+                        onAddRule(selectedType, daysInt, note.ifBlank { null }) // UPDATED
                     }
                 },
                 enabled = days.isNotBlank()

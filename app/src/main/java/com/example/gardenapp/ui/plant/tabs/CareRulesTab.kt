@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
@@ -35,7 +36,7 @@ private fun TaskType.toRussian(): String = when (this) {
 @Composable
 fun CareRulesTab(
     rules: List<CareRuleEntity>,
-    onAddRule: (TaskType, Int) -> Unit, // Renamed for clarity
+    onAddRule: (TaskType, Int, String?) -> Unit, // Renamed for clarity
     onUpdateRule: (CareRuleEntity) -> Unit, // ADDED
     onDeleteRule: (CareRuleEntity) -> Unit // Renamed for clarity
 ) {
@@ -56,12 +57,12 @@ fun CareRulesTab(
                     VideoCard(title = "Как правильно поливать томаты")
                 }
             }
-            
+
             Divider()
-            
+
             // --- Care Rules List ---
             Text("Правила ухода", style = MaterialTheme.typography.titleMedium)
-            
+
             LazyColumn(modifier = Modifier.weight(1f)) {
                  if (rules.isEmpty()) {
                     item { Text("Правил ухода пока нет. Нажмите +, чтобы добавить.") }
@@ -70,7 +71,20 @@ fun CareRulesTab(
                         val everyText = rule.everyDays?.let { "каждые $it дней" } ?: ""
                         ListItem(
                             headlineContent = { Text("${rule.type.toRussian()} $everyText") },
-                            supportingContent = { Text("Начиная с ${rule.start.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
+                            supportingContent = {
+                                Column {
+                                    Text("Начиная с ${rule.start.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                                    rule.note?.let {
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontStyle = FontStyle.Italic,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            },
                             trailingContent = {
                                 Row {
                                     IconButton(onClick = { ruleToEdit = rule }) { Icon(Icons.Default.Edit, null) }
@@ -96,8 +110,8 @@ fun CareRulesTab(
     if (showAddDialog) {
         AddCareRuleDialog(
             onDismiss = { showAddDialog = false },
-            onAddRule = { type, days ->
-                onAddRule(type, days)
+            onAddRule = { type, days, note -> // UPDATED
+                onAddRule(type, days, note)
                 showAddDialog = false
             }
         )
@@ -107,8 +121,8 @@ fun CareRulesTab(
         AddCareRuleDialog(
             initialRule = rule,
             onDismiss = { ruleToEdit = null },
-            onAddRule = { type, days -> // This effectively becomes an update
-                onUpdateRule(rule.copy(type = type, everyDays = days))
+            onAddRule = { type, days, note -> // UPDATED
+                onUpdateRule(rule.copy(type = type, everyDays = days, note = note))
                 ruleToEdit = null
             }
         )

@@ -12,11 +12,12 @@ import androidx.room.TypeConverters
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 3, // BUMPED VERSION
+    version = 4, // BUMPED VERSION
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3) // ADDED THIS
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4)
     ]
 )
 @TypeConverters(Converters::class)
