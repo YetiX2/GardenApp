@@ -152,6 +152,7 @@ fun GardenPlanScreen(
                 onPlantUpdate = { scope.launch { vm.upsertPlant(it) } },
                 onGardenUpdate = { scope.launch { vm.upsertGarden(it) } },
                 onGardenOpen = { onOpenGarden(it.id) },
+                onPlantOpen = {onOpenPlant(it.id)},
                 modifier = Modifier.fillMaxSize()
             )
 

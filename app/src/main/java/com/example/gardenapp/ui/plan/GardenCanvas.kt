@@ -6,20 +6,17 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.graphics.Color
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
@@ -46,6 +43,7 @@ fun GardenCanvas(
     onGardenDrag: (GardenEntity) -> Unit,
     onPlantUpdate: (PlantEntity) -> Unit,
     onGardenUpdate: (GardenEntity) -> Unit,
+    onPlantOpen: (PlantEntity) -> Unit,   // 🔹 НОВЫЙ колбэк
     onGardenOpen: (GardenEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -53,16 +51,22 @@ fun GardenCanvas(
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
 
-    // 📌 ОДНОРАЗОВАЯ ЦЕНТРОВКА ПРИ ПЕРВОЙ ОТРИСОВКЕ
+    // Одноразовая центровка при первой отрисовке
     LaunchedEffect(state.garden, state.canvasSize, state.scale) {
         state.ensureGardenCentered()
     }
+
     Canvas(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(state.isLocked) {
-                var lastTapTime = 0L
-                var lastTapWorldPos: Offset? = null
+                // 🔹 Раздельное состояние для дабл-тапа по растениям и саду
+                var lastPlantTapTime = 0L
+                var lastPlantTapWorldPos: Offset? = null
+                var lastTappedPlantId: String? = null
+
+                var lastGardenTapTime = 0L
+                var lastGardenTapWorldPos: Offset? = null
                 var lastTappedGardenId: String? = null
 
                 awaitEachGesture {
@@ -82,36 +86,31 @@ fun GardenCanvas(
                     var isPanning = false
                     var isTransform = false
 
-                    // ДВИГАТЬ ОБЪЕКТЫ МОЖНО ТОЛЬКО ЕСЛИ НЕ ЗАБЛОКИРОВАНО
-                    if (!state.isLocked) {
-                        when {
-                            hitGarden != null -> {
-                                onGardenSelect(hitGarden)
-                                onPlantSelect(null)
-                                state.dragStartOffset = startWorld - Offset(
-                                    (hitGarden.x ?: 0).toFloat(),
-                                    (hitGarden.y ?: 0).toFloat()
-                                )
-                                isDraggingObject = true
-                            }
-
-                            hitPlant != null -> {
-                                onPlantSelect(hitPlant)
-                                onGardenSelect(null)
-                                state.dragStartOffset =
-                                    startWorld - Offset(hitPlant.x, hitPlant.y)
-                                isDraggingObject = true
-                            }
-
-                            else -> {
-                                onPlantSelect(null)
-                                onGardenSelect(null)
-                                // здесь isPanning выставим ниже, чтобы панорама работала и в lock
-                            }
+                    // 🔹 ВЫБОР (select) РАБОТАЕТ ВСЕГДА, а drag — только если не locked
+                    if (hitGarden != null) {
+                        onGardenSelect(hitGarden)
+                        onPlantSelect(null)
+                        if (!state.isLocked) {
+                            state.dragStartOffset = startWorld - Offset(
+                                (hitGarden.x ?: 0).toFloat(),
+                                (hitGarden.y ?: 0).toFloat()
+                            )
+                            isDraggingObject = true
                         }
+                    } else if (hitPlant != null) {
+                        onPlantSelect(hitPlant)
+                        onGardenSelect(null)
+                        if (!state.isLocked) {
+                            state.dragStartOffset =
+                                startWorld - Offset(hitPlant.x, hitPlant.y)
+                            isDraggingObject = true
+                        }
+                    } else {
+                        onPlantSelect(null)
+                        onGardenSelect(null)
                     }
 
-                    // CHANGED: панорама разрешена ВСЕГДА, если не тащим объект
+                    // Панорама разрешена всегда, если не тащим объект
                     if (!isDraggingObject) {
                         isPanning = true
                     }
@@ -127,12 +126,14 @@ fun GardenCanvas(
 
                         val pressedChanges = event.changes.filter { it.pressed }
 
-                        // PINCH-ZOOM — НЕ ЗАВИСИТ ОТ isLocked
+                        // 🔹 PINCH-ZOOM — не зависит от lock
                         if (pressedChanges.size > 1 || isTransform) {
                             isTransform = true
                             val zoom = event.calculateZoom()
-                            val pan = event.calculatePan()
-                            state.updateViewWithConstraints(pan, zoom)
+                            val panScreen = event.calculatePan()
+                            // 🔹 ИСПРАВЛЕНО: pan передаём в мировых координатах
+                            val panWorld = panScreen / state.scale
+                            state.updateViewWithConstraints(panWorld, zoom)
                             event.changes.forEach { it.consume() }
                             continue
                         }
@@ -175,51 +176,84 @@ fun GardenCanvas(
                                     )
                                 )
                             }
-                        }
-                        // CHANGED: pan не проверяет isLocked
-                        else if (isPanning) {
-                            val pan = (pos - lastPos) / state.scale
-                            state.updateViewWithConstraints(pan, 1f)
+                        } else if (isPanning) {
+                            val panWorld = pos - lastPos
+                            state.updateViewWithConstraints(panWorld, 1f)
                         }
 
                         lastPos = pos
                         change.consume()
                     }
 
-                    // Фиксировать перемещение объектов — только если не locked
+                    // Фиксируем перемещение объектов — только если не locked
                     if (isDraggingObject && !isTransform && !state.isLocked && hasMoved) {
                         state.selectedPlant?.let { onPlantUpdate(it) }
                         state.selectedChildGarden?.let { onGardenUpdate(it) }
                     }
 
-                    // ДВОЙНОЙ ТАП ПО GARDEN (кроме BUILDING) — РАБОТАЕТ ДАЖЕ В LOCK
+                    // ---------- TAP / DOUBLE-TAP ЛОГИКА ----------
+
+                    // 🔹 Сначала проверяем растение
+                    val tappedPlant = hitPlant
+                    val isTapOnPlant =
+                        tappedPlant != null &&
+                                !isTransform &&
+                                !hasMoved
+
+                    if (isTapOnPlant && tappedPlant != null) {
+                        val tapTime = down.uptimeMillis
+                        val lastPosWorld = lastPlantTapWorldPos
+                        val lastId = lastTappedPlantId
+
+                        val isSamePlant = lastId != null && lastId == tappedPlant.id
+                        val isWithinTime = tapTime - lastPlantTapTime <= DOUBLE_TAP_TIMEOUT
+                        val isCloseEnough =
+                            lastPosWorld != null &&
+                                    (startWorld - lastPosWorld).getDistance() < 16f
+
+                        if (isSamePlant && isWithinTime && isCloseEnough) {
+                            // 🔹 ДВОЙНОЙ ТАП ПО РАСТЕНИЮ
+                            onPlantOpen(tappedPlant)
+                            lastPlantTapTime = 0L
+                            lastPlantTapWorldPos = null
+                            lastTappedPlantId = null
+                        } else {
+                            lastPlantTapTime = tapTime
+                            lastPlantTapWorldPos = startWorld
+                            lastTappedPlantId = tappedPlant.id
+                        }
+
+                        // Если уже обработали как plant tap, дальше garden не трогаем
+                        return@awaitEachGesture
+                    }
+
+                    // 🔹 Потом проверяем сад (кроме BUILDING)
                     val tappedGarden = hitGarden
                     val isTapOnGarden =
                         tappedGarden != null &&
                                 tappedGarden.type != GardenType.BUILDING &&
                                 !isTransform &&
                                 !hasMoved
-                    // CHANGED: убрали !state.isLocked, чтобы double-tap работал в lock
 
                     if (isTapOnGarden && tappedGarden != null) {
                         val tapTime = down.uptimeMillis
-                        val lastPos = lastTapWorldPos
+                        val lastPosWorld = lastGardenTapWorldPos
                         val lastId = lastTappedGardenId
 
                         val isSameGarden = lastId != null && lastId == tappedGarden.id
-                        val isWithinTime = tapTime - lastTapTime <= DOUBLE_TAP_TIMEOUT
+                        val isWithinTime = tapTime - lastGardenTapTime <= DOUBLE_TAP_TIMEOUT
                         val isCloseEnough =
-                            lastPos != null &&
-                                    (startWorld - lastPos).getDistance() < 16f
+                            lastPosWorld != null &&
+                                    (startWorld - lastPosWorld).getDistance() < 16f
 
                         if (isSameGarden && isWithinTime && isCloseEnough) {
                             onGardenOpen(tappedGarden)
-                            lastTapTime = 0L
-                            lastTapWorldPos = null
+                            lastGardenTapTime = 0L
+                            lastGardenTapWorldPos = null
                             lastTappedGardenId = null
                         } else {
-                            lastTapTime = tapTime
-                            lastTapWorldPos = startWorld
+                            lastGardenTapTime = tapTime
+                            lastGardenTapWorldPos = startWorld
                             lastTappedGardenId = tappedGarden.id
                         }
                     }
@@ -229,14 +263,17 @@ fun GardenCanvas(
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
         state.garden?.let {
-            // Draw background first - REMOVED the alpha check
             val backgroundRect = worldToScreen(
                 Rect(0f, 0f, it.widthCm.toFloat(), it.heightCm.toFloat()),
                 state.scale,
                 state.offset
             )
-            drawRect(color = gardenBackgroundColor, topLeft = backgroundRect.topLeft, size = backgroundRect.size)
-            
+            drawRect(
+                color = gardenBackgroundColor,
+                topLeft = backgroundRect.topLeft,
+                size = backgroundRect.size
+            )
+
             if (state.snapToGrid) {
                 drawGrid(
                     garden = it,

@@ -105,12 +105,37 @@ class GardenPlanState(
     }
 
     fun updateViewWithConstraints(pan: Offset, zoom: Float) {
-        scale = (scale * zoom).coerceIn(0.2f, 5f)
+        val gardenWidth = garden?.widthCm?.toFloat() ?: 0f
+        val gardenHeight = garden?.heightCm?.toFloat() ?: 0f
 
-        val newOffset = offset + pan
+        val oldScale = scale
+        val newScale = (scale * zoom).coerceIn(0.2f, 5f)
 
-        val gardenWidthScaled = (garden?.widthCm?.toFloat() ?: 0f) * scale
-        val gardenHeightScaled = (garden?.heightCm?.toFloat() ?: 0f) * scale
+        // Если ещё нечего масштабировать — просто двигаем/зумим
+        if (canvasSize.width == 0 || canvasSize.height == 0 || gardenWidth == 0f || gardenHeight == 0f) {
+            scale = newScale
+            offset += pan
+            return
+        }
+
+        // Центр экрана в пикселях
+        val centerScreen = Offset(
+            x = canvasSize.width / 2f,
+            y = canvasSize.height / 2f
+        )
+
+        // Мировая точка, которая сейчас под центром экрана
+        val worldCenter = (centerScreen - offset) / oldScale
+
+        // Новый offset так, чтобы worldCenter остался под тем же centerScreen после зума
+        var newOffset = centerScreen - worldCenter * newScale
+
+        // Применяем pan (в экранных координатах)
+        newOffset += pan
+
+        // Размер сада в пикселях при новом масштабе
+        val gardenWidthScaled = gardenWidth * newScale
+        val gardenHeightScaled = gardenHeight * newScale
 
         val marginX = canvasSize.width * 0.5f
         val marginY = canvasSize.height * 0.5f
@@ -120,16 +145,34 @@ class GardenPlanState(
         val minOffsetY = -gardenHeightScaled + canvasSize.height - marginY
         val maxOffsetY = marginY
 
-        val tempOffset = if (gardenWidthScaled < canvasSize.width) {
-            Offset(x = (canvasSize.width - gardenWidthScaled) / 2f, y = newOffset.y)
+        // Ограничения по X: если сад меньше экрана — центрируем, иначе ограничиваем
+        newOffset = if (gardenWidthScaled < canvasSize.width) {
+            Offset(
+                x = (canvasSize.width - gardenWidthScaled) / 2f,
+                y = newOffset.y
+            )
         } else {
-            Offset(x = newOffset.x.coerceIn(minOffsetX, maxOffsetX), y = newOffset.y)
+            Offset(
+                x = newOffset.x.coerceIn(minOffsetX, maxOffsetX),
+                y = newOffset.y
+            )
         }
 
-        offset = if (gardenHeightScaled < canvasSize.height) {
-            Offset(x = tempOffset.x, y = (canvasSize.height - gardenHeightScaled) / 2f)
+        // Ограничения по Y: аналогично
+        newOffset = if (gardenHeightScaled < canvasSize.height) {
+            Offset(
+                x = newOffset.x,
+                y = (canvasSize.height - gardenHeightScaled) / 2f
+            )
         } else {
-            Offset(x = tempOffset.x, y = newOffset.y.coerceIn(minOffsetY, maxOffsetY))
+            Offset(
+                x = newOffset.x,
+                y = newOffset.y.coerceIn(minOffsetY, maxOffsetY)
+            )
         }
+
+        scale = newScale
+        offset = newOffset
     }
+
 }
