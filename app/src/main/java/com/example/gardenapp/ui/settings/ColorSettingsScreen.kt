@@ -38,7 +38,7 @@ fun ColorSettingsScreen(
     val defaultGreenhouseColor = 0x99D1C4E9.toInt()
     val defaultBuildingColor = 0x99C2DEDC.toInt()
     val defaultGridColor = 0x4D1C1B1F.toInt()
-    val defaultBackgroundColor = 0 // Transparent
+    val defaultBackgroundColor = 0x4DFED8C0.toInt()
     val defaultTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val defaultSelectedStrokeColor = MaterialTheme.colorScheme.primary.toArgb()
 

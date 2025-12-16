@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -30,11 +32,11 @@ fun GardenCanvas(
     state: GardenPlanState,
     plants: List<PlantEntity>,
     childGardens: List<GardenEntity>,
-    plantColor: Color, // ADDED
-    bedColor: Color, // ADDED
-    greenhouseColor: Color, // ADDED
-    buildingColor: Color, // ADDED
-    gridColor: Color, // ADDED
+    plantColor: Color,
+    bedColor: Color,
+    greenhouseColor: Color,
+    buildingColor: Color,
+    gridColor: Color,
     gardenBackgroundColor: Color,
     textColor: Color,
     selectedStrokeColor: Color,
@@ -227,15 +229,14 @@ fun GardenCanvas(
         state.canvasSize = IntSize(size.width.toInt(), size.height.toInt())
 
         state.garden?.let {
-            // Draw background first
-            if (gardenBackgroundColor.alpha > 0) {
-                val backgroundRect = worldToScreen(
-                    Rect(0f, 0f, it.widthCm.toFloat(), it.heightCm.toFloat()),
-                    state.scale,
-                    state.offset
-                )
-                drawRect(color = gardenBackgroundColor, topLeft = backgroundRect.topLeft, size = backgroundRect.size)
-            }
+            // Draw background first - REMOVED the alpha check
+            val backgroundRect = worldToScreen(
+                Rect(0f, 0f, it.widthCm.toFloat(), it.heightCm.toFloat()),
+                state.scale,
+                state.offset
+            )
+            drawRect(color = gardenBackgroundColor, topLeft = backgroundRect.topLeft, size = backgroundRect.size)
+            
             if (state.snapToGrid) {
                 drawGrid(
                     garden = it,
