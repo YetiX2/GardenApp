@@ -30,7 +30,8 @@ fun AppNav() {
             DashboardScreen(
                 onOpenGardens = { nav.navigate(Route.Gardens.value) },
                 onOpenTasks = { nav.navigate(Route.Tasks.value) },
-                onOpenSettings = { nav.navigate(Route.Settings.value) } 
+                onOpenSettings = { nav.navigate(Route.Settings.value) },
+                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") } // ADDED
             )
         }
         composable(Route.Gardens.value) {

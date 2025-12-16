@@ -44,6 +44,7 @@ fun DashboardScreen(
     onOpenGardens: () -> Unit,
     onOpenTasks: () -> Unit,
     onOpenSettings: () -> Unit, // ADDED
+    onOpenPlant: (String) -> Unit,
     vm: DashboardVm = hiltViewModel()
 ) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
@@ -182,7 +183,7 @@ fun DashboardScreen(
                 }
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
-                item { RecentEntriesCard(activityItems = recentActivity) }
+                item { RecentEntriesCard(activityItems = recentActivity, onOpenPlant = onOpenPlant) } // UPDATED
                 item { AdCard() }
             }
 

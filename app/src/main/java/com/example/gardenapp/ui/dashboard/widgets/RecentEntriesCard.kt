@@ -23,7 +23,10 @@ import com.example.gardenapp.data.db.RecentActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentEntriesCard(activityItems: List<RecentActivity>) {
+fun RecentEntriesCard(
+    activityItems: List<RecentActivity>,
+    onOpenPlant: (String) -> Unit // ADDED
+) {
     Column {
         Text("Последние записи", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(8.dp))
@@ -35,7 +38,14 @@ fun RecentEntriesCard(activityItems: List<RecentActivity>) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 activityItems.forEach { item ->
-                    Card(modifier = Modifier.weight(1f)) {
+                    val plantId = when (item) { // Get plantId from the item
+                        is RecentActivity.Fertilizer -> item.data.log.plantId
+                        is RecentActivity.Harvest -> item.data.log.plantId
+                    }
+                    Card(
+                        onClick = { onOpenPlant(plantId) }, // ADDED
+                        modifier = Modifier.weight(1f)
+                    ) {
                         when (item) {
                             is RecentActivity.Fertilizer -> {
                                 val text = "Удобрение: ${item.data.log.amountGrams}г для \"${item.data.plantName}\""

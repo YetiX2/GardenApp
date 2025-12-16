@@ -27,7 +27,7 @@ class GardenPlanState(
     var snapToGrid by mutableStateOf(true)
     var showGrid by mutableStateOf(true)
     var showNames by mutableStateOf(true) // ADDED
-    var isLocked by mutableStateOf(false)
+    var isLocked by mutableStateOf(false)//TODO подумать что сделать с блокировкой редактирования
     var canvasSize by mutableStateOf(IntSize.Zero)
 
     var selectedPlant by mutableStateOf<PlantEntity?>(null)
