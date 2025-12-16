@@ -44,6 +44,10 @@ class GardenRepository @Inject constructor(
     suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?) {
         db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths))
     }
+
+    suspend fun updateCareRule(rule: CareRuleEntity) { // FIXED
+        db.ruleDao().upsert(rule)
+    }
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
 
     fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()

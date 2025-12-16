@@ -84,7 +84,12 @@ class PlantEditorVm @Inject constructor(
             _eventFlow.emit(UiEvent.ShowSnackbar("Правило ухода добавлено"))
         }
     }
-
+    fun updateCareRule(rule: CareRuleEntity) { // ADDED
+        viewModelScope.launch {
+            repo.updateCareRule(rule)
+            _eventFlow.emit(UiEvent.ShowSnackbar("Правило ухода обновлено"))
+        }
+    }
     fun deleteFertilizerLog(item: FertilizerLogEntity) = viewModelScope.launch { repo.deleteFertilizerLog(item) }
     fun deleteHarvestLog(item: HarvestLogEntity) = viewModelScope.launch { repo.deleteHarvestLog(item) }
     fun deleteCareRule(item: CareRuleEntity) = viewModelScope.launch { repo.deleteCareRule(item) }

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.icon // ADDED IMPORT
 
@@ -21,16 +22,19 @@ private fun TaskType.toRussian(): String = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCareRuleDialog(
+    initialRule: CareRuleEntity? = null, // ADDED
     onDismiss: () -> Unit,
     onAddRule: (TaskType, Int) -> Unit
 ) {
-    var selectedType by remember { mutableStateOf(TaskType.WATER) }
+    var selectedType by remember { mutableStateOf(initialRule?.type ?: TaskType.WATER) } // UPDATED
     var typeMenuExpanded by remember { mutableStateOf(false) }
-    var days by remember { mutableStateOf("3") }
+    var days by remember { mutableStateOf(initialRule?.everyDays?.toString() ?: "3") } // UPDATED
+
+    val title = if (initialRule == null) "Новое правило ухода" else "Редактировать правило"
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новое правило ухода") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExposedDropdownMenuBox(expanded = typeMenuExpanded, onExpandedChange = { typeMenuExpanded = !typeMenuExpanded }) {

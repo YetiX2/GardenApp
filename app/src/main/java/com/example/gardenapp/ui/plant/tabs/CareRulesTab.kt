@@ -9,16 +9,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import java.time.format.DateTimeFormatter
 
 private fun TaskType.toRussian(): String = when (this) {
@@ -31,11 +33,18 @@ private fun TaskType.toRussian(): String = when (this) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (CareRuleEntity) -> Unit) {
+fun CareRulesTab(
+    rules: List<CareRuleEntity>,
+    onAddRule: (TaskType, Int) -> Unit, // Renamed for clarity
+    onUpdateRule: (CareRuleEntity) -> Unit, // ADDED
+    onDeleteRule: (CareRuleEntity) -> Unit // Renamed for clarity
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var ruleToEdit by remember { mutableStateOf<CareRuleEntity?>(null) }
+
     Scaffold(
-        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Default.Add, null) } }
-    ) {
-        padding ->
+        floatingActionButton = { FloatingActionButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, null) } }
+    ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -62,13 +71,17 @@ fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (Care
                         ListItem(
                             headlineContent = { Text("${rule.type.toRussian()} $everyText") },
                             supportingContent = { Text("Начиная с ${rule.start.format(DateTimeFormatter.ISO_LOCAL_DATE)}") },
-                            trailingContent = { IconButton(onClick = { onDelete(rule) }) { Icon(Icons.Default.Delete, null) } }
+                            trailingContent = {
+                                Row {
+                                    IconButton(onClick = { ruleToEdit = rule }) { Icon(Icons.Default.Edit, null) }
+                                    IconButton(onClick = { onDeleteRule(rule) }) { Icon(Icons.Default.Delete, null) }
+                                }
+                            }
                         )
                     }
                 }
             }
 
-            // --- Ad Block ---
             Card(modifier = Modifier.fillMaxWidth()) {
                 ListItem(
                     headlineContent = { Text("Видео-каналы по уходу за садом") },
@@ -78,6 +91,27 @@ fun CareRulesTab(rules: List<CareRuleEntity>, onAdd: () -> Unit, onDelete: (Care
             }
             Spacer(modifier = Modifier.height(16.dp)) // Spacer for padding at the bottom
         }
+    }
+
+    if (showAddDialog) {
+        AddCareRuleDialog(
+            onDismiss = { showAddDialog = false },
+            onAddRule = { type, days ->
+                onAddRule(type, days)
+                showAddDialog = false
+            }
+        )
+    }
+
+    ruleToEdit?.let { rule ->
+        AddCareRuleDialog(
+            initialRule = rule,
+            onDismiss = { ruleToEdit = null },
+            onAddRule = { type, days -> // This effectively becomes an update
+                onUpdateRule(rule.copy(type = type, everyDays = days))
+                ruleToEdit = null
+            }
+        )
     }
 }
 
@@ -104,4 +138,3 @@ private fun VideoCard(title: String) {
         }
     }
 }
-

@@ -118,7 +118,12 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                         1 -> TasksTab(tasks = tasks, onStatusChange = vm::updateTaskStatus, onAdd = { showAddTaskDialog = true })
                         2 -> FertilizerLogTab(logs = fertilizerLogs, onAdd = { showAddFertilizerDialog = true }, onDelete = { vm.deleteFertilizerLog(it) })
                         3 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
-                        4 -> CareRulesTab(rules = careRules, onAdd = { showAddCareRuleDialog = true }, onDelete = { vm.deleteCareRule(it) })
+                        4 -> CareRulesTab(
+                         rules = careRules,
+                         onAddRule = { type, days -> vm.addCareRule(type, LocalDate.now(), days) }, // FIXED
+                         onUpdateRule = { rule -> vm.updateCareRule(rule) }, // ADDED
+                         onDeleteRule = { rule -> vm.deleteCareRule(rule) } // FIXED
+                     )
                     }
                 }
             }
