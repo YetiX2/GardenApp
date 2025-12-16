@@ -7,6 +7,7 @@ import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.round
+import androidx.compose.foundation.gestures.calculateCentroid
 
 @Composable
 fun rememberGardenPlanState(
@@ -104,33 +105,37 @@ class GardenPlanState(
         return snapped
     }
 
-    fun updateViewWithConstraints(pan: Offset, zoom: Float) {
+    fun updateViewWithConstraints(
+        pan: Offset,
+        zoom: Float,
+        pivotScreen: Offset? = null,  // 👈 добавили pivot
+    ) {
         val gardenWidth = garden?.widthCm?.toFloat() ?: 0f
         val gardenHeight = garden?.heightCm?.toFloat() ?: 0f
 
         val oldScale = scale
         val newScale = (scale * zoom).coerceIn(0.2f, 5f)
 
-        // Если ещё нечего масштабировать — просто двигаем/зумим
+        // Если нечего масштабировать — просто двигаем/зумим
         if (canvasSize.width == 0 || canvasSize.height == 0 || gardenWidth == 0f || gardenHeight == 0f) {
             scale = newScale
             offset += pan
             return
         }
 
-        // Центр экрана в пикселях
-        val centerScreen = Offset(
+        // 👇 Пивот: точка, вокруг которой зумим
+        val pivot = pivotScreen ?: Offset(
             x = canvasSize.width / 2f,
             y = canvasSize.height / 2f
         )
 
-        // Мировая точка, которая сейчас под центром экрана
-        val worldCenter = (centerScreen - offset) / oldScale
+        // Мировая точка, которая сейчас под pivot
+        val worldPivot = (pivot - offset) / oldScale
 
-        // Новый offset так, чтобы worldCenter остался под тем же centerScreen после зума
-        var newOffset = centerScreen - worldCenter * newScale
+        // Новый offset, чтобы worldPivot осталась под тем же pivot после зума
+        var newOffset = pivot - worldPivot * newScale
 
-        // Применяем pan (в экранных координатах)
+        // Применяем pan (экранные координаты)
         newOffset += pan
 
         // Размер сада в пикселях при новом масштабе
@@ -158,7 +163,7 @@ class GardenPlanState(
             )
         }
 
-        // Ограничения по Y: аналогично
+        // Ограничения по Y
         newOffset = if (gardenHeightScaled < canvasSize.height) {
             Offset(
                 x = newOffset.x,
@@ -174,5 +179,6 @@ class GardenPlanState(
         scale = newScale
         offset = newOffset
     }
+
 
 }

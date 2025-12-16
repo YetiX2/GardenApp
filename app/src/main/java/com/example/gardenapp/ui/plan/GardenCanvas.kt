@@ -3,6 +3,7 @@ package com.example.gardenapp.ui.plan
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,9 @@ import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
 import kotlin.math.hypot
 
-private const val DOUBLE_TAP_TIMEOUT = 300L
+private const val DOUBLE_TAP_TIMEOUT = 400L      // было 300
+private const val TAP_MOVE_SLOP = 12f           // минимальный сдвиг, чтобы считать жест «движением»
+private const val DOUBLE_TAP_SLOP = 48f         // окно, в пределах которого два тапа считаются одним местом
 
 @Composable
 fun GardenCanvas(
@@ -43,7 +46,7 @@ fun GardenCanvas(
     onGardenDrag: (GardenEntity) -> Unit,
     onPlantUpdate: (PlantEntity) -> Unit,
     onGardenUpdate: (GardenEntity) -> Unit,
-    onPlantOpen: (PlantEntity) -> Unit,   // 🔹 НОВЫЙ колбэк
+    onPlantOpen: (PlantEntity) -> Unit,
     onGardenOpen: (GardenEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -60,18 +63,19 @@ fun GardenCanvas(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(state.isLocked) {
-                // 🔹 Раздельное состояние для дабл-тапа по растениям и саду
+                // Раздельное состояние для дабл-тапа по растениям и саду
                 var lastPlantTapTime = 0L
-                var lastPlantTapWorldPos: Offset? = null
+                var lastPlantTapScreenPos: Offset? = null
                 var lastTappedPlantId: String? = null
 
                 var lastGardenTapTime = 0L
-                var lastGardenTapWorldPos: Offset? = null
+                var lastGardenTapScreenPos: Offset? = null
                 var lastTappedGardenId: String? = null
 
                 awaitEachGesture {
                     val down = awaitFirstDown()
-                    val startWorld = state.screenToWorld(down.position)
+                    val startScreen = down.position
+                    val startWorld = state.screenToWorld(startScreen)
 
                     val plantsSnapshot = currentPlants
                     val childGardensSnapshot = currentChildGardens
@@ -86,7 +90,7 @@ fun GardenCanvas(
                     var isPanning = false
                     var isTransform = false
 
-                    // 🔹 ВЫБОР (select) РАБОТАЕТ ВСЕГДА, а drag — только если не locked
+                    // ВЫБОР (select) работает всегда, drag — только если не locked
                     if (hitGarden != null) {
                         onGardenSelect(hitGarden)
                         onPlantSelect(null)
@@ -126,14 +130,19 @@ fun GardenCanvas(
 
                         val pressedChanges = event.changes.filter { it.pressed }
 
-                        // 🔹 PINCH-ZOOM — не зависит от lock
+                        // PINCH-ZOOM — не зависит от lock
                         if (pressedChanges.size > 1 || isTransform) {
                             isTransform = true
                             val zoom = event.calculateZoom()
                             val panScreen = event.calculatePan()
-                            // 🔹 ИСПРАВЛЕНО: pan передаём в мировых координатах
-                            val panWorld = panScreen / state.scale
-                            state.updateViewWithConstraints(panWorld, zoom)
+                            val pivot = event.calculateCentroid()  // центр жеста
+
+                            state.updateViewWithConstraints(
+                                pan = panScreen,
+                                zoom = zoom,
+                                pivotScreen = pivot
+                            )
+
                             event.changes.forEach { it.consume() }
                             continue
                         }
@@ -141,7 +150,7 @@ fun GardenCanvas(
                         val change = pressedChanges.first()
                         val pos = change.position
 
-                        if (!hasMoved && (pos - initialPos).getDistance() > 8f) {
+                        if (!hasMoved && (pos - initialPos).getDistance() > TAP_MOVE_SLOP) {
                             hasMoved = true
                         }
 
@@ -177,8 +186,12 @@ fun GardenCanvas(
                                 )
                             }
                         } else if (isPanning) {
-                            val panWorld = pos - lastPos
-                            state.updateViewWithConstraints(panWorld, 1f)
+                            val panScreen = pos - lastPos
+                            state.updateViewWithConstraints(
+                                pan = panScreen,
+                                zoom = 1f,
+                                pivotScreen = null
+                            )
                         }
 
                         lastPos = pos
@@ -193,7 +206,7 @@ fun GardenCanvas(
 
                     // ---------- TAP / DOUBLE-TAP ЛОГИКА ----------
 
-                    // 🔹 Сначала проверяем растение
+                    // Сначала проверяем растение
                     val tappedPlant = hitPlant
                     val isTapOnPlant =
                         tappedPlant != null &&
@@ -202,24 +215,24 @@ fun GardenCanvas(
 
                     if (isTapOnPlant && tappedPlant != null) {
                         val tapTime = down.uptimeMillis
-                        val lastPosWorld = lastPlantTapWorldPos
+                        val lastPosScreen = lastPlantTapScreenPos
                         val lastId = lastTappedPlantId
 
                         val isSamePlant = lastId != null && lastId == tappedPlant.id
                         val isWithinTime = tapTime - lastPlantTapTime <= DOUBLE_TAP_TIMEOUT
                         val isCloseEnough =
-                            lastPosWorld != null &&
-                                    (startWorld - lastPosWorld).getDistance() < 16f
+                            lastPosScreen != null &&
+                                    (startScreen - lastPosScreen).getDistance() < DOUBLE_TAP_SLOP
 
                         if (isSamePlant && isWithinTime && isCloseEnough) {
-                            // 🔹 ДВОЙНОЙ ТАП ПО РАСТЕНИЮ
+                            // ДВОЙНОЙ ТАП ПО РАСТЕНИЮ
                             onPlantOpen(tappedPlant)
                             lastPlantTapTime = 0L
-                            lastPlantTapWorldPos = null
+                            lastPlantTapScreenPos = null
                             lastTappedPlantId = null
                         } else {
                             lastPlantTapTime = tapTime
-                            lastPlantTapWorldPos = startWorld
+                            lastPlantTapScreenPos = startScreen
                             lastTappedPlantId = tappedPlant.id
                         }
 
@@ -227,33 +240,32 @@ fun GardenCanvas(
                         return@awaitEachGesture
                     }
 
-                    // 🔹 Потом проверяем сад (кроме BUILDING)
+                    // Потом проверяем сад (кроме BUILDING)
                     val tappedGarden = hitGarden
                     val isTapOnGarden =
                         tappedGarden != null &&
-                                tappedGarden.type != GardenType.BUILDING &&
                                 !isTransform &&
                                 !hasMoved
 
                     if (isTapOnGarden && tappedGarden != null) {
                         val tapTime = down.uptimeMillis
-                        val lastPosWorld = lastGardenTapWorldPos
+                        val lastPosScreen = lastGardenTapScreenPos
                         val lastId = lastTappedGardenId
 
                         val isSameGarden = lastId != null && lastId == tappedGarden.id
                         val isWithinTime = tapTime - lastGardenTapTime <= DOUBLE_TAP_TIMEOUT
                         val isCloseEnough =
-                            lastPosWorld != null &&
-                                    (startWorld - lastPosWorld).getDistance() < 16f
+                            lastPosScreen != null &&
+                                    (startScreen - lastPosScreen).getDistance() < DOUBLE_TAP_SLOP
 
                         if (isSameGarden && isWithinTime && isCloseEnough) {
                             onGardenOpen(tappedGarden)
                             lastGardenTapTime = 0L
-                            lastGardenTapWorldPos = null
+                            lastGardenTapScreenPos = null
                             lastTappedGardenId = null
                         } else {
                             lastGardenTapTime = tapTime
-                            lastGardenTapWorldPos = startWorld
+                            lastGardenTapScreenPos = startScreen
                             lastTappedGardenId = tappedGarden.id
                         }
                     }
