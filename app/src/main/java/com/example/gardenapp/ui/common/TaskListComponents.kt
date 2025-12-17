@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
+import com.example.gardenapp.data.db.icon
 
 // TODO: Move to a shared file
 private fun TaskType.toRussian(): String = when (this) {
@@ -59,6 +60,9 @@ internal fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) 
     val taskText = "$taskDescription \"${taskInfo.plantName}\""
 
     ListItem(
+        leadingContent = { // ADDED
+            Icon(taskInfo.task.type.icon, contentDescription = null)
+        },
         headlineContent = { Text(taskText) },
         supportingContent = { 
             // Show note if it exists
