@@ -23,9 +23,9 @@ import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
 import kotlin.math.hypot
 
-private const val DOUBLE_TAP_TIMEOUT = 400L      // было 300
+private const val DOUBLE_TAP_TIMEOUT = 400L      // окно по времени
 private const val TAP_MOVE_SLOP = 12f           // минимальный сдвиг, чтобы считать жест «движением»
-private const val DOUBLE_TAP_SLOP = 48f         // окно, в пределах которого два тапа считаются одним местом
+private const val DOUBLE_TAP_SLOP = 48f         // окно по расстоянию для double-tap
 
 @Composable
 fun GardenCanvas(
@@ -244,6 +244,7 @@ fun GardenCanvas(
                     val tappedGarden = hitGarden
                     val isTapOnGarden =
                         tappedGarden != null &&
+                                //tappedGarden.type != GardenType.BUILDING && // не открываем здания
                                 !isTransform &&
                                 !hasMoved
 
