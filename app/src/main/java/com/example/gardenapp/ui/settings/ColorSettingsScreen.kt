@@ -169,7 +169,7 @@ fun ColorSettingsScreen(
                 color = Color(plantColorLight?:defaultPlantColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет растений (светлая тема)",
+                    label = "Цвет растений",
                     initialColor = color
                 ) { selected ->
                     vm.savePlantColor(selected.toArgb())
@@ -181,7 +181,7 @@ fun ColorSettingsScreen(
                 color = Color(bedColorLight?:defaultBedColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет грядок (светлая тема)",
+                    label = "Цвет грядок",
                     initialColor = color
                 ) { selected ->
                     vm.saveBedColor(selected.toArgb())
@@ -193,7 +193,7 @@ fun ColorSettingsScreen(
                 color = Color(greenhouseColorLight?:defaultGreenhouseColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет теплиц (светлая тема)",
+                    label = "Цвет теплиц",
                     initialColor = color
                 ) { selected ->
                     vm.saveGreenhouseColor(selected.toArgb())
@@ -205,7 +205,7 @@ fun ColorSettingsScreen(
                 color = Color(buildingColorLight?:defaultBuildingColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет строений (светлая тема)",
+                    label = "Цвет строений",
                     initialColor = color
                 ) { selected ->
                     vm.saveBuildingColor(selected.toArgb())
@@ -217,7 +217,7 @@ fun ColorSettingsScreen(
                 color = Color(gridColorLight?:defaultGridColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет сетки (светлая тема)",
+                    label = "Цвет сетки",
                     initialColor = color
                 ) { selected ->
                     vm.saveGridColor(selected.toArgb())
@@ -229,7 +229,7 @@ fun ColorSettingsScreen(
                 color = Color(backgroundColorLight?:defaultBackgroundColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет фона участка (светлая тема)",
+                    label = "Цвет фона участка",
                     initialColor = color
                 ) { selected ->
                     vm.saveGardenBackgroundColor(selected.toArgb())
@@ -241,7 +241,7 @@ fun ColorSettingsScreen(
                 color = Color(textColorLight?:defaultTextColorLight),
             ) { color ->
                 colorPickerState = ColorPickerState(
-                    label = "Цвет текста (светлая тема)",
+                    label = "Цвет текста",
                     initialColor = color
                 ) { selected ->
                     vm.saveTextColor(selected.toArgb())
@@ -283,11 +283,11 @@ fun ColorSettingsScreen(
                 Spacer(Modifier.height(8.dp))
 
                 ColorSettingRow(
-                    label = "Цвет растений (тёмная тема)",
+                    label = "Цвет растений",
                     color = Color(plantColorDark?:defaultPlantColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет растений (тёмная тема)",
+                        label = "Цвет растений",
                         initialColor = color
                     ) { selected ->
                         vm.savePlantColorDark(selected.toArgb())
@@ -295,11 +295,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет грядок (тёмная тема)",
+                    label = "Цвет грядок",
                     color = Color(bedColorDark?:defaultBedColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет грядок (тёмная тема)",
+                        label = "Цвет грядок",
                         initialColor = color
                     ) { selected ->
                         vm.saveBedColorDark(selected.toArgb())
@@ -307,11 +307,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет теплиц (тёмная тема)",
+                    label = "Цвет теплиц",
                     color = Color(greenhouseColorDark?:defaultGreenhouseColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет теплиц (тёмная тема)",
+                        label = "Цвет теплиц",
                         initialColor = color
                     ) { selected ->
                         vm.saveGreenhouseColorDark(selected.toArgb())
@@ -319,11 +319,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет строений (тёмная тема)",
+                    label = "Цвет строений",
                     color = Color(buildingColorDark?:defaultBuildingColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет строений (тёмная тема)",
+                        label = "Цвет строений",
                         initialColor = color
                     ) { selected ->
                         vm.saveBuildingColorDark(selected.toArgb())
@@ -331,11 +331,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет сетки (тёмная тема)",
+                    label = "Цвет сетки",
                     color = Color(gridColorDark?:defaultGridColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет сетки (тёмная тема)",
+                        label = "Цвет сетки",
                         initialColor = color
                     ) { selected ->
                         vm.saveGridColorDark(selected.toArgb())
@@ -343,11 +343,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет фона участка (тёмная тема)",
+                    label = "Цвет фона участка",
                     color = Color(backgroundColorDark?:defaultBackgroundColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет фона участка (тёмная тема)",
+                        label = "Цвет фона участка",
                         initialColor = color
                     ) { selected ->
                         vm.saveGardenBackgroundColorDark(selected.toArgb())
@@ -355,11 +355,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет текста (тёмная тема)",
+                    label = "Цвет текста",
                     color = Color(textColorDark?:defaultTextColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет текста (тёмная тема)",
+                        label = "Цвет текста",
                         initialColor = color
                     ) { selected ->
                         vm.saveTextColorDark(selected.toArgb())
@@ -367,11 +367,11 @@ fun ColorSettingsScreen(
                 }
 
                 ColorSettingRow(
-                    label = "Цвет выделения (тёмная тема)",
+                    label = "Цвет выделения",
                     color = Color(selectedStrokeColorDark?:defaultSelectedStrokeColorDark),
                 ) { color ->
                     colorPickerState = ColorPickerState(
-                        label = "Цвет выделения (тёмная тема)",
+                        label = "Цвет выделения",
                         initialColor = color
                     ) { selected ->
                         vm.saveSelectedStrokeColorDark(selected.toArgb())
@@ -585,8 +585,14 @@ private fun GardenColorsPreview(
 
             // растения внутри грядки
             val plantPositions = listOf(
-                Offset(20f, 18f),
+                Offset(20f, 16f),
+                Offset(30f, 16f),
+                Offset(40f, 16f),
+                /*Offset(20f, 22f),
                 Offset(30f, 22f),
+                Offset(40f, 22f),*/
+                Offset(20f, 28f),
+                Offset(30f, 28f),
                 Offset(40f, 28f),
             )
             plantPositions.forEachIndexed { index, posWorld ->
@@ -606,6 +612,15 @@ private fun GardenColorsPreview(
                     )
                 }
             }
+            //Дерево
+            val center = worldToScreen(120f, 60f)
+            val radius = w(2.5f)
+            drawCircle(
+                color = plant,
+                radius = radius + w(1f)+30,
+                center = center/*,
+                style = Stroke(width = w(0.5f))*/
+            )
 
             // подписи
             val bedLabel = textMeasurer.measure(
