@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.ui.theme.LocalIsDarkTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -74,7 +75,7 @@ fun GardenPlanScreen(
     val editorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val plantListSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val darkTheme = isSystemInDarkTheme() // можно заменить на свой флаг из SettingsViewModel, если есть
+    val darkTheme = LocalIsDarkTheme.current // можно заменить на свой флаг из SettingsViewModel, если есть
 
     Scaffold(
         topBar = {

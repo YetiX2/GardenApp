@@ -8,8 +8,16 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import com.example.gardenapp.data.settings.ThemeOption
+
+/**
+ * Источник истины для "эффективной" темы (dark/light) с учётом ThemeOption.SYSTEM.
+ * Используй LocalIsDarkTheme.current в экранах (например, чтобы выбрать палитру Canvas).
+ */
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -25,28 +33,30 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun GardenAppTheme(
-    themeOption: ThemeOption = ThemeOption.SYSTEM, // ADDED
+    themeOption: ThemeOption = ThemeOption.SYSTEM,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val darkTheme = when (themeOption) { // ADDED LOGIC
+    val isDark = when (themeOption) {
         ThemeOption.LIGHT -> false
         ThemeOption.DARK -> true
         ThemeOption.SYSTEM -> isSystemInDarkTheme()
     }
-    
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        isDark -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalIsDarkTheme provides isDark) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

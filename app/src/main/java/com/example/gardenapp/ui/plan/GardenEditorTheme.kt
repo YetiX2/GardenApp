@@ -65,24 +65,36 @@ object GardenEditorTheme {
  */
 @Composable
 fun GardenEditorThemeFromSettings(
-    darkTheme: Boolean = isSystemInDarkTheme(),      // лучше прокинуть сверху тот же флаг, что и в MaterialTheme
+    darkTheme: Boolean, // <- важно: без default isSystemInDarkTheme()
     vm: ColorSettingsVm = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
-    // Базовая палитра по теме
+    // Базовая палитра по фактической теме
     val base = if (darkTheme) GardenEditorPalettes.DarkBase else GardenEditorPalettes.LightBase
 
-    // читаем кастомные цвета (Int?) из репозитория
-    val plantColorInt = vm.settings.plantColor.collectAsState(initial = null).value
-    val bedColorInt = vm.settings.bedColor.collectAsState(initial = null).value
-    val greenhouseColorInt = vm.settings.greenhouseColor.collectAsState(initial = null).value
-    val buildingColorInt = vm.settings.buildingColor.collectAsState(initial = null).value
-    val gridColorInt = vm.settings.gridColor.collectAsState(initial = null).value
-    val backgroundColorInt = vm.settings.gardenBackgroundColor.collectAsState(initial = null).value
-    val textColorInt = vm.settings.textColor.collectAsState(initial = null).value
-    val selectedStrokeColorInt = vm.settings.selectedStrokeColor.collectAsState(initial = null).value
+    // Флаг: раздельные палитры для светлой/тёмной темы
+    val useSeparateDark = vm.useSeparateDarkPalette.collectAsState(initial = false).value
 
-    // если значение null — берём базовый цвет из темы
+    // Если флаг включен и сейчас darkTheme — берём DARK ключи; иначе LIGHT ключи
+    val useDarkKeys = useSeparateDark && darkTheme
+
+    val plantColorInt = (if (useDarkKeys) vm.settings.plantColorDark else vm.settings.plantColor)
+        .collectAsState(initial = null).value
+    val bedColorInt = (if (useDarkKeys) vm.settings.bedColorDark else vm.settings.bedColor)
+        .collectAsState(initial = null).value
+    val greenhouseColorInt = (if (useDarkKeys) vm.settings.greenhouseColorDark else vm.settings.greenhouseColor)
+        .collectAsState(initial = null).value
+    val buildingColorInt = (if (useDarkKeys) vm.settings.buildingColorDark else vm.settings.buildingColor)
+        .collectAsState(initial = null).value
+    val gridColorInt = (if (useDarkKeys) vm.settings.gridColorDark else vm.settings.gridColor)
+        .collectAsState(initial = null).value
+    val backgroundColorInt = (if (useDarkKeys) vm.settings.gardenBackgroundColorDark else vm.settings.gardenBackgroundColor)
+        .collectAsState(initial = null).value
+    val textColorInt = (if (useDarkKeys) vm.settings.textColorDark else vm.settings.textColor)
+        .collectAsState(initial = null).value
+    val selectedStrokeColorInt = (if (useDarkKeys) vm.settings.selectedStrokeColorDark else vm.settings.selectedStrokeColor)
+        .collectAsState(initial = null).value
+
     val editorColors = GardenEditorColors(
         background     = backgroundColorInt?.let(::Color) ?: base.background,
         grid           = gridColorInt?.let(::Color) ?: base.grid,
@@ -94,9 +106,7 @@ fun GardenEditorThemeFromSettings(
         text           = textColorInt?.let(::Color) ?: base.text,
     )
 
-    CompositionLocalProvider(
-        LocalGardenEditorColors provides editorColors
-    ) {
+    CompositionLocalProvider(LocalGardenEditorColors provides editorColors) {
         content()
     }
 }
