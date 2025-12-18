@@ -9,10 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gardenapp.ui.theme.GardenAppTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -23,6 +27,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         "Все готово!" to "Нажмите кнопку ниже, чтобы начать работу."
     )
     val pagerState = rememberPagerState { pages.size }
+    val scope = rememberCoroutineScope() // ADDED
 
     Scaffold {
         Column(
@@ -33,8 +38,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
-            ) {
-                page ->
+            ) { page ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
@@ -46,11 +50,31 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 }
             }
 
+            // MODIFIED BLOCK
             if (pagerState.currentPage == pages.lastIndex) {
                 Button(onClick = onFinished, modifier = Modifier.fillMaxWidth()) {
                     Text("Начать работу")
                 }
+            } else {
+                Button(
+                    onClick = { 
+                        scope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Далее")
+                }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingScreenPreview() {
+    GardenAppTheme {
+        OnboardingScreen(onFinished = {})
     }
 }
