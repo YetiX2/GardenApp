@@ -147,6 +147,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideReferenceDataRepository(referenceDao: ReferenceDao, @ApplicationContext context: Context) =
-        ReferenceDataRepository(referenceDao, context)
+    fun provideReferenceDataRepository(referenceDao: ReferenceDao, @ApplicationContext context: Context, settingsManager: SettingsManager) =
+        ReferenceDataRepository(referenceDao, settingsManager, context)
+
 }

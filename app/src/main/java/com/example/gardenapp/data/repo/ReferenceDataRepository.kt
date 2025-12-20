@@ -3,9 +3,11 @@ package com.example.gardenapp.data.repo
 import android.content.Context
 import android.util.Log
 import com.example.gardenapp.data.db.*
+import com.example.gardenapp.data.settings.SettingsManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -17,6 +19,10 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val LATEST_DATA_VERSION = 4
+
+// --- JSON Deserialization Classes (Updated to match varieties_v4.json) ---
 
 @Serializable
 private data class GroupJson(val id: String, val title: String)
@@ -40,40 +46,51 @@ data class I18nJson(val ru: String, val en: String, val kz: String)
 
 @Serializable
 data class HardinessJson(val min: Int, val max: Int)
-
 @Serializable
 data class SmartFiltersJson(
     val cultivation: List<String>? = null,
     val soil_pH: String? = null,
     val height_cm: Int? = null
 )
+@Serializable
+data class PlantingWindowJson(val spring: WindowJson? = null, val autumn: WindowJson? = null)
+
+@Serializable
+data class HarvestWindowJson(val start: Int? = null, val end: Int? = null)
+
+@Serializable
+data class WindowJson(val start: Int, val end: Int)
 
 @Singleton
 class ReferenceDataRepository @Inject constructor(
     private val referenceDao: ReferenceDao,
+    private val settingsManager: SettingsManager,
     @ApplicationContext private val context: Context
 ) {
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
-    // --- Methods to get reference data for UI ---
-    fun getVariety(id: String): Flow<ReferenceVarietyEntity?> = referenceDao.getVariety(id)
-    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
-    fun getCulture(id: String): Flow<ReferenceCultureEntity?> = referenceDao.getCulture(id)
+    suspend fun checkAndUpdate() {
+        val currentVersion = settingsManager.dataVersion.first()
+        if (currentVersion < LATEST_DATA_VERSION) {
+            Log.d("DataUpdate", "Current data version ($currentVersion) is older than latest ($LATEST_DATA_VERSION). Updating.")
+            populateDatabaseIfEmpty()
+            settingsManager.setDataVersion(LATEST_DATA_VERSION)
+        }
+    }
 
     suspend fun populateDatabaseIfEmpty() {
         if (referenceDao.getGroupsCount() > 0) {
             Log.d("DataPopulation", "Database already populated. Skipping.")
             return
         }
-
         withContext(Dispatchers.IO) {
             try {
                 Log.d("DataPopulation", "Starting data population...")
 
                 val groupsString = context.assets.open("groups.json").bufferedReader().use { it.readText() }
                 val culturesString = context.assets.open("cultures.json").bufferedReader().use { it.readText() }
-                val varietiesString = context.assets.open("varieties_v3.json").bufferedReader().use { it.readText() }
+                val varietiesString = context.assets.open("varieties_v5.json").bufferedReader().use { it.readText() }
 
                 val groups = json.decodeFromString<List<GroupJson>>(groupsString)
                 referenceDao.insertGroups(groups.map { ReferenceGroupEntity(it.id, it.title) })
@@ -118,13 +135,20 @@ class ReferenceDataRepository @Inject constructor(
                             val cultivationEntities = it.map { type -> ReferenceCultivationEntity(v.id, type) }
                             referenceDao.insertCultivationTypes(cultivationEntities)
                         }
+                        //TODO referenceDao.updateAllReferenceData(.....)
+
                     }
                 }
                 Log.d("DataPopulation", "Data population finished successfully!")
 
             } catch (e: Exception) {
-                Log.e("DataPopulation", "CRITICAL ERROR populating database", e)
+                Log.e("DataUpdate", "CRITICAL ERROR updating database from assets", e)
             }
         }
     }
+
+    // --- Getters for UI ---
+    fun getVariety(id: String): Flow<ReferenceVarietyEntity?> = referenceDao.getVariety(id)
+    fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
+    fun getCulture(id: String): Flow<ReferenceCultureEntity?> = referenceDao.getCulture(id)
 }

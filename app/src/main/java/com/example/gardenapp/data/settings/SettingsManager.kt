@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,28 +22,33 @@ enum class ThemeOption { LIGHT, DARK, SYSTEM }
 class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
 
     private object Keys {
-        val THEME = stringPreferencesKey("theme_option")
-        val HAS_SEEN_ONBOARDING = booleanPreferencesKey("has_seen_onboarding") // ADDED
+        val theme = stringPreferencesKey("theme_option")
+        val hasSeenOnboarding = booleanPreferencesKey("has_seen_onboarding")
+        val dataVersion = intPreferencesKey("data_version") // ADDED
     }
 
     val themeFlow = context.dataStore.data.map { preferences ->
-        val themeName = preferences[Keys.THEME] ?: ThemeOption.SYSTEM.name
+        val themeName = preferences[Keys.theme] ?: ThemeOption.SYSTEM.name
         ThemeOption.valueOf(themeName)
     }
 
-    suspend fun setTheme(theme: ThemeOption) {
-        context.dataStore.edit {
-                settings -> settings[Keys.THEME] = theme.name
-        }
-    }
-
-    // ADDED
     val hasSeenOnboarding: Flow<Boolean> = context.dataStore.data.map {
-        it[Keys.HAS_SEEN_ONBOARDING] ?: false
+        it[Keys.hasSeenOnboarding] ?: false
     }
 
-    // ADDED
+    val dataVersion: Flow<Int> = context.dataStore.data.map { // ADDED
+        it[Keys.dataVersion] ?: 0
+    }
+
+    suspend fun setTheme(theme: ThemeOption) {
+        context.dataStore.edit { it[Keys.theme] = theme.name }
+    }
+
     suspend fun setOnboardingSeen() {
-        context.dataStore.edit { it[Keys.HAS_SEEN_ONBOARDING] = true }
+        context.dataStore.edit { it[Keys.hasSeenOnboarding] = true }
+    }
+
+    suspend fun setDataVersion(version: Int) { // ADDED
+        context.dataStore.edit { it[Keys.dataVersion] = version }
     }
 }

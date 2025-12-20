@@ -73,9 +73,9 @@ fun InfoTab(
             }
 
             // --- Description ---
-            variety.i18n.ru?.let {
+            /*variety.i18n.ru?.let {
                 Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Justify)
-            }
+            }*/
 
             Spacer(modifier = Modifier.weight(1f)) // Pushes ad to the bottom
 

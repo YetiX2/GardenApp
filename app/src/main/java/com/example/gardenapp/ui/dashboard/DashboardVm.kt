@@ -13,12 +13,14 @@ import com.example.gardenapp.data.repo.WeatherRepository
 import com.example.gardenapp.worker.CareTaskWorker
 import com.example.gardenapp.data.weather.WeatherResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -111,7 +113,9 @@ class DashboardVm @Inject constructor(
 
     fun createTestData() {
         viewModelScope.launch {
-            testDataGenerator.seed() // FIXED
+            withContext(Dispatchers.IO) { // ADDED
+                testDataGenerator.seed()
+            }
             _eventFlow.emit(UiEvent.ShowSnackbar("Тестовые данные созданы"))
         }
     }
