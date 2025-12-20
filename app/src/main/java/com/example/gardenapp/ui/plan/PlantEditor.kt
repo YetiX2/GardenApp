@@ -217,6 +217,10 @@ private fun checkRecommendation(gardenZone: Int?, varietyHardiness: HardinessEnt
     val min = varietyHardiness.min
     val max = varietyHardiness.max
 
+    // If min or max are null, we can't make a recommendation.
+    if (min == null || max == null || min == 99 || max == 99 ) {
+        return RecommendationLevel.RECOMMENDED
+    }
     return when {
         gardenZone in min..max -> RecommendationLevel.RECOMMENDED
         abs(gardenZone - min) <= 1 || abs(gardenZone - max) <= 1 -> RecommendationLevel.WARNING

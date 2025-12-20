@@ -13,16 +13,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val LATEST_DATA_VERSION = 4
+private const val LATEST_DATA_VERSION = 6 // Using version 3 to match the file
 
-// --- JSON Deserialization Classes (Updated to match varieties_v4.json) ---
+// --- JSON Deserialization Classes (Matching v3 structure) ---
 
 @Serializable
 private data class GroupJson(val id: String, val title: String)
@@ -32,12 +29,12 @@ private data class CultureJson(val id: String, val title: String)
 
 @Serializable
 private data class VarietyJson(
-    val id: String, // UUID
+    val id: String,
     val title: String,
-    val i18n: I18nJson,
+    val i18n: I18nJson = I18nJson("", "", ""),
     val hardiness_ru: HardinessJson? = null,
     val regions_reco: List<String>? = null,
-    val smart_filters: SmartFiltersJson,
+    val smart_filters: SmartFiltersJson = SmartFiltersJson(),
     val tags: Map<String, JsonElement>? = null
 )
 
@@ -45,21 +42,14 @@ private data class VarietyJson(
 data class I18nJson(val ru: String, val en: String, val kz: String)
 
 @Serializable
-data class HardinessJson(val min: Int, val max: Int)
+data class HardinessJson(val min: Int?, val max: Int?)
+
 @Serializable
 data class SmartFiltersJson(
     val cultivation: List<String>? = null,
     val soil_pH: String? = null,
     val height_cm: Int? = null
 )
-@Serializable
-data class PlantingWindowJson(val spring: WindowJson? = null, val autumn: WindowJson? = null)
-
-@Serializable
-data class HarvestWindowJson(val start: Int? = null, val end: Int? = null)
-
-@Serializable
-data class WindowJson(val start: Int, val end: Int)
 
 @Singleton
 class ReferenceDataRepository @Inject constructor(
@@ -71,78 +61,69 @@ class ReferenceDataRepository @Inject constructor(
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
     suspend fun checkAndUpdate() {
-        val currentVersion = settingsManager.dataVersion.first()
-        if (currentVersion < LATEST_DATA_VERSION) {
-            Log.d("DataUpdate", "Current data version ($currentVersion) is older than latest ($LATEST_DATA_VERSION). Updating.")
-            populateDatabaseIfEmpty()
-            settingsManager.setDataVersion(LATEST_DATA_VERSION)
+        try {
+            val currentVersion = settingsManager.dataVersion.first()
+            if (currentVersion < LATEST_DATA_VERSION) {
+                Log.d("DataUpdate", "Current data version ($currentVersion) is older than latest ($LATEST_DATA_VERSION). Updating.")
+                forceUpdateFromAssets()
+                settingsManager.setDataVersion(LATEST_DATA_VERSION)
+            }
+        } catch (e: Exception) {
+            Log.e("DataUpdate", "CRITICAL ERROR updating database from assets", e)
+            throw e
         }
+
     }
 
-    suspend fun populateDatabaseIfEmpty() {
-        if (referenceDao.getGroupsCount() > 0) {
-            Log.d("DataPopulation", "Database already populated. Skipping.")
-            return
-        }
+    private suspend fun forceUpdateFromAssets() {
         withContext(Dispatchers.IO) {
             try {
-                Log.d("DataPopulation", "Starting data population...")
+                Log.d("DataUpdate", "Starting data update from assets...")
 
                 val groupsString = context.assets.open("groups.json").bufferedReader().use { it.readText() }
                 val culturesString = context.assets.open("cultures.json").bufferedReader().use { it.readText() }
-                val varietiesString = context.assets.open("varieties_v5.json").bufferedReader().use { it.readText() }
+                val varietiesString = context.assets.open("varieties_v5.json").bufferedReader().use { it.readText() } // Using v3
 
                 val groups = json.decodeFromString<List<GroupJson>>(groupsString)
-                referenceDao.insertGroups(groups.map { ReferenceGroupEntity(it.id, it.title) })
-
                 val cultures = json.decodeFromString<Map<String, List<CultureJson>>>(culturesString)
-                val cultureEntities = cultures.flatMap { (groupId, cultureList) ->
-                    cultureList.map { ReferenceCultureEntity(it.id, groupId, it.title) }
-                }
-                referenceDao.insertCultures(cultureEntities)
-
                 val varieties = json.decodeFromString<Map<String, List<VarietyJson>>>(varietiesString)
+
+                val groupEntities = groups.map { ReferenceGroupEntity(it.id, it.title) }
+                val cultureEntities = cultures.flatMap { (groupId, cultureList) -> cultureList.map { ReferenceCultureEntity(it.id, groupId, it.title) } }
+                
+                val varietyEntities = mutableListOf<ReferenceVarietyEntity>()
+                val tagEntities = mutableListOf<ReferenceTagEntity>()
+                val regionEntities = mutableListOf<ReferenceRegionEntity>()
+                val cultivationEntities = mutableListOf<ReferenceCultivationEntity>()
+
                 varieties.forEach { (cultureId, varietyList) ->
                     varietyList.forEach { v ->
-                        val varietyEntity = ReferenceVarietyEntity(
+                        varietyEntities.add(ReferenceVarietyEntity(
                             id = v.id,
                             cultureId = cultureId,
                             title = v.title,
                             i18n = I18nEntity(v.i18n.ru, v.i18n.en, v.i18n.kz),
                             hardiness = v.hardiness_ru?.let { HardinessEntity(it.min, it.max) },
                             smartFilters = SmartFilterEntity(v.smart_filters.soil_pH, v.smart_filters.height_cm)
-                        )
-                        referenceDao.insertVarieties(listOf(varietyEntity))
+                        ))
 
-                        v.tags?.let {
-                            val tagEntities = it.map { (key, value) ->
-                                val stringValue = when (value) {
-                                    is JsonPrimitive -> value.content
-                                    is JsonArray -> value.joinToString { el -> el.jsonPrimitive.content.trim('"') }
-                                    else -> value.toString()
-                                }
+                        v.tags?.let { tags ->
+                            val mappedTags = tags.map { (key, value) ->
+                                val stringValue = if (value is JsonPrimitive) value.content else value.toString().trim('"')
                                 ReferenceTagEntity(v.id, key, stringValue)
                             }
-                            referenceDao.insertTags(tagEntities)
+                            tagEntities.addAll(mappedTags)
                         }
-
-                        v.regions_reco?.let {
-                            val regionEntities = it.map { region -> ReferenceRegionEntity(v.id, region) }
-                            referenceDao.insertRegions(regionEntities)
-                        }
-
-                        v.smart_filters.cultivation?.let {
-                            val cultivationEntities = it.map { type -> ReferenceCultivationEntity(v.id, type) }
-                            referenceDao.insertCultivationTypes(cultivationEntities)
-                        }
-                        //TODO referenceDao.updateAllReferenceData(.....)
-
+                        v.regions_reco?.let { regions -> regionEntities.addAll(regions.map { ReferenceRegionEntity(v.id, it) }) }
+                        v.smart_filters.cultivation?.let { cultivation -> cultivationEntities.addAll(cultivation.map { ReferenceCultivationEntity(v.id, it) }) }
                     }
                 }
-                Log.d("DataPopulation", "Data population finished successfully!")
 
+                referenceDao.updateAllReferenceData(groupEntities, cultureEntities, varietyEntities, tagEntities, regionEntities, cultivationEntities)
+                Log.d("DataUpdate", "Data update finished successfully!")
             } catch (e: Exception) {
                 Log.e("DataUpdate", "CRITICAL ERROR updating database from assets", e)
+                throw e
             }
         }
     }
@@ -151,4 +132,9 @@ class ReferenceDataRepository @Inject constructor(
     fun getVariety(id: String): Flow<ReferenceVarietyEntity?> = referenceDao.getVariety(id)
     fun getTagsForVariety(varietyId: String): Flow<List<ReferenceTagEntity>> = referenceDao.getTagsForVariety(varietyId)
     fun getCulture(id: String): Flow<ReferenceCultureEntity?> = referenceDao.getCulture(id)
+    fun getGroups(): Flow<List<ReferenceGroupEntity>> = referenceDao.getGroups()
+    fun getAllCultures(): Flow<List<ReferenceCultureEntity>> = referenceDao.getAllCultures()
+    fun getAllVarieties(): Flow<List<ReferenceVarietyEntity>> = referenceDao.getAllVarieties()
+    fun getCulturesByGroup(groupId: String): Flow<List<ReferenceCultureEntity>> = referenceDao.getCulturesByGroup(groupId)
+    fun getVarietiesByCulture(cultureId: String): Flow<List<ReferenceVarietyEntity>> = referenceDao.getVarietiesByCulture(cultureId)
 }

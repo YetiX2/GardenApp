@@ -36,6 +36,8 @@ import retrofit2.Retrofit
 import javax.inject.Provider
 import javax.inject.Singleton
 
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
@@ -50,15 +52,21 @@ object AppModule {
     @Singleton
     fun provideDb(
         @ApplicationContext ctx: Context,
-        repoProvider: Provider<ReferenceDataRepository>
+        refRepoProvider: Provider<ReferenceDataRepository>
     ): GardenDatabase {
         return Room.databaseBuilder(ctx, GardenDatabase::class.java, "garden.db")
             .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        refRepoProvider.get().checkAndUpdate()
+                    }
+                }
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
                     CoroutineScope(Dispatchers.IO).launch {
-                        repoProvider.get().populateDatabaseIfEmpty()
+                        refRepoProvider.get().checkAndUpdate()
                     }
                 }
             })

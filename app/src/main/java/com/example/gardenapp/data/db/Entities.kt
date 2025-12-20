@@ -146,8 +146,9 @@ data class ReferenceVarietyEntity(
     @Embedded(prefix = "filter_") val smartFilters: SmartFilterEntity
 )
 
+// Reverted to old structure
 data class I18nEntity(val ru: String, val en: String, val kz: String)
-data class HardinessEntity(val min: Int, val max: Int)
+data class HardinessEntity(val min: Int?, val max: Int?)
 data class SmartFilterEntity(val soil_pH: String?, val height_cm: Int?)
 
 @Entity(
