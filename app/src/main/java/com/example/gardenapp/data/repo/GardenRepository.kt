@@ -4,6 +4,7 @@ import com.example.gardenapp.data.db.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -30,7 +31,12 @@ class GardenRepository @Inject constructor(
 
     suspend fun deleteGarden(g: GardenEntity) = db.gardenDao().delete(g)
 
-    fun plants(gardenId: String): Flow<List<PlantEntity>> = db.plantDao().observeByGarden(gardenId)
+    fun plantsForGardens(gardenId: String): Flow<List<PlantEntity>> {
+        return getChildGardens(gardenId).flatMapLatest { childGardens ->
+            val gardenIds = listOf(gardenId) + childGardens.map { it.id }
+            db.plantDao().observeByGardenIds(gardenIds)
+        }
+    }
     fun observeAllPlants(): Flow<List<PlantEntity>> = db.plantDao().observeAllPlants()
     fun observePlant(id: String): Flow<PlantEntity?> = db.plantDao().observePlant(id)
     suspend fun upsertPlant(p: PlantEntity) = db.plantDao().upsert(p)
@@ -55,6 +61,13 @@ class GardenRepository @Inject constructor(
     fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeTasksForPlant(plantId)
     suspend fun getLatestTaskForRule(ruleId: String): TaskInstanceEntity? = db.taskDao().getLatestTaskForRule(ruleId)
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
+    fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> { // ADDED
+        return getChildGardens(gardenId).flatMapLatest { childGardens ->
+            val gardenIds = listOf(gardenId) + childGardens.map { it.id }
+            db.taskDao().observePendingTasksForGardens(gardenIds)
+        }
+    }
+
 
     suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String? = null) { // MODIFIED
         db.taskDao().upsert(

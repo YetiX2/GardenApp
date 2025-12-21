@@ -26,6 +26,22 @@ interface TaskDao {
     """)
     fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>>
 
+    @Query("""
+        SELECT t.* 
+        FROM TaskInstanceEntity as t
+        INNER JOIN PlantEntity as p ON t.plantId = p.id
+        WHERE p.gardenId = :gardenId AND t.status = 'PENDING'
+    """)
+    fun observePendingTasksForGarden(gardenId: String): Flow<List<TaskInstanceEntity>>
+
+    @Query("""
+        SELECT t.* 
+        FROM TaskInstanceEntity as t
+        INNER JOIN PlantEntity as p ON t.plantId = p.id
+        WHERE p.gardenId IN (:gardenIds) AND t.status = 'PENDING'
+    """)
+    fun observePendingTasksForGardens(gardenIds: List<String>): Flow<List<TaskInstanceEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(task: TaskInstanceEntity)
 

@@ -37,10 +37,12 @@ class PlanVm @Inject constructor(
     // --- ПЛАН / ОБЪЕКТЫ ---
 
     fun plantsFlow(gardenId: String): Flow<List<PlantEntity>> =
-        repo.plants(gardenId)
+        repo.plantsForGardens(gardenId)
 
     fun childGardensFlow(gardenId: String): Flow<List<GardenEntity>> =
         repo.getChildGardens(gardenId)
+    fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> = // ADDED
+        repo.getPendingTasksForGardens(gardenId)
 
     suspend fun upsertPlant(p: PlantEntity) =
         repo.upsertPlant(p)

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.TaskInstanceEntity
 import com.example.gardenapp.ui.theme.LocalIsDarkTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -51,9 +52,11 @@ fun GardenPlanScreen(
 
     var plants by remember { mutableStateOf(emptyList<PlantEntity>()) }
     var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
+    var pendingTasks by remember { mutableStateOf(emptyList<TaskInstanceEntity>()) } // ADDED
 
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
+    LaunchedEffect(gardenId) { vm.getPendingTasksForGardens(gardenId).collectLatest { pendingTasks = it } } // ADDED
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
 
@@ -156,6 +159,7 @@ fun GardenPlanScreen(
                     state = state,
                     plants = plants,
                     childGardens = childGardens,
+                    pendingTasks = pendingTasks, // ADDED
                     plantColor = colors.plant,
                     bedColor = colors.bed,
                     greenhouseColor = colors.greenhouse,

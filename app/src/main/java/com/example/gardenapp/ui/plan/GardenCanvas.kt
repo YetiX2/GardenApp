@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.TaskInstanceEntity
 import kotlin.math.hypot
 
 private const val DOUBLE_TAP_TIMEOUT = 400L      // окно по времени
@@ -32,6 +33,7 @@ fun GardenCanvas(
     state: GardenPlanState,
     plants: List<PlantEntity>,
     childGardens: List<GardenEntity>,
+    pendingTasks: List<TaskInstanceEntity>,
     plantColor: Color,
     bedColor: Color,
     greenhouseColor: Color,
@@ -298,9 +300,16 @@ fun GardenCanvas(
             }
         }
 
+        val plantsByGarden = plants.groupBy { it.gardenId }
+        val tasksByPlant = pendingTasks.groupBy { it.plantId }
+
         childGardens.forEach { child ->
+            val childPlants = plantsByGarden[child.id] ?: emptyList()
+            val hasPendingTasks = childPlants.any { plant -> tasksByPlant.containsKey(plant.id) }
+
             drawChildGarden(
                 garden = child,
+                hasPendingTasks = hasPendingTasks,
                 bedColor = bedColor,
                 greenhouseColor = greenhouseColor,
                 buildingColor = buildingColor,
@@ -314,6 +323,7 @@ fun GardenCanvas(
         plants.forEach { p ->
             drawPlant(
                 plant = p,
+                hasPendingTasks = tasksByPlant.containsKey(p.id),
                 plantColor = plantColor,
                 selectedColor = selectedStrokeColor,
                 textColor = textColor,

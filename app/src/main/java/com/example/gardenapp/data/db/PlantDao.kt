@@ -12,6 +12,9 @@ interface PlantDao {
     @Query("SELECT * FROM PlantEntity WHERE gardenId = :gardenId")
     fun observeByGarden(gardenId: String): Flow<List<PlantEntity>>
 
+    @Query("SELECT * FROM PlantEntity WHERE gardenId IN (:gardenIds)")
+    fun observeByGardenIds(gardenIds: List<String>): Flow<List<PlantEntity>>
+
     @Query("SELECT * FROM PlantEntity WHERE id = :id")
     fun observePlant(id: String): Flow<PlantEntity?>
 

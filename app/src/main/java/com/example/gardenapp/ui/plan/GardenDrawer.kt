@@ -3,6 +3,7 @@ package com.example.gardenapp.ui.plan
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextMeasurer
@@ -13,7 +14,9 @@ import androidx.compose.ui.unit.sp
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
+import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.sin
 
 internal fun GardenEntity.toRect(): Rect {
     val left = (this.x ?: 0).toFloat()
@@ -23,6 +26,7 @@ internal fun GardenEntity.toRect(): Rect {
 
 internal fun DrawScope.drawChildGarden(
     garden: GardenEntity,
+    hasPendingTasks: Boolean,
     bedColor: Color,
     greenhouseColor: Color,
     buildingColor: Color,
@@ -44,6 +48,10 @@ internal fun DrawScope.drawChildGarden(
         drawRect(selectedColor, topLeft = rect.topLeft, size = rect.size, style = Stroke(width = 3f * state.scale))
     }
 
+    if (hasPendingTasks) {
+        drawStar(rect.topRight, rect.width.coerceAtMost(rect.height) * 0.2f, Color.Yellow)
+    }
+
     if (state.showNames) { // ADDED CHECK
         val textLayoutResult = textMeasurer.measure(
             text = garden.name,
@@ -58,6 +66,7 @@ internal fun DrawScope.drawChildGarden(
 
 internal fun DrawScope.drawPlant(
     plant: PlantEntity,
+    hasPendingTasks: Boolean, // ADDED
     plantColor: Color,
     selectedColor: Color,
     textColor: Color,
@@ -76,6 +85,10 @@ internal fun DrawScope.drawPlant(
             center = center,
             style = Stroke(width = 3f * state.scale)
         )
+    }
+
+    if (hasPendingTasks) {
+        drawStar(center, radius, Color.Yellow)
     }
 
     if (state.showNames) { // ADDED CHECK
@@ -106,6 +119,29 @@ internal fun DrawScope.drawPlant(
             )
         }
     }
+}
+
+// ADDED a function to draw a star
+private fun DrawScope.drawStar(center: Offset, radius: Float, color: Color) {
+    val starPath = Path()
+    val starRadius = radius * 0.4f
+    val angle = (Math.PI / 5).toFloat()
+    val rotation = (Math.PI / 2).toFloat()
+
+    val starCenter = Offset(center.x + radius, center.y - radius)
+
+    for (i in 0..10) {
+        val r = if (i % 2 == 0) starRadius else starRadius / 2
+        val x = starCenter.x + (r * cos(i * angle - rotation))
+        val y = starCenter.y + (r * sin(i * angle - rotation))
+        if (i == 0) {
+            starPath.moveTo(x, y)
+        } else {
+            starPath.lineTo(x, y)
+        }
+    }
+    starPath.close()
+    drawPath(starPath, color)
 }
 
 internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {

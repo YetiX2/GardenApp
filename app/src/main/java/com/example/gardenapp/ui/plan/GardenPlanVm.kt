@@ -23,7 +23,7 @@ class GardenPlanVm @Inject constructor(
     val garden: StateFlow<GardenEntity?> = repo.observeGardenById(gardenId) // FIXED THIS
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val plants: StateFlow<List<PlantEntity>> = repo.plants(gardenId)
+    val plants: StateFlow<List<PlantEntity>> = repo.plantsForGardens(gardenId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
         
     val childGardens: StateFlow<List<GardenEntity>> = repo.getChildGardens(gardenId)
