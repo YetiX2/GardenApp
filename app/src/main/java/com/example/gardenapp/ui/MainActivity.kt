@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
     lateinit var settingsManager: SettingsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState) // MOVED TO THE TOP
+        super.onCreate(savedInstanceState)
 
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
 
@@ -42,8 +42,6 @@ class MainActivity : ComponentActivity() {
             uiState == MainActivityUiState.Loading
         }
 
-        // Now that super.onCreate() has been called, Hilt has injected settingsManager.
-        // It's safe to access it here.
         lifecycleScope.launch {
             val hasSeenOnboarding = settingsManager.hasSeenOnboarding.first()
             uiState = if (hasSeenOnboarding) {
