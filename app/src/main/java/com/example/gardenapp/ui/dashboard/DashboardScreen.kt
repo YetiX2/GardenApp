@@ -183,8 +183,8 @@ fun DashboardScreen(
                 }
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
-                item { RecentEntriesCard(activityItems = recentActivity, onOpenPlant = onOpenPlant) } // UPDATED
                 item { AdCard() }
+                item { RecentEntriesCard(activityItems = recentActivity, onOpenPlant = onOpenPlant) }
             }
 
             PullToRefreshContainer(
