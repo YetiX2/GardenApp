@@ -6,20 +6,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
 import com.example.gardenapp.data.repo.GardenRepository
+import com.example.gardenapp.data.settings.SettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class PlanVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceDao: ReferenceDao,
+    private val settingsManager: SettingsManager // ADDED
 ) : ViewModel() {
 
     private val _currentGarden = mutableStateOf<GardenEntity?>(null)
     val currentGarden: State<GardenEntity?> = _currentGarden
+
+    val lastUsedGroupId = settingsManager.lastUsedGroupId.stateIn(viewModelScope, SharingStarted.Lazily, null) // ADDED
+    val lastUsedCultureId = settingsManager.lastUsedCultureId.stateIn(viewModelScope, SharingStarted.Lazily, null) // ADDED
 
     init {
         // тут пока ничего не нужно, но место под init-логику есть
@@ -41,6 +47,7 @@ class PlanVm @Inject constructor(
 
     fun childGardensFlow(gardenId: String): Flow<List<GardenEntity>> =
         repo.getChildGardens(gardenId)
+
     fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> = // ADDED
         repo.getPendingTasksForGardens(gardenId)
 
@@ -52,6 +59,12 @@ class PlanVm @Inject constructor(
 
     suspend fun upsertGarden(g: GardenEntity) =
         repo.upsertGarden(g)
+
+    fun saveLastUsedIds(groupId: String, cultureId: String) { // ADDED
+        viewModelScope.launch {
+            settingsManager.setLastUsedIds(groupId, cultureId)
+        }
+    }
 
     // --- СПРАВОЧНИКИ (referenceDao) ---
 

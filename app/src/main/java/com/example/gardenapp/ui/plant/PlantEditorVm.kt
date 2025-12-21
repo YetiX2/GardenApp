@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.gardenapp.data.db.*
 import com.example.gardenapp.data.repo.GardenRepository
 import com.example.gardenapp.data.repo.ReferenceDataRepository
+import com.example.gardenapp.data.settings.SettingsManager
 import com.example.gardenapp.ui.dashboard.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +21,7 @@ import javax.inject.Inject
 class PlantEditorVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceRepo: ReferenceDataRepository,
+    private val settingsManager: SettingsManager, // ADDED
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -27,6 +29,9 @@ class PlantEditorVm @Inject constructor(
 
     val plant = repo.observePlant(plantId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val lastUsedGroupId = settingsManager.lastUsedGroupId.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val lastUsedCultureId = settingsManager.lastUsedCultureId.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     val varietyDetails: StateFlow<ReferenceVarietyEntity?> = plant.flatMapLatest { p ->
         p?.varietyId?.let { referenceRepo.getVariety(it) } ?: flowOf(null)
@@ -48,6 +53,12 @@ class PlantEditorVm @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    fun saveLastUsedIds(groupId: String, cultureId: String) { // ADDED
+        viewModelScope.launch {
+            settingsManager.setLastUsedIds(groupId, cultureId)
+        }
+    }
 
     fun addTask(type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
         viewModelScope.launch {
