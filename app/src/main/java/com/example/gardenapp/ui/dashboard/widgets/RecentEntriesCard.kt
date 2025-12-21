@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.RecentActivity
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +49,8 @@ fun RecentEntriesCard(
                     ) {
                         when (item) {
                             is RecentActivity.Fertilizer -> {
-                                val text = "Удобрение: ${item.data.log.amountGrams}г для \"${item.data.plantName}\""
+                                val formattedAmount = String.format(Locale.getDefault(), "%.1f", item.data.log.amountGrams)
+                                val text = "Удобрение: ${formattedAmount}г для \"${item.data.plantName}\""
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
                                     Spacer(Modifier.height(8.dp))
@@ -56,7 +58,8 @@ fun RecentEntriesCard(
                                 }
                             }
                             is RecentActivity.Harvest -> {
-                                val text = "Урожай: ${item.data.log.weightKg}кг с \"${item.data.plantName}\""
+                                val formattedWeight = String.format(Locale.getDefault(), "%.1f", item.data.log.weightKg)
+                                val text = "Урожай: ${formattedWeight}кг с \"${item.data.plantName}\""
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Icon(Icons.Default.Agriculture, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.secondary)
                                     Spacer(Modifier.height(8.dp))

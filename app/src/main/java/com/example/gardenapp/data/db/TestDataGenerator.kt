@@ -1,6 +1,7 @@
 package com.example.gardenapp.data.db
 
 import java.time.LocalDate
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
@@ -88,7 +89,7 @@ class TestDataGenerator @Inject constructor(
                 fertilizerLogDao.upsert(
                     FertilizerLogEntity(
                         UUID.randomUUID().toString(), plant.id, LocalDate.now().minusDays(Random.nextLong(1, 365)),
-                        Random.nextFloat() * 20 + 5, null
+                        String.format(Locale.ROOT, "%.1f", Random.nextFloat() * 20 + 5).toFloat(), null
                     )
                 )
             }
@@ -96,7 +97,7 @@ class TestDataGenerator @Inject constructor(
                 harvestLogDao.upsert(
                     HarvestLogEntity(
                         UUID.randomUUID().toString(), plant.id, LocalDate.now().minusDays(Random.nextLong(1, 365)),
-                        Random.nextFloat() * 5 + 0.5f, null
+                        String.format(Locale.ROOT, "%.1f", Random.nextFloat() * 5 + 0.5f).toFloat(), null
                     )
                 )
             }
