@@ -17,6 +17,7 @@ import com.example.gardenapp.data.db.PlantEntity
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 internal fun GardenEntity.toRect(): Rect {
     val left = (this.x ?: 0).toFloat()
@@ -49,10 +50,12 @@ internal fun DrawScope.drawChildGarden(
     }
 
     if (hasPendingTasks) {
-        drawStar(rect.topRight, rect.width.coerceAtMost(rect.height) * 0.2f, Color.Yellow)
+        val warningRadius = (rect.width.coerceAtMost(rect.height) * 0.1f).coerceAtMost(20f).coerceAtLeast(10f)
+        val warningCenter = rect.topRight + Offset(-warningRadius, warningRadius)
+        drawWarningSign(warningCenter, warningRadius)
     }
 
-    if (state.showNames) { // ADDED CHECK
+    if (state.showNames) {
         val textLayoutResult = textMeasurer.measure(
             text = garden.name,
             style = TextStyle(fontSize = 14.sp, color = textColor)
@@ -66,7 +69,7 @@ internal fun DrawScope.drawChildGarden(
 
 internal fun DrawScope.drawPlant(
     plant: PlantEntity,
-    hasPendingTasks: Boolean, // ADDED
+    hasPendingTasks: Boolean,
     plantColor: Color,
     selectedColor: Color,
     textColor: Color,
@@ -88,17 +91,19 @@ internal fun DrawScope.drawPlant(
     }
 
     if (hasPendingTasks) {
-        drawStar(center, radius, Color.Yellow)
+        val warningRadius = (radius * 0.4f).coerceAtLeast(10f)
+        val warningCenter = center + Offset(radius * 0.707f, -radius * 0.707f)
+        drawWarningSign(warningCenter, warningRadius)
     }
 
-    if (state.showNames) { // ADDED CHECK
+    if (state.showNames) {
         val textToDraw = buildAnnotatedString {
             val hasTitle = !plant.title.isNullOrBlank()
             val hasVariety = !plant.variety.isNullOrBlank()
             if (hasTitle) {
                 append(plant.title)
             }
-            if(plant.title != plant.variety) {
+            if (plant.title != plant.variety) {
                 if (hasTitle && hasVariety) {
                     append("\n")
                 }
@@ -121,27 +126,36 @@ internal fun DrawScope.drawPlant(
     }
 }
 
-// ADDED a function to draw a star
-private fun DrawScope.drawStar(center: Offset, radius: Float, color: Color) {
-    val starPath = Path()
-    val starRadius = radius * 0.4f
-    val angle = (Math.PI / 5).toFloat()
-    val rotation = (Math.PI / 2).toFloat()
+private fun DrawScope.drawWarningSign(center: Offset, radius: Float) {
+    val path = Path()
+    val height = radius * 2
+    val triangleHeight = sqrt(3.0) / 2.0 * height
 
-    val starCenter = Offset(center.x + radius, center.y - radius)
+    val p1 = Offset(center.x, center.y - radius)
+    val p2 = Offset(center.x - height / 2, (center.y + triangleHeight / 2).toFloat())
+    val p3 = Offset(center.x + height / 2, (center.y + triangleHeight / 2).toFloat())
 
-    for (i in 0..10) {
-        val r = if (i % 2 == 0) starRadius else starRadius / 2
-        val x = starCenter.x + (r * cos(i * angle - rotation))
-        val y = starCenter.y + (r * sin(i * angle - rotation))
-        if (i == 0) {
-            starPath.moveTo(x, y)
-        } else {
-            starPath.lineTo(x, y)
-        }
-    }
-    starPath.close()
-    drawPath(starPath, color)
+    path.moveTo(p1.x, p1.y)
+    path.lineTo(p2.x, p2.y)
+    path.lineTo(p3.x, p3.y)
+    path.close()
+
+    drawPath(path, Color.Yellow)
+
+    val exclamationHeight = radius * 0.8f
+    val exclamationWidth = radius * 0.2f
+    val dotRadius = radius * 0.15f
+
+    drawRect(
+        color = Color.Black,
+        topLeft = Offset(center.x - exclamationWidth / 2, center.y - exclamationHeight / 2),
+        size = androidx.compose.ui.geometry.Size(exclamationWidth, exclamationHeight * 0.6f)
+    )
+    drawCircle(
+        color = Color.Black,
+        radius = dotRadius,
+        center = Offset(center.x, center.y + exclamationHeight / 2)
+    )
 }
 
 internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
@@ -154,26 +168,21 @@ internal fun worldToScreen(rect: Rect, scale: Float, offset: Offset): Rect {
 internal fun DrawScope.drawGrid(
     garden: GardenEntity,
     color: Color,
-    step: Float,      // шаг сетки в "мировых" единицах (как и x/y, widthCm/heightCm)
+    step: Float,
     scale: Float,
     offset: Offset
 ) {
     val stepWorld = step
     val stepScreen = stepWorld * scale
-    if (stepScreen < 10f) return   // слишком частая сетка — не рисуем
+    if (stepScreen < 10f) return
 
     val gardenWidthWorld = garden.widthCm.toFloat()
     val gardenHeightWorld = garden.heightCm.toFloat()
 
-    // Видимая область в МИРОВЫХ координатах (0..gardenWidth/Height)
-    val leftWorldVisible = ((0f - offset.x) / scale)
-        .coerceIn(0f, gardenWidthWorld)
-    val rightWorldVisible = ((size.width - offset.x) / scale)
-        .coerceIn(0f, gardenWidthWorld)
-    val topWorldVisible = ((0f - offset.y) / scale)
-        .coerceIn(0f, gardenHeightWorld)
-    val bottomWorldVisible = ((size.height - offset.y) / scale)
-        .coerceIn(0f, gardenHeightWorld)
+    val leftWorldVisible = ((0f - offset.x) / scale).coerceIn(0f, gardenWidthWorld)
+    val rightWorldVisible = ((size.width - offset.x) / scale).coerceIn(0f, gardenWidthWorld)
+    val topWorldVisible = ((0f - offset.y) / scale).coerceIn(0f, gardenHeightWorld)
+    val bottomWorldVisible = ((size.height - offset.y) / scale).coerceIn(0f, gardenHeightWorld)
 
     if (leftWorldVisible >= rightWorldVisible || topWorldVisible >= bottomWorldVisible) return
 
@@ -182,39 +191,29 @@ internal fun DrawScope.drawGrid(
         return k * stepWorld
     }
 
-    // --- Вертикальные линии (фиксируем x в мировых координатах) ---
     var xWorld = snapWorldStart(leftWorldVisible, stepWorld)
     while (xWorld <= rightWorldVisible) {
         val xScreen = xWorld * scale + offset.x
-
         val topScreen = topWorldVisible * scale + offset.y
         val bottomScreen = bottomWorldVisible * scale + offset.y
-
         drawLine(
             color = color,
             start = Offset(xScreen, topScreen.coerceAtLeast(0f)),
             end = Offset(xScreen, bottomScreen.coerceAtMost(size.height))
         )
-
         xWorld += stepWorld
     }
 
-    // --- Горизонтальные линии ---
     var yWorld = snapWorldStart(topWorldVisible, stepWorld)
     while (yWorld <= bottomWorldVisible) {
         val yScreen = yWorld * scale + offset.y
-
         val leftScreen = leftWorldVisible * scale + offset.x
         val rightScreen = rightWorldVisible * scale + offset.x
-
         drawLine(
             color = color,
             start = Offset(leftScreen.coerceAtLeast(0f), yScreen),
             end = Offset(rightScreen.coerceAtMost(size.width), yScreen)
         )
-
         yWorld += stepWorld
     }
 }
-
-
