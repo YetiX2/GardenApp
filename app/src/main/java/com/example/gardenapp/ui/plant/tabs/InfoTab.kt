@@ -84,18 +84,9 @@ fun InfoTab(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                variety.bloomWindow?.let {
-                    Timeline(label = "Цветение", range = it, color = MaterialTheme.colorScheme.primary)
-                }
-                variety.harvestWindow?.let {
-                    Timeline(label = "Сбор урожая", range = it, color = MaterialTheme.colorScheme.secondary)
-                }
                 variety.plantingWindow?.let { planting ->
                     planting.spring?.let {
                         Timeline(label = "Посадка (весна)", range = it, color = MaterialTheme.colorScheme.tertiary)
-                    }
-                    planting.autumn?.let {
-                        Timeline(label = "Посадка (осень)", range = it, color = MaterialTheme.colorScheme.tertiary)
                     }
                     planting.seedling?.let {
                         Timeline(label = "Посадка (рассада)", range = it, color = MaterialTheme.colorScheme.tertiary.copy(alpha=0.5f))
@@ -105,6 +96,15 @@ fun InfoTab(
                     }
                     planting.transplantOg?.let {
                         Timeline(label = "Высадка (открытый грунт)", range = it, color = MaterialTheme.colorScheme.tertiary)
+                    }
+                    variety.bloomWindow?.let {
+                        Timeline(label = "Цветение", range = it, color = MaterialTheme.colorScheme.primary)
+                    }
+                    variety.harvestWindow?.let {
+                        Timeline(label = "Сбор урожая", range = it, color = MaterialTheme.colorScheme.secondary)
+                    }
+                    planting.autumn?.let {
+                        Timeline(label = "Посадка (осень)", range = it, color = MaterialTheme.colorScheme.tertiary)
                     }
                 }
             }
