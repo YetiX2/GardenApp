@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "98bfe3637acb9bcec1b2c4890dfefef2",
+    "identityHash": "243d8accd5559c9d18fa2b5719ea3e58",
     "entities": [
       {
         "tableName": "GardenEntity",
@@ -455,7 +455,7 @@
       },
       {
         "tableName": "ref_varieties",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `cultureId` TEXT NOT NULL, `title` TEXT NOT NULL, `i18n_ru` TEXT NOT NULL, `i18n_en` TEXT NOT NULL, `i18n_kz` TEXT NOT NULL, `hardiness_min` INTEGER, `hardiness_max` INTEGER, `filter_soil_pH` TEXT, `filter_height_cm` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`cultureId`) REFERENCES `ref_cultures`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `cultureId` TEXT NOT NULL, `title` TEXT NOT NULL, `i18n_ru` TEXT NOT NULL, `i18n_en` TEXT NOT NULL, `i18n_kz` TEXT NOT NULL, `hardiness_min` INTEGER, `hardiness_max` INTEGER, `filter_soil_pH` TEXT, `filter_height_cm` INTEGER, `planting_spring_start` INTEGER, `planting_spring_end` INTEGER, `planting_autumn_start` INTEGER, `planting_autumn_end` INTEGER, `planting_seedling_start` INTEGER, `planting_seedling_end` INTEGER, `planting_greenhouse_start` INTEGER, `planting_greenhouse_end` INTEGER, `planting_og_start` INTEGER, `planting_og_end` INTEGER, `harvest_start` INTEGER, `harvest_end` INTEGER, `bloom_start` INTEGER, `bloom_end` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`cultureId`) REFERENCES `ref_cultures`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -514,6 +514,90 @@
           {
             "fieldPath": "smartFilters.height_cm",
             "columnName": "filter_height_cm",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.spring.start",
+            "columnName": "planting_spring_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.spring.end",
+            "columnName": "planting_spring_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.autumn.start",
+            "columnName": "planting_autumn_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.autumn.end",
+            "columnName": "planting_autumn_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.seedling.start",
+            "columnName": "planting_seedling_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.seedling.end",
+            "columnName": "planting_seedling_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.transplantGreenhouse.start",
+            "columnName": "planting_greenhouse_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.transplantGreenhouse.end",
+            "columnName": "planting_greenhouse_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.transplantOg.start",
+            "columnName": "planting_og_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "plantingWindow.transplantOg.end",
+            "columnName": "planting_og_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "harvestWindow.start",
+            "columnName": "harvest_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "harvestWindow.end",
+            "columnName": "harvest_end",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bloomWindow.start",
+            "columnName": "bloom_start",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bloomWindow.end",
+            "columnName": "bloom_end",
             "affinity": "INTEGER",
             "notNull": false
           }
@@ -706,7 +790,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '98bfe3637acb9bcec1b2c4890dfefef2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '243d8accd5559c9d18fa2b5719ea3e58')"
     ]
   }
 }

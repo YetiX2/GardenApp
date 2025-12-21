@@ -138,18 +138,32 @@ data class ReferenceCultureEntity(
     foreignKeys = [ForeignKey(entity = ReferenceCultureEntity::class, parentColumns = ["id"], childColumns = ["cultureId"], onDelete = ForeignKey.CASCADE)]
 )
 data class ReferenceVarietyEntity(
-    @PrimaryKey val id: String, // UUID from JSON
+    @PrimaryKey val id: String,
     val cultureId: String,
     val title: String,
     @Embedded(prefix = "i18n_") val i18n: I18nEntity,
     @Embedded(prefix = "hardiness_") val hardiness: HardinessEntity?,
-    @Embedded(prefix = "filter_") val smartFilters: SmartFilterEntity
+    @Embedded(prefix = "filter_") val smartFilters: SmartFilterEntity,
+    @Embedded(prefix = "planting_") val plantingWindow: PlantingWindowEntity? = null, // ADDED
+    @Embedded(prefix = "harvest_") val harvestWindow: MonthRangeEntity? = null,    // ADDED
+    @Embedded(prefix = "bloom_") val bloomWindow: MonthRangeEntity? = null       // ADDED
 )
 
-// Reverted to old structure
+
 data class I18nEntity(val ru: String, val en: String, val kz: String)
 data class HardinessEntity(val min: Int?, val max: Int?)
 data class SmartFilterEntity(val soil_pH: String?, val height_cm: Int?)
+
+data class PlantingWindowEntity(
+    @Embedded(prefix = "spring_") val spring: MonthRangeEntity? = null,
+    @Embedded(prefix = "autumn_") val autumn: MonthRangeEntity? = null,
+    @Embedded(prefix = "seedling_") val seedling: MonthRangeEntity? = null,
+    @Embedded(prefix = "greenhouse_") val transplantGreenhouse: MonthRangeEntity? = null,
+    @Embedded(prefix = "og_") val transplantOg: MonthRangeEntity? = null
+)
+
+data class MonthRangeEntity(val start: Int?, val end: Int?)
+
 
 @Entity(
     tableName = "ref_variety_tags",

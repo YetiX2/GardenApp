@@ -7,17 +7,18 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [
-        GardenEntity::class, PlantEntity::class, CareRuleEntity::class, TaskInstanceEntity::class, 
+        GardenEntity::class, PlantEntity::class, CareRuleEntity::class, TaskInstanceEntity::class,
         FertilizerLogEntity::class, HarvestLogEntity::class,
-        ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class, 
+        ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class,
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 4, // BUMPED VERSION
+    version = 5, // BUMPED VERSION
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
-        AutoMigration(from = 3, to = 4)
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5) // ADDED
     ]
 )
 @TypeConverters(Converters::class)
