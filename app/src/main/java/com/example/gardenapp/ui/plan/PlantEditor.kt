@@ -166,7 +166,7 @@ fun PlantEditor(
                         varietyId = selectedVarietyId
                     )
                 )
-            }) { Text("Сохранить") }
+            }, enabled = selectedVarietyId != null) { Text("Сохранить") }
         }
     }
 }
