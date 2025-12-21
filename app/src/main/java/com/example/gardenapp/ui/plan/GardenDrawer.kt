@@ -50,7 +50,7 @@ internal fun DrawScope.drawChildGarden(
     }
 
     if (hasPendingTasks) {
-        val warningRadius = (rect.width.coerceAtMost(rect.height) * 0.1f).coerceAtMost(20f).coerceAtLeast(10f)
+        val warningRadius = (rect.width.coerceAtMost(rect.height) * 0.2f).coerceAtMost(40f).coerceAtLeast(10f)
         val warningCenter = rect.topRight + Offset(-warningRadius, warningRadius)
         drawWarningSign(warningCenter, warningRadius)
     }
