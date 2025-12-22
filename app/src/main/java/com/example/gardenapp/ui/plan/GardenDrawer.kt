@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -70,6 +72,7 @@ internal fun DrawScope.drawChildGarden(
 internal fun DrawScope.drawPlant(
     plant: PlantEntity,
     hasPendingTasks: Boolean,
+    icon: Painter?,
     plantColor: Color,
     selectedColor: Color,
     textColor: Color,
@@ -79,7 +82,17 @@ internal fun DrawScope.drawPlant(
     val center = state.worldToScreen(Offset(plant.x, plant.y))
     val radius = plant.radius * state.scale
 
-    drawCircle(color = plantColor, radius = radius, center = center)
+    if (icon != null) {
+        withTransform({
+            translate(left = center.x - radius, top = center.y - radius)
+        }) {
+            with(icon) {
+                draw(size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2))
+            }
+        }
+    } else {
+        drawCircle(color = plantColor, radius = radius, center = center)
+    }
 
     if (plant.id == state.selectedPlant?.id) {
         drawCircle(

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.ReferenceVarietyEntity
 import com.example.gardenapp.data.db.TaskInstanceEntity
 import com.example.gardenapp.ui.theme.LocalIsDarkTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -52,11 +53,13 @@ fun GardenPlanScreen(
 
     var plants by remember { mutableStateOf(emptyList<PlantEntity>()) }
     var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
-    var pendingTasks by remember { mutableStateOf(emptyList<TaskInstanceEntity>()) } // ADDED
+    var pendingTasks by remember { mutableStateOf(emptyList<TaskInstanceEntity>()) }
+    var varieties by remember { mutableStateOf(emptyList<ReferenceVarietyEntity>()) }
 
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
-    LaunchedEffect(gardenId) { vm.getPendingTasksForGardens(gardenId).collectLatest { pendingTasks = it } } // ADDED
+    LaunchedEffect(gardenId) { vm.getPendingTasksForGardens(gardenId).collectLatest { pendingTasks = it } }
+    LaunchedEffect(Unit) { vm.getAllVarieties().collectLatest { varieties = it } }
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
 
@@ -160,6 +163,7 @@ fun GardenPlanScreen(
                     plants = plants,
                     childGardens = childGardens,
                     pendingTasks = pendingTasks, // ADDED
+                    varieties = varieties,
                     plantColor = colors.plant,
                     bedColor = colors.bed,
                     greenhouseColor = colors.greenhouse,

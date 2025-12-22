@@ -10,17 +10,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.graphics.Color
+import com.example.gardenapp.R
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.ReferenceVarietyEntity
 import com.example.gardenapp.data.db.TaskInstanceEntity
 import kotlin.math.hypot
 
@@ -28,12 +34,53 @@ private const val DOUBLE_TAP_TIMEOUT = 400L      // окно по времени
 private const val TAP_MOVE_SLOP = 12f           // минимальный сдвиг, чтобы считать жест «движением»
 private const val DOUBLE_TAP_SLOP = 48f         // окно по расстоянию для double-tap
 
+private val cultureIconMap = mapOf(
+    "apple" to R.drawable.icon_culture_apple_generic,
+    "pear" to R.drawable.icon_culture_pear_green_anjou,
+    "cherry_sour" to R.drawable.icon_culture_cherry_sour_rainier,
+    "cherry_sweet" to R.drawable.icon_culture_cherry_sweet_bing,
+    "plum" to R.drawable.icon_culture_plum,
+    "apricot" to R.drawable.icon_culture_apricot,
+    "peach" to R.drawable.icon_culture_peach,
+    //"quince" to R.drawable.icon_culture_quince,//Айва
+    //"currant_black" to R.drawable.icon_culture_currant_black,//смородина чёрная
+    //"currant_red" to R.drawable.icon_culture_currant_red,//смородина красная
+    //"gooseberry" to R.drawable.icon_culture_gooseberry,//Крыжовник
+    "raspberry" to R.drawable.icon_culture_raspberry,
+    //"blackberry" to R.drawable.icon_culture_blackberry,//Ежевика
+    //"honeyberry" to R.drawable.icon_culture_honeyberry,//Жимолость съедобная
+    //"blueberry" to R.drawable.icon_culture_blueberry,//Голубика
+    //"seabuckthorn" to R.drawable.icon_culture_seabuckthorn,//Облепиха
+    "tomato" to R.drawable.icon_culture_tomato,
+    "cucumber" to R.drawable.icon_culture_cucumber,
+    "pepper_sweet" to R.drawable.icon_culture_pepper_sweet,
+    "eggplant" to R.drawable.icon_culture_eggplant,
+    "cabbage_white" to R.drawable.icon_culture_cabbage_green,
+    //"cabbage_broccoli" to R.drawable.icon_culture_cabbage_broccoli,//broccoli
+    "carrot" to R.drawable.icon_culture_carrot,
+    "beet" to R.drawable.icon_culture_beet,
+    "radish" to R.drawable.icon_culture_radish_cherry_bell,
+    "onion" to R.drawable.icon_culture_onion_yellow,
+    "garlic" to R.drawable.icon_culture_garlic,
+    "potato" to R.drawable.icon_culture_potato_russet,
+    "pumpkin_group" to R.drawable.icon_culture_pumpkin_group,
+    //"legumes" to R.drawable.icon_culture_legumes,//Бобовые (горох/фасоль)
+    "dill" to R.drawable.icon_culture_dill,
+    "parsley" to R.drawable.icon_culture_parsley,
+    "lettuce" to R.drawable.icon_culture_lettuce_bibb,
+    "basil" to R.drawable.icon_culture_basil,
+    "cilantro" to R.drawable.icon_culture_cilantro,
+    "spinach" to R.drawable.icon_culture_spinach,
+    "onion_green" to R.drawable.icon_culture_onion_green,
+)
+
 @Composable
 fun GardenCanvas(
     state: GardenPlanState,
     plants: List<PlantEntity>,
     childGardens: List<GardenEntity>,
     pendingTasks: List<TaskInstanceEntity>,
+    varieties: List<ReferenceVarietyEntity>,
     plantColor: Color,
     bedColor: Color,
     greenhouseColor: Color,
@@ -55,6 +102,10 @@ fun GardenCanvas(
     val textMeasurer = rememberTextMeasurer()
     val currentPlants by rememberUpdatedState(plants)
     val currentChildGardens by rememberUpdatedState(childGardens)
+
+    val cultureIcons = cultureIconMap.mapValues { (_, resId) ->
+        painterResource(id = resId)
+    }
 
     // Одноразовая центровка при первой отрисовке
     LaunchedEffect(state.garden, state.canvasSize, state.scale) {
@@ -302,6 +353,7 @@ fun GardenCanvas(
 
         val plantsByGarden = plants.groupBy { it.gardenId }
         val tasksByPlant = pendingTasks.groupBy { it.plantId }
+        val varietiesById = varieties.associateBy { it.id }
 
         childGardens.forEach { child ->
             val childPlants = plantsByGarden[child.id] ?: emptyList()
@@ -320,10 +372,13 @@ fun GardenCanvas(
             )
         }
 
-        plants.forEach { p ->
+        (plantsByGarden[state.garden?.id] ?: emptyList()).forEach { p ->
+            val cultureId = varietiesById[p.varietyId]?.cultureId
+            val icon = cultureIcons[cultureId]
             drawPlant(
                 plant = p,
                 hasPendingTasks = tasksByPlant.containsKey(p.id),
+                icon = icon,
                 plantColor = plantColor,
                 selectedColor = selectedStrokeColor,
                 textColor = textColor,
