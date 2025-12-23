@@ -83,11 +83,17 @@ internal fun DrawScope.drawPlant(
     val radius = plant.radius * state.scale
 
     if (icon != null) {
+        // We use withTransform to scale the canvas space, then draw the icon
+        // at its intrinsic size. This avoids mutating the shared Painter's size,
+        // which was causing other plants with the same icon to resize incorrectly.
         withTransform({
             translate(left = center.x - radius, top = center.y - radius)
+            val scaleX = (radius * 2) / icon.intrinsicSize.width
+            val scaleY = (radius * 2) / icon.intrinsicSize.height
+            scale(scaleX, scaleY, pivot = Offset.Zero)
         }) {
             with(icon) {
-                draw(size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2))
+                draw(icon.intrinsicSize)
             }
         }
     } else {
