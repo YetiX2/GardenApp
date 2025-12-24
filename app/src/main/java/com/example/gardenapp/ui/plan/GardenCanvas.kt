@@ -47,16 +47,16 @@ private val cultureIconMap = mapOf(
     //"currant_red" to R.drawable.icon_culture_currant_red,//смородина красная
     //"gooseberry" to R.drawable.icon_culture_gooseberry,//Крыжовник
     "raspberry" to R.drawable.icon_culture_raspberry,
-    //"blackberry" to R.drawable.icon_culture_blackberry,//Ежевика
+    "blackberry" to R.drawable.icon_culture_blackberry,//Ежевика
     //"honeyberry" to R.drawable.icon_culture_honeyberry,//Жимолость съедобная
-    //"blueberry" to R.drawable.icon_culture_blueberry,//Голубика
+    "blueberry" to R.drawable.icon_culture_blueberry,//Голубика
     //"seabuckthorn" to R.drawable.icon_culture_seabuckthorn,//Облепиха
     "tomato" to R.drawable.icon_culture_tomato,
     "cucumber" to R.drawable.icon_culture_cucumber,
     "pepper_sweet" to R.drawable.icon_culture_pepper_sweet,
     "eggplant" to R.drawable.icon_culture_eggplant,
     "cabbage_white" to R.drawable.icon_culture_cabbage_green,
-    //"cabbage_broccoli" to R.drawable.icon_culture_cabbage_broccoli,//broccoli
+    "cabbage_broccoli" to R.drawable.icon_culture_cabbage_broccoli,
     "carrot" to R.drawable.icon_culture_carrot,
     "beet" to R.drawable.icon_culture_beet,
     "radish" to R.drawable.icon_culture_radish_cherry_bell,
