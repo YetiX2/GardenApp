@@ -22,8 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.ui.dashboard.SeasonSummary
+import com.example.gardenapp.ui.theme.GardenAppTheme
 import java.util.Locale
 
 @Composable
@@ -68,3 +70,17 @@ private fun Kpi(label: String, value: String, icon: ImageVector) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun SeasonSummaryCardPreview() {
+    GardenAppTheme {
+        SeasonSummaryCard(
+            summary = SeasonSummary(
+                activePlants = 12,
+                totalHarvest = 34.5f,
+                totalTreatments = 8
+            ),
+            onDetailsClick = {}
+        )
+    }
+}
