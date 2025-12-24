@@ -22,9 +22,10 @@ data class GardenStats(
 
 data class CultureStats(
     val culture: ReferenceCultureEntity,
+    val representativePlantId: String?, // ADDED
     val totalHarvest: Float = 0f,
     val totalFertilizer: Int = 0,
-    val totalTreatments: Int = 0 // Assuming treatments are a separate type of log later
+    val totalTreatments: Int = 0
 )
 
 interface ISeasonStatsVm {
@@ -71,9 +72,11 @@ class SeasonStatsVm @Inject constructor(
                 Pair(plant, variety.cultureId)
             }
         }
+
         val cultureStats = mutableMapOf<String, CultureStats>()
         cultures.forEach { culture ->
-            cultureStats[culture.id] = CultureStats(culture = culture)
+            val representativePlantId = plantsWithCulture.find { it.second == culture.id }?.first?.id
+            cultureStats[culture.id] = CultureStats(culture = culture, representativePlantId = representativePlantId)
         }
 
         plantsWithCulture.forEach { (plant, cultureId) ->

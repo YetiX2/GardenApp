@@ -1,5 +1,6 @@
 package com.example.gardenapp.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,7 +48,9 @@ import java.util.Locale
 @Composable
 fun SeasonStatsScreen(
     vm: ISeasonStatsVm = hiltViewModel<SeasonStatsVm>(),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onOpenGarden: (String) -> Unit = {},
+    onOpenPlant: (String) -> Unit = {}
 ) {
     val summary by vm.seasonSummary.collectAsState()
     val statsByCulture by vm.statsByCulture.collectAsState()
@@ -102,6 +105,7 @@ fun SeasonStatsScreen(
             }
             items(statsByCulture) {
                 ListItem(
+                    modifier = Modifier.clickable { it.representativePlantId?.let(onOpenPlant) },
                     headlineContent = {
                         Text(it.culture.title, fontWeight = FontWeight.Bold)
                     },
@@ -117,6 +121,7 @@ fun SeasonStatsScreen(
             }
             items(statsByGarden) {
                 ListItem(
+                    modifier = Modifier.clickable { onOpenGarden(it.garden.id) },
                     headlineContent = { Text(it.garden.name) },
                     supportingContent = { Text("${String.format(Locale.getDefault(), "%.1f", it.totalHarvest)} кг") }
                 )
@@ -130,9 +135,9 @@ class PreviewSeasonStatsVm : ISeasonStatsVm {
         SeasonSummary(activePlants = 12, totalHarvest = 18.4f, totalTreatments = 5)
     )
     override val statsByCulture: StateFlow<List<CultureStats>> = MutableStateFlow(listOf(
-        CultureStats(culture = ReferenceCultureEntity("tomato", "", "Томаты"), totalHarvest = 9.2f, totalFertilizer = 3),
-        CultureStats(culture = ReferenceCultureEntity("strawberry", "", "Клубника"), totalHarvest = 4.5f, totalFertilizer = 2),
-        CultureStats(culture = ReferenceCultureEntity("currant_black", "", "Смородина"), totalHarvest = 2.1f, totalTreatments = 1),
+        CultureStats(culture = ReferenceCultureEntity("tomato", "", "Томаты"), representativePlantId = "p1", totalHarvest = 9.2f, totalFertilizer = 3),
+        CultureStats(culture = ReferenceCultureEntity("strawberry", "", "Клубника"), representativePlantId = "p2", totalHarvest = 4.5f, totalFertilizer = 2),
+        CultureStats(culture = ReferenceCultureEntity("currant_black", "", "Смородина"), representativePlantId = "p3", totalHarvest = 2.1f, totalTreatments = 1),
     ))
     override val statsByGarden: StateFlow<List<GardenStats>> = MutableStateFlow(listOf(
         GardenStats(garden = GardenEntity("g1", "Теплица 1", 0, 0, 0, GardenType.GREENHOUSE), totalHarvest = 11.0f),

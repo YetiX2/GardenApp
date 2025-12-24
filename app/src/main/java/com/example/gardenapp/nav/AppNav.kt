@@ -21,7 +21,7 @@ sealed class Route(val value: String) {
     data object Tasks : Route("tasks")
     data object Settings : Route("settings")
     data object ColorSettings : Route("colorSettings")
-    data object SeasonStats : Route("seasonStats") // ADDED
+    data object SeasonStats : Route("seasonStats")
 }
 
 @Composable
@@ -33,15 +33,15 @@ fun AppNav() {
                 onOpenGardens = { nav.navigate(Route.Gardens.value) },
                 onOpenTasks = { nav.navigate(Route.Tasks.value) },
                 onOpenSettings = { nav.navigate(Route.Settings.value) },
-                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") }, // ADDED
-                onSeasonStatsClick = { nav.navigate(Route.SeasonStats.value) } // ADDED
+                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") },
+                onSeasonStatsClick = { nav.navigate(Route.SeasonStats.value) }
             )
         }
         composable(Route.Gardens.value) {
             GardenListScreen(
                 onOpen = { id -> nav.navigate("plan/$id") },
                 onBack = { nav.popBackStack() },
-                onOpenSettings = { nav.navigate(Route.ColorSettings.value) } // MOVED HERE
+                onOpenSettings = { nav.navigate(Route.ColorSettings.value) }
             )
         }
         composable(Route.Plan.value) { backStack ->
@@ -51,7 +51,6 @@ fun AppNav() {
                 onBack = { nav.popBackStack() },
                 onOpenPlant = { plantId -> nav.navigate("plant/$plantId") },
                 onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") }
-                // onOpenColorSettings is removed from here
             )
         }
         composable(Route.PlantEditor.value) { backStack ->
@@ -67,7 +66,11 @@ fun AppNav() {
             ColorSettingsScreen(onBack = { nav.popBackStack() })
         }
         composable(Route.SeasonStats.value) { 
-            SeasonStatsScreen(onNavigateBack = { nav.popBackStack() })
+            SeasonStatsScreen(
+                onNavigateBack = { nav.popBackStack() },
+                onOpenGarden = { gardenId -> nav.navigate("plan/$gardenId") },
+                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") }
+            )
         }
     }
 }
