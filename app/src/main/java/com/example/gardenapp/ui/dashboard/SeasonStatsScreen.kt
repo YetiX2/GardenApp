@@ -1,15 +1,108 @@
 package com.example.gardenapp.ui.dashboard
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SeasonStatsScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Экран статистики сезона (в разработке)")
+fun SeasonStatsScreen(
+    vm: SeasonStatsVm = hiltViewModel(),
+    onNavigateBack: () -> Unit
+) {
+    val summary by vm.seasonSummary.collectAsState()
+    val statsByCulture by vm.statsByCulture.collectAsState()
+    val statsByGarden by vm.statsByGarden.collectAsState()
+
+    var selectedFilter by remember { mutableStateOf("Урожай") }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Статистика сезона") })
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // --- Filter Chips ---
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = selectedFilter == "Урожай", onClick = { selectedFilter = "Урожай" }, label = { Text("Урожай") })
+                    FilterChip(selected = selectedFilter == "Удобрения", onClick = { selectedFilter = "Удобрения" }, label = { Text("Удобрения") })
+                    FilterChip(selected = selectedFilter == "Задачи", onClick = { selectedFilter = "Задачи" }, label = { Text("Задачи") })
+                }
+            }
+
+            // --- Totals ---
+            item {
+                Card(elevation = CardDefaults.cardElevation(2.dp)) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Итоги сезона", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Всего собрано: ${String.format(Locale.getDefault(), "%.1f", summary.totalHarvest)} кг")
+                        Text("Всего внесено удобрений: ${summary.totalTreatments} раз")
+                        // Text("Всего обработок от вредителей: X") // Placeholder
+                    }
+                }
+            }
+
+            // --- By Culture ---
+            item {
+                Text("По культурам", style = MaterialTheme.typography.titleMedium)
+            }
+            items(statsByCulture) {
+                ListItem(
+                    headlineContent = {
+                        Text(it.culture.title, fontWeight = FontWeight.Bold)
+                    },
+                    supportingContent = {
+                        Text("${String.format(Locale.getDefault(), "%.1f", it.totalHarvest)} кг • ${it.totalFertilizer} подкормок")
+                    }
+                )
+            }
+
+            // --- By Garden ---
+            item {
+                Text("По участкам", style = MaterialTheme.typography.titleMedium)
+            }
+            items(statsByGarden) {
+                ListItem(
+                    headlineContent = { Text(it.garden.name) },
+                    supportingContent = { Text("${String.format(Locale.getDefault(), "%.1f", it.totalHarvest)} кг") }
+                )
+            }
+        }
     }
 }

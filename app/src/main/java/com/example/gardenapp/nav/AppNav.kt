@@ -66,8 +66,8 @@ fun AppNav() {
         composable(Route.ColorSettings.value) {
             ColorSettingsScreen(onBack = { nav.popBackStack() })
         }
-        composable(Route.SeasonStats.value) { // ADDED
-            SeasonStatsScreen()
+        composable(Route.SeasonStats.value) { 
+            SeasonStatsScreen(onNavigateBack = { nav.popBackStack() })
         }
     }
 }
