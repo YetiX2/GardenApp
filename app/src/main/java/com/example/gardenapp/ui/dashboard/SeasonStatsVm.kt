@@ -27,11 +27,17 @@ data class CultureStats(
     val totalTreatments: Int = 0 // Assuming treatments are a separate type of log later
 )
 
+interface ISeasonStatsVm {
+    val seasonSummary: StateFlow<SeasonSummary>
+    val statsByCulture: StateFlow<List<CultureStats>>
+    val statsByGarden: StateFlow<List<GardenStats>>
+}
+
 @HiltViewModel
 class SeasonStatsVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceRepo: ReferenceDataRepository
-) : ViewModel() {
+) : ViewModel(), ISeasonStatsVm {
 
     private val seasonStart = LocalDate.of(LocalDate.now().year, Month.MARCH, 1)
 
@@ -42,7 +48,7 @@ class SeasonStatsVm @Inject constructor(
     private val allHarvests = repo.observeAllHarvests()
     private val allFertilizers = repo.observeAllFertilizerLogs()
 
-    val seasonSummary: StateFlow<SeasonSummary> = combine(
+    override val seasonSummary: StateFlow<SeasonSummary> = combine(
         allPlants, allHarvests, allFertilizers
     ) { plants, harvests, fertilizers ->
         val activePlantCount = plants.size
@@ -56,7 +62,7 @@ class SeasonStatsVm @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SeasonSummary())
 
-    val statsByCulture: StateFlow<List<CultureStats>> = combine(
+    override val statsByCulture: StateFlow<List<CultureStats>> = combine(
         allPlants, allVarieties, allCultures, allHarvests, allFertilizers
     ) { plants, varieties, cultures, harvests, fertilizers ->
         val varietiesById = varieties.associateBy { it.id }
@@ -84,7 +90,7 @@ class SeasonStatsVm @Inject constructor(
         cultureStats.values.filter { it.totalHarvest > 0 || it.totalFertilizer > 0 }.sortedByDescending { it.totalHarvest }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val statsByGarden: StateFlow<List<GardenStats>> = combine(
+    override val statsByGarden: StateFlow<List<GardenStats>> = combine(
         allPlants, allGardens, allHarvests
     ) { plants, gardens, harvests ->
         val plantsByGarden = plants.groupBy { it.gardenId }

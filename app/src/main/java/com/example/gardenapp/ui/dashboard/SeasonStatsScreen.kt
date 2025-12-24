@@ -35,13 +35,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gardenapp.data.db.GardenEntity
+import com.example.gardenapp.data.db.GardenType
+import com.example.gardenapp.data.db.ReferenceCultureEntity
 import com.example.gardenapp.ui.theme.GardenAppTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeasonStatsScreen(
-    vm: SeasonStatsVm = hiltViewModel(),
+    vm: ISeasonStatsVm = hiltViewModel<SeasonStatsVm>(),
     onNavigateBack: () -> Unit = {}
 ) {
     val summary by vm.seasonSummary.collectAsState()
@@ -120,11 +125,26 @@ fun SeasonStatsScreen(
     }
 }
 
+class PreviewSeasonStatsVm : ISeasonStatsVm {
+    override val seasonSummary: StateFlow<SeasonSummary> = MutableStateFlow(
+        SeasonSummary(activePlants = 12, totalHarvest = 18.4f, totalTreatments = 5)
+    )
+    override val statsByCulture: StateFlow<List<CultureStats>> = MutableStateFlow(listOf(
+        CultureStats(culture = ReferenceCultureEntity("tomato", "", "Томаты"), totalHarvest = 9.2f, totalFertilizer = 3),
+        CultureStats(culture = ReferenceCultureEntity("strawberry", "", "Клубника"), totalHarvest = 4.5f, totalFertilizer = 2),
+        CultureStats(culture = ReferenceCultureEntity("currant_black", "", "Смородина"), totalHarvest = 2.1f, totalTreatments = 1),
+    ))
+    override val statsByGarden: StateFlow<List<GardenStats>> = MutableStateFlow(listOf(
+        GardenStats(garden = GardenEntity("g1", "Теплица 1", 0, 0, 0, GardenType.GREENHOUSE), totalHarvest = 11.0f),
+        GardenStats(garden = GardenEntity("g2", "Грядка №3", 0, 0, 0, GardenType.BED), totalHarvest = 3.4f),
+        GardenStats(garden = GardenEntity("g3", "Ягодник", 0, 0, 0, GardenType.PLOT), totalHarvest = 4.0f),
+    ))
+}
+
 @Preview(showBackground = true)
 @Composable
 fun SeasonStatsScreenPreview() {
     GardenAppTheme {
-        // This is a simplified preview and won't display real data
-        SeasonStatsScreen()
+        SeasonStatsScreen(vm = PreviewSeasonStatsVm())
     }
 }
