@@ -2,6 +2,7 @@ package com.example.gardenapp.ui.dashboard.widgets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,14 +41,17 @@ fun SeasonSummaryCard(
             containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Сводка сезона", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                TextButton(onClick = onDetailsClick) {
+                TextButton(
+                    onClick = onDetailsClick,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                ) {
                     Text("Подробнее")
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
