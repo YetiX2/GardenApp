@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,15 +32,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gardenapp.ui.theme.GardenAppTheme
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeasonStatsScreen(
     vm: SeasonStatsVm = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit = {}
 ) {
     val summary by vm.seasonSummary.collectAsState()
     val statsByCulture by vm.statsByCulture.collectAsState()
@@ -46,7 +52,14 @@ fun SeasonStatsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Статистика сезона") })
+            TopAppBar(
+                title = { Text("Статистика сезона") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                }
+            )
         }
     ) { padding ->
         LazyColumn(
@@ -104,5 +117,14 @@ fun SeasonStatsScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SeasonStatsScreenPreview() {
+    GardenAppTheme {
+        // This is a simplified preview and won't display real data
+        SeasonStatsScreen()
     }
 }
