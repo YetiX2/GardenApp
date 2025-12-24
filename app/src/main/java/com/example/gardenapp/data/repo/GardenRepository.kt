@@ -176,6 +176,7 @@ class GardenRepository @Inject constructor(
 
     // --- Logs ---
     fun fertilizerLogs(plantId: String): Flow<List<FertilizerLogEntity>> = db.fertilizerLogDao().observe(plantId)
+    fun observeAllFertilizerLogs(): Flow<List<FertilizerLogEntity>> = db.fertilizerLogDao().observeAll()
     suspend fun addFertilizerLog(plantId: String, date: LocalDate, amountGrams: Float, note: String?) {
         db.fertilizerLogDao().upsert(
             FertilizerLogEntity(UUID.randomUUID().toString(), plantId, date, amountGrams, note)
@@ -184,6 +185,7 @@ class GardenRepository @Inject constructor(
     suspend fun deleteFertilizerLog(item: FertilizerLogEntity) = db.fertilizerLogDao().delete(item)
 
     fun harvestLogs(plantId: String): Flow<List<HarvestLogEntity>> = db.harvestLogDao().observe(plantId)
+    fun observeAllHarvests(): Flow<List<HarvestLogEntity>> = db.harvestLogDao().observeAll()
     suspend fun addHarvestLog(plantId: String, date: LocalDate, weightKg: Float, note: String?) {
         db.harvestLogDao().upsert(
             HarvestLogEntity(UUID.randomUUID().toString(), plantId, date, weightKg, note)

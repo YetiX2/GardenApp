@@ -45,6 +45,7 @@ fun DashboardScreen(
     onOpenTasks: () -> Unit,
     onOpenSettings: () -> Unit, // ADDED
     onOpenPlant: (String) -> Unit,
+    onSeasonStatsClick: () -> Unit, // ADDED
     vm: DashboardVm = hiltViewModel()
 ) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
@@ -53,6 +54,8 @@ fun DashboardScreen(
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     val weatherState by vm.weatherState.collectAsState()
     val isRefreshing by vm.isRefreshing.collectAsState()
+    val seasonSummary by vm.seasonSummary.collectAsState() // ADDED
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -181,6 +184,7 @@ fun DashboardScreen(
                         onGrantPermission = { context.startActivity(settingsIntent) }
                     ) 
                 }
+                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick)}// ADDED
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
                 item { AdCard() }

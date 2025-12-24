@@ -16,13 +16,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Month
 import javax.inject.Inject
 
 sealed interface WeatherUiState {
@@ -35,6 +39,12 @@ sealed interface WeatherUiState {
 sealed interface UiEvent {
     data class ShowSnackbar(val message: String) : UiEvent
 }
+
+data class SeasonSummary( // ADDED
+    val activePlants: Int = 0,
+    val totalHarvest: Float = 0f,
+    val totalTreatments: Int = 0
+)
 
 @HiltViewModel
 class DashboardVm @Inject constructor(
@@ -57,6 +67,22 @@ class DashboardVm @Inject constructor(
     val gardens = repo.gardens()
     val recentActivity = repo.getRecentActivity()
     val allPlants = repo.observeAllPlants()
+
+    // ADDED SEASON SUMMARY
+    val seasonSummary: StateFlow<SeasonSummary> = combine(
+        allPlants, repo.observeAllHarvests(), repo.observeAllFertilizerLogs()
+    ) { plants, harvests, fertilizers ->
+        val seasonStart = LocalDate.of(LocalDate.now().year, Month.MARCH, 1)
+        val activePlantCount = plants.size
+        val seasonHarvest = harvests.filter { it.date >= seasonStart }.sumOf { it.weightKg.toDouble() }.toFloat()
+        val seasonTreatments = fertilizers.filter { it.date >= seasonStart }.size
+
+        SeasonSummary(
+            activePlants = activePlantCount,
+            totalHarvest = seasonHarvest,
+            totalTreatments = seasonTreatments
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SeasonSummary())
 
     fun onPermissionResult(isGranted: Boolean) {
         if (isGranted) {

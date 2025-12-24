@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gardenapp.ui.dashboard.DashboardScreen
+import com.example.gardenapp.ui.dashboard.SeasonStatsScreen
 import com.example.gardenapp.ui.gardenlist.GardenListScreen
 import com.example.gardenapp.ui.plant.PlantEditorScreen
 import com.example.gardenapp.ui.plan.GardenPlanScreen
@@ -20,6 +21,7 @@ sealed class Route(val value: String) {
     data object Tasks : Route("tasks")
     data object Settings : Route("settings")
     data object ColorSettings : Route("colorSettings")
+    data object SeasonStats : Route("seasonStats") // ADDED
 }
 
 @Composable
@@ -31,7 +33,8 @@ fun AppNav() {
                 onOpenGardens = { nav.navigate(Route.Gardens.value) },
                 onOpenTasks = { nav.navigate(Route.Tasks.value) },
                 onOpenSettings = { nav.navigate(Route.Settings.value) },
-                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") } // ADDED
+                onOpenPlant = { plantId -> nav.navigate("plant/$plantId") }, // ADDED
+                onSeasonStatsClick = { nav.navigate(Route.SeasonStats.value) } // ADDED
             )
         }
         composable(Route.Gardens.value) {
@@ -62,6 +65,9 @@ fun AppNav() {
         }
         composable(Route.ColorSettings.value) {
             ColorSettingsScreen(onBack = { nav.popBackStack() })
+        }
+        composable(Route.SeasonStats.value) { // ADDED
+            SeasonStatsScreen()
         }
     }
 }
