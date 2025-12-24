@@ -60,7 +60,19 @@ class GardenRepository @Inject constructor(
     fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()
     fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeTasksForPlant(plantId)
     suspend fun getLatestTaskForRule(ruleId: String): TaskInstanceEntity? = db.taskDao().getLatestTaskForRule(ruleId)
-    suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) = db.taskDao().setStatus(taskId, newStatus)
+    suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) {
+        db.taskDao().setStatus(taskId, newStatus)
+        if (newStatus == TaskStatus.DONE) {
+            val task = db.taskDao().getTask(taskId)
+            if (task != null) {
+                when (task.type) {
+                    TaskType.FERTILIZE -> addFertilizerLog(task.plantId, LocalDate.now(), 0f, "Автоматически из задачи")
+                    TaskType.HARVEST -> addHarvestLog(task.plantId, LocalDate.now(), 0f, "Автоматически из задачи")
+                    else -> Unit
+                }
+            }
+        }
+    }
     fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> { // ADDED
         return getChildGardens(gardenId).flatMapLatest { childGardens ->
             val gardenIds = listOf(gardenId) + childGardens.map { it.id }

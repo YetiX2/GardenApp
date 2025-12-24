@@ -45,6 +45,9 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(task: TaskInstanceEntity)
 
+    @Query("SELECT * FROM TaskInstanceEntity WHERE id = :id")
+    suspend fun getTask(id: String): TaskInstanceEntity? // ADDED
+
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
     suspend fun setStatus(id: String, status: TaskStatus)
 
@@ -55,7 +58,7 @@ interface TaskDao {
 @Dao
 interface RuleDao {
     @Query("SELECT * FROM CareRuleEntity")
-    fun getAllCareRules(): List<CareRuleEntity> // MODIFIED THIS
+    fun getAllCareRules(): List<CareRuleEntity>
 
     @Query("SELECT * FROM CareRuleEntity WHERE plantId = :plantId")
     fun observeRulesForPlant(plantId: String): Flow<List<CareRuleEntity>>

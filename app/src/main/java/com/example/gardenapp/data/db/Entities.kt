@@ -1,6 +1,7 @@
 package com.example.gardenapp.data.db
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.FilterVintage
@@ -80,7 +81,7 @@ data class CareRuleEntity(
     val note: String? = null // ADDED
 )
 
-enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, OTHER }
+enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, HARVEST, OTHER } // ADDED HARVEST
 enum class TaskStatus { PENDING, DONE, SNOOZED, REJECTED }
 
 @Entity(tableName = "TaskInstanceEntity")
@@ -205,5 +206,6 @@ val TaskType.icon: ImageVector
         TaskType.PRUNE -> Icons.Default.ContentCut
         TaskType.TREAT -> Icons.Default.BugReport
         TaskType.WATER -> Icons.Default.WaterDrop
+        TaskType.HARVEST -> Icons.Default.Agriculture // ADDED
         TaskType.OTHER -> Icons.Default.FilterVintage
     }

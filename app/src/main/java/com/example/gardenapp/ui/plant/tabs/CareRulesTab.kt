@@ -30,6 +30,7 @@ private fun TaskType.toRussian(): String = when (this) {
     TaskType.PRUNE -> "Обрезать"
     TaskType.TREAT -> "Обработать"
     TaskType.WATER -> "Полить"
+    TaskType.HARVEST -> "Сбор урожая"
     TaskType.OTHER -> "Другое"
 }
 
