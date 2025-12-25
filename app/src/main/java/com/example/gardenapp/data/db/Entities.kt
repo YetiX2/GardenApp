@@ -78,10 +78,22 @@ data class CareRuleEntity(
     val start: LocalDate,
     val everyDays: Int?,
     val everyMonths: Int? = null,
-    val note: String? = null // ADDED
+    val note: String? = null,
+    val amount: Float? = null, 
+    val unit: String? = null
 )
 
-enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, HARVEST, OTHER } // ADDED HARVEST
+enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, HARVEST, OTHER }
+
+fun TaskType.toRussian(): String = when (this) { // ADDED
+    TaskType.FERTILIZE -> "Подкормить"
+    TaskType.PRUNE -> "Обрезать"
+    TaskType.TREAT -> "Обработать"
+    TaskType.WATER -> "Полить"
+    TaskType.HARVEST -> "Сбор урожая"
+    TaskType.OTHER -> "Другое"
+}
+
 enum class TaskStatus { PENDING, DONE, SNOOZED, REJECTED }
 
 @Entity(tableName = "TaskInstanceEntity")
@@ -93,7 +105,9 @@ data class TaskInstanceEntity(
     val due: LocalDateTime,
     val exact: Boolean,
     val status: TaskStatus,
-    val notes: String? = null // ADDED THIS
+    val notes: String? = null,
+    val amount: Float? = null,
+    val unit: String? = null
 )
 
 @Entity(indices = [Index("plantId")])
@@ -145,9 +159,9 @@ data class ReferenceVarietyEntity(
     @Embedded(prefix = "i18n_") val i18n: I18nEntity,
     @Embedded(prefix = "hardiness_") val hardiness: HardinessEntity?,
     @Embedded(prefix = "filter_") val smartFilters: SmartFilterEntity,
-    @Embedded(prefix = "planting_") val plantingWindow: PlantingWindowEntity? = null, // ADDED
-    @Embedded(prefix = "harvest_") val harvestWindow: MonthRangeEntity? = null,    // ADDED
-    @Embedded(prefix = "bloom_") val bloomWindow: MonthRangeEntity? = null       // ADDED
+    @Embedded(prefix = "planting_") val plantingWindow: PlantingWindowEntity? = null,
+    @Embedded(prefix = "harvest_") val harvestWindow: MonthRangeEntity? = null,
+    @Embedded(prefix = "bloom_") val bloomWindow: MonthRangeEntity? = null
 )
 
 
@@ -206,6 +220,6 @@ val TaskType.icon: ImageVector
         TaskType.PRUNE -> Icons.Default.ContentCut
         TaskType.TREAT -> Icons.Default.BugReport
         TaskType.WATER -> Icons.Default.WaterDrop
-        TaskType.HARVEST -> Icons.Default.Agriculture // ADDED
+        TaskType.HARVEST -> Icons.Default.Agriculture
         TaskType.OTHER -> Icons.Default.FilterVintage
     }

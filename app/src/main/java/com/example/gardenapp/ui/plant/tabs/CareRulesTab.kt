@@ -38,9 +38,9 @@ private fun TaskType.toRussian(): String = when (this) {
 @Composable
 fun CareRulesTab(
     rules: List<CareRuleEntity>,
-    onAddRule: (TaskType, Int, String?) -> Unit, // Renamed for clarity
-    onUpdateRule: (CareRuleEntity) -> Unit, // ADDED
-    onDeleteRule: (CareRuleEntity) -> Unit // Renamed for clarity
+    onAddRule: (TaskType, Int, String?, Float?, String?) -> Unit,
+    onUpdateRule: (CareRuleEntity) -> Unit,
+    onDeleteRule: (CareRuleEntity) -> Unit
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var ruleToEdit by remember { mutableStateOf<CareRuleEntity?>(null) }
@@ -115,8 +115,8 @@ fun CareRulesTab(
     if (showAddDialog) {
         AddCareRuleDialog(
             onDismiss = { showAddDialog = false },
-            onAddRule = { type, days, note -> // UPDATED
-                onAddRule(type, days, note)
+            onAddRule = { type, days, note, amount, unit ->
+                onAddRule(type, days, note, amount, unit)
                 showAddDialog = false
             }
         )
@@ -126,8 +126,8 @@ fun CareRulesTab(
         AddCareRuleDialog(
             initialRule = rule,
             onDismiss = { ruleToEdit = null },
-            onAddRule = { type, days, note -> // UPDATED
-                onUpdateRule(rule.copy(type = type, everyDays = days, note = note))
+            onAddRule = { type, days, note, amount, unit ->
+                onUpdateRule(rule.copy(type = type, everyDays = days, note = note, amount = amount, unit = unit))
                 ruleToEdit = null
             }
         )

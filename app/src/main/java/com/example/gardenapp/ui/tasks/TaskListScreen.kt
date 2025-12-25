@@ -50,8 +50,8 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     if (showAddTaskDialog) {
         AddTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { plant, type, due, notes -> // MODIFIED
-                vm.addTask(plant, type, due, notes) // MODIFIED
+            onAddTask = { plant, type, due, notes, amount, unit ->
+                vm.addTask(plant, type, due, notes, amount, unit)
                 showAddTaskDialog = false
             },
             plants = allPlants

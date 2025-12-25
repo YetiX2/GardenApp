@@ -40,7 +40,7 @@ sealed interface UiEvent {
     data class ShowSnackbar(val message: String) : UiEvent
 }
 
-data class SeasonSummary( // ADDED
+data class SeasonSummary( 
     val activePlants: Int = 0,
     val totalHarvest: Float = 0f,
     val totalTreatments: Int = 0
@@ -51,7 +51,7 @@ class DashboardVm @Inject constructor(
     private val application: Application,
     private val repo: GardenRepository,
     private val weatherRepo: WeatherRepository,
-    private val testDataGenerator: TestDataGenerator // ADDED
+    private val testDataGenerator: TestDataGenerator
 ) : ViewModel() {
 
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
@@ -113,12 +113,9 @@ class DashboardVm @Inject constructor(
         }
     }
 
-
-
-
-    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
+    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?, amount: Float?, unit: String?) {
         viewModelScope.launch {
-            repo.addTask(plant, type, due, notes) // MODIFIED
+            repo.addTask(plant, type, due, notes, amount, unit)
             _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
         }
     }
@@ -139,7 +136,7 @@ class DashboardVm @Inject constructor(
 
     fun createTestData() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { // ADDED
+            withContext(Dispatchers.IO) { 
                 testDataGenerator.seed()
             }
             _eventFlow.emit(UiEvent.ShowSnackbar("Тестовые данные созданы"))

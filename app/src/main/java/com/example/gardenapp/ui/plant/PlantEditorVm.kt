@@ -21,7 +21,7 @@ import javax.inject.Inject
 class PlantEditorVm @Inject constructor(
     private val repo: GardenRepository,
     private val referenceRepo: ReferenceDataRepository,
-    private val settingsManager: SettingsManager, // ADDED
+    private val settingsManager: SettingsManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -54,16 +54,16 @@ class PlantEditorVm @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    fun saveLastUsedIds(groupId: String, cultureId: String) { // ADDED
+    fun saveLastUsedIds(groupId: String, cultureId: String) {
         viewModelScope.launch {
             settingsManager.setLastUsedIds(groupId, cultureId)
         }
     }
 
-    fun addTask(type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
+    fun addTask(type: TaskType, due: LocalDateTime, notes: String?, amount: Float?, unit: String?) {
         viewModelScope.launch {
             plant.value?.let {
-                repo.addTask(it, type, due, notes) // MODIFIED
+                repo.addTask(it, type, due, notes, amount, unit)
                 _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
             }
         }
@@ -89,13 +89,13 @@ class PlantEditorVm @Inject constructor(
         }
     }
 
-    fun addCareRule(type: TaskType, everyDays: Int, note: String?) { // UPDATED
+    fun addCareRule(type: TaskType, everyDays: Int, note: String?, amount: Float?, unit: String?) {
         viewModelScope.launch {
-            repo.addCareRule(plantId, type, LocalDate.now(), everyDays, null, note)
+            repo.addCareRule(plantId, type, LocalDate.now(), everyDays, null, note, amount, unit)
             _eventFlow.emit(UiEvent.ShowSnackbar("Правило ухода добавлено"))
         }
     }
-    fun updateCareRule(rule: CareRuleEntity) { // ADDED
+    fun updateCareRule(rule: CareRuleEntity) {
         viewModelScope.launch {
             repo.updateCareRule(rule)
             _eventFlow.emit(UiEvent.ShowSnackbar("Правило ухода обновлено"))

@@ -12,7 +12,6 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
-import kotlin.toString
 
 class GardenRepository @Inject constructor(
     private val db: GardenDatabase,
@@ -48,8 +47,8 @@ class GardenRepository @Inject constructor(
         db.ruleDao().getAllCareRules()
     }
 
-    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?, note: String? = null) {
-        db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths, note))
+    suspend fun addCareRule(plantId: String, type: TaskType, start: LocalDate, everyDays: Int?, everyMonths: Int?, note: String?, amount: Float?, unit: String?) {
+        db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths, note, amount, unit))
     }
 
     suspend fun updateCareRule(rule: CareRuleEntity) { // FIXED
@@ -66,8 +65,8 @@ class GardenRepository @Inject constructor(
             val task = db.taskDao().getTask(taskId)
             if (task != null) {
                 when (task.type) {
-                    TaskType.FERTILIZE -> addFertilizerLog(task.plantId, LocalDate.now(), 0f, "Автоматически из задачи")
-                    TaskType.HARVEST -> addHarvestLog(task.plantId, LocalDate.now(), 0f, "Автоматически из задачи")
+                    TaskType.FERTILIZE -> addFertilizerLog(task.plantId, LocalDate.now(), task.amount ?: 0f, "Автоматически из задачи")
+                    TaskType.HARVEST -> addHarvestLog(task.plantId, LocalDate.now(), task.amount ?: 0f, "Автоматически из задачи")
                     else -> Unit
                 }
             }
@@ -81,7 +80,14 @@ class GardenRepository @Inject constructor(
     }
 
 
-    suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String? = null) { // MODIFIED
+    suspend fun addTask(
+        plant: PlantEntity,
+        type: TaskType,
+        due: LocalDateTime,
+        notes: String? = null,
+        amount: Float?,
+        unit: String?
+    ) { // MODIFIED
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -91,7 +97,9 @@ class GardenRepository @Inject constructor(
                 due = due,
                 exact = true,
                 status = TaskStatus.PENDING,
-                notes = notes // ADDED
+                notes = notes, // ADDED
+                amount = amount,
+                unit = unit
             )
         )
     }
@@ -106,7 +114,9 @@ class GardenRepository @Inject constructor(
                 due = due,
                 exact = true,
                 status = TaskStatus.PENDING,
-                notes = rule.note // FIXED - Use note from the rule
+                notes = rule.note, // FIXED - Use note from the rule
+                amount = rule.amount,
+                unit = rule.unit
             )
         )
     }
@@ -181,7 +191,7 @@ class GardenRepository @Inject constructor(
                 type = taskTypes.random(),
                 start = LocalDate.now().minusWeeks(2),
                 everyDays = Random.nextInt(3, 30),
-                everyMonths = null
+                everyMonths = null, null, null, null
             )
         }
     }

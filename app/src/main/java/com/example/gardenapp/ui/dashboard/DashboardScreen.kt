@@ -31,21 +31,24 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import com.example.gardenapp.ui.dashboard.widgets.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onOpenGardens: () -> Unit,
     onOpenTasks: () -> Unit,
-    onOpenSettings: () -> Unit, // ADDED
+    onOpenSettings: () -> Unit, 
     onOpenPlant: (String) -> Unit,
-    onSeasonStatsClick: () -> Unit, // ADDED
+    onSeasonStatsClick: () -> Unit,
     vm: DashboardVm = hiltViewModel()
 ) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
@@ -54,7 +57,7 @@ fun DashboardScreen(
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     val weatherState by vm.weatherState.collectAsState()
     val isRefreshing by vm.isRefreshing.collectAsState()
-    val seasonSummary by vm.seasonSummary.collectAsState() // ADDED
+    val seasonSummary by vm.seasonSummary.collectAsState()
 
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -104,8 +107,8 @@ fun DashboardScreen(
     if (showAddTaskDialog) {
         AddTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { plant, type, due, notes -> // MODIFIED
-                vm.addTask(plant, type, due, notes) // MODIFIED
+            onAddTask = { plant, type, due, notes, amount, unit ->
+                vm.addTask(plant, type, due, notes, amount, unit)
                 showAddTaskDialog = false
             },
             plants = allPlants
@@ -153,7 +156,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Сегодня на даче") },
                 actions = {
-                    IconButton(onClick = onOpenSettings) { // ADDED
+                    IconButton(onClick = onOpenSettings) { 
                         Icon(Icons.Default.Settings, contentDescription = "Настройки")
                     }
                     IconButton(onClick = { vm.runCareTaskWorkerNow() }) {
@@ -184,8 +187,8 @@ fun DashboardScreen(
                         onGrantPermission = { context.startActivity(settingsIntent) }
                     ) 
                 }
-                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick)}// ADDED
-                item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks) }
+                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick)}
+                item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks, onPlantClick = onOpenPlant) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
                 item { AdCard() }
                 item { RecentEntriesCard(activityItems = recentActivity, onOpenPlant = onOpenPlant) }

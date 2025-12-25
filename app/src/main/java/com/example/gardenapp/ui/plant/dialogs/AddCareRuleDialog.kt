@@ -2,6 +2,7 @@ package com.example.gardenapp.ui.plant.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,14 +26,18 @@ private fun TaskType.toRussian(): String = when (this) {
 fun AddCareRuleDialog(
     initialRule: CareRuleEntity? = null,
     onDismiss: () -> Unit,
-    onAddRule: (TaskType, Int, String?) -> Unit // UPDATED signature
+    onAddRule: (TaskType, Int, String?, Float?, String?) -> Unit // UPDATED signature
 ) {
     var selectedType by remember { mutableStateOf(initialRule?.type ?: TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
     var days by remember { mutableStateOf(initialRule?.everyDays?.toString() ?: "3") }
-    var note by remember { mutableStateOf(initialRule?.note ?: "") } // ADDED
+    var note by remember { mutableStateOf(initialRule?.note ?: "") }
+    var amount by remember { mutableStateOf(initialRule?.amount?.toString() ?: "") }
+    var unit by remember { mutableStateOf(initialRule?.unit ?: "г") }
+    var unitMenuExpanded by remember { mutableStateOf(false) }
 
     val title = if (initialRule == null) "Новое правило ухода" else "Редактировать правило"
+    val showAmount = selectedType in listOf(TaskType.FERTILIZE, TaskType.WATER, TaskType.TREAT)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -46,21 +51,51 @@ fun AddCareRuleDialog(
                         readOnly = true,
                         label = { Text("Тип задачи") },
                         modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        leadingIcon = { Icon(selectedType.icon, contentDescription = null) }, // ADDED
+                        leadingIcon = { Icon(selectedType.icon, contentDescription = null) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
                     )
                     ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
                         TaskType.values().forEach { taskType ->
                             DropdownMenuItem(
                                 text = { Text(taskType.toRussian()) },
-                                leadingIcon = { Icon(taskType.icon, contentDescription = null) }, // ADDED
+                                leadingIcon = { Icon(taskType.icon, contentDescription = null) },
                                 onClick = { selectedType = taskType; typeMenuExpanded = false }
                             )
                         }
                     }
                 }
                 OutlinedTextField(value = days, onValueChange = { days = it.filter(Char::isDigit) }, label = { Text("Повторять каждые (дней)") })
-                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опционально)") }) // ADDED
+
+                if (showAmount) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = amount,
+                            onValueChange = { amount = it },
+                            label = { Text("Количество") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ExposedDropdownMenuBox(
+                            expanded = unitMenuExpanded,
+                            onExpandedChange = { unitMenuExpanded = !unitMenuExpanded },
+                            modifier = Modifier.weight(0.5f)
+                        ) {
+                            OutlinedTextField(
+                                value = unit,
+                                onValueChange = {},
+                                readOnly = true,
+                                modifier = Modifier.menuAnchor(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitMenuExpanded) }
+                            )
+                            ExposedDropdownMenu(expanded = unitMenuExpanded, onDismissRequest = { unitMenuExpanded = false }) {
+                                listOf("г", "мл", "л").forEach { u ->
+                                    DropdownMenuItem(text = { Text(u) }, onClick = { unit = u; unitMenuExpanded = false })
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Заметка (опционально)") })
             }
         },
         confirmButton = {
@@ -68,7 +103,7 @@ fun AddCareRuleDialog(
                 onClick = {
                     val daysInt = days.toIntOrNull()
                     if (daysInt != null) {
-                        onAddRule(selectedType, daysInt, note.ifBlank { null }) // UPDATED
+                        onAddRule(selectedType, daysInt, note.ifBlank { null }, amount.toFloatOrNull(), if(showAmount) unit else null)
                     }
                 },
                 enabled = days.isNotBlank()

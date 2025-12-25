@@ -20,16 +20,7 @@ import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 import com.example.gardenapp.data.db.icon
-
-// TODO: Move to a shared file
-private fun TaskType.toRussian(): String = when (this) {
-    TaskType.FERTILIZE -> "Подкормить"
-    TaskType.PRUNE -> "Обрезать"
-    TaskType.TREAT -> "Обработать"
-    TaskType.WATER -> "Полить"
-    TaskType.HARVEST -> "Сбор урожая"
-    TaskType.OTHER -> "Другое"
-}
+import com.example.gardenapp.data.db.toRussian
 
 @Composable
 internal fun TaskList(
@@ -57,7 +48,9 @@ internal fun TaskList(
 
 @Composable
 internal fun TaskItem(taskInfo: TaskWithPlantInfo, onStatusChange: (TaskStatus) -> Unit) {
-    val taskDescription = taskInfo.task.type.toRussian()
+    val task = taskInfo.task
+    val amountText = task.amount?.let { "${it}${task.unit}" } ?: ""
+    val taskDescription = "${task.type.toRussian()} $amountText"
     val taskText = "$taskDescription \"${taskInfo.plantName}\""
 
     ListItem(

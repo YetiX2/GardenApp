@@ -19,12 +19,12 @@ fun TasksTab(
     onAdd: () -> Unit
 ) {
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAdd) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить задачу")
-            }
-        }
+        floatingActionButton = { FloatingActionButton(onClick = onAdd) { Icon(Icons.Default.Add, "Добавить задачу") } }
     ) { padding ->
-        TaskList(tasks = tasks, onStatusChange = onStatusChange, modifier = Modifier.padding(padding))
+        TaskList(
+            tasks = tasks, 
+            onStatusChange = onStatusChange,
+            modifier = Modifier.padding(padding)
+        )
     }
 }

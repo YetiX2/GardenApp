@@ -46,7 +46,7 @@ interface TaskDao {
     suspend fun upsert(task: TaskInstanceEntity)
 
     @Query("SELECT * FROM TaskInstanceEntity WHERE id = :id")
-    suspend fun getTask(id: String): TaskInstanceEntity? // ADDED
+    suspend fun getTask(id: String): TaskInstanceEntity?
 
     @Query("UPDATE TaskInstanceEntity SET status = :status WHERE id = :id")
     suspend fun setStatus(id: String, status: TaskStatus)
@@ -59,6 +59,9 @@ interface TaskDao {
 interface RuleDao {
     @Query("SELECT * FROM CareRuleEntity")
     fun getAllCareRules(): List<CareRuleEntity>
+
+    @Query("SELECT * FROM CareRuleEntity WHERE id = :id")
+    suspend fun getRule(id: String): CareRuleEntity? // ADDED
 
     @Query("SELECT * FROM CareRuleEntity WHERE plantId = :plantId")
     fun observeRulesForPlant(plantId: String): Flow<List<CareRuleEntity>>

@@ -29,9 +29,9 @@ class TaskListVm @Inject constructor(private val repo: GardenRepository) : ViewM
         }
     }
 
-    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?) { // MODIFIED
+    fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?, amount: Float?, unit: String?) {
         viewModelScope.launch {
-            repo.addTask(plant, type, due, notes) // MODIFIED
+            repo.addTask(plant, type, due, notes, amount, unit)
             _eventFlow.emit(UiEvent.ShowSnackbar("Задача добавлена"))
         }
     }
