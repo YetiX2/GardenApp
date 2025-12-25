@@ -15,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.ui.common.TaskList
+import com.example.gardenapp.ui.common.dialogs.UpsertTaskDialog
 import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
-import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -50,9 +50,9 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val scope = rememberCoroutineScope()
 
     if (showAddTaskDialog) {
-        AddTaskDialog(
+        UpsertTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { plant, type, due, notes, amount, unit ->
+            onConfirm = { plant, type, due, notes, amount, unit ->
                 vm.addTask(plant, type, due, notes, amount, unit)
                 showAddTaskDialog = false
             },

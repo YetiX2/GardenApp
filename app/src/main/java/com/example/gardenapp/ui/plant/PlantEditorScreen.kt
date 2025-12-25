@@ -14,16 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.CareRuleEntity
-import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.ui.common.dialogs.UpsertTaskDialog
 import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import com.example.gardenapp.ui.plant.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.plant.dialogs.AddHarvestLogDialog
-import com.example.gardenapp.ui.plant.dialogs.AddTaskDialogForPlant
 import com.example.gardenapp.ui.plant.tabs.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -57,12 +55,14 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     var showAddCareRuleDialog by remember { mutableStateOf(false) }
 
     if (showAddTaskDialog) {
-        AddTaskDialogForPlant(
+        UpsertTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { type, due, notes, amount, unit ->
+            onConfirm = { _, type, due, notes, amount, unit -> // Plant is already known
                 vm.addTask(type, due, notes, amount, unit)
                 showAddTaskDialog = false
-            }
+            },
+            plants = emptyList(), // Not needed
+            initialPlant = plant
         )
     }
 
@@ -141,4 +141,3 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
         }
     }
 }
-

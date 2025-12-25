@@ -31,22 +31,19 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gardenapp.data.db.PlantEntity
-import com.example.gardenapp.data.db.TaskType
+import com.example.gardenapp.ui.common.dialogs.UpsertTaskDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddFertilizerLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
-import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import com.example.gardenapp.ui.dashboard.widgets.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onOpenGardens: () -> Unit,
     onOpenTasks: () -> Unit,
-    onOpenSettings: () -> Unit, 
+    onOpenSettings: () -> Unit,
     onOpenPlant: (String) -> Unit,
     onSeasonStatsClick: () -> Unit,
     vm: DashboardVm = hiltViewModel()
@@ -58,7 +55,6 @@ fun DashboardScreen(
     val weatherState by vm.weatherState.collectAsState()
     val isRefreshing by vm.isRefreshing.collectAsState()
     val seasonSummary by vm.seasonSummary.collectAsState()
-
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -88,10 +84,6 @@ fun DashboardScreen(
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-
-
-
-    // -- Pull to Refresh Logic (using the API compatible with your project) --
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(true) {
@@ -103,17 +95,17 @@ fun DashboardScreen(
         permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
-
     if (showAddTaskDialog) {
-        AddTaskDialog(
+        UpsertTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { plant, type, due, notes, amount, unit ->
+            onConfirm = { plant, type, due, notes, amount, unit ->
                 vm.addTask(plant, type, due, notes, amount, unit)
                 showAddTaskDialog = false
             },
             plants = allPlants
         )
     }
+
     if (showAddFertilizerDialog) {
         AddFertilizerLogDialog(
             onDismiss = { showAddFertilizerDialog = false },
@@ -144,8 +136,6 @@ fun DashboardScreen(
         }
     }
 
-
-
     val settingsIntent = remember {
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
     }
@@ -156,7 +146,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Сегодня на даче") },
                 actions = {
-                    IconButton(onClick = onOpenSettings) { 
+                    IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Настройки")
                     }
                     IconButton(onClick = { vm.runCareTaskWorkerNow() }) {
@@ -187,7 +177,7 @@ fun DashboardScreen(
                         onGrantPermission = { context.startActivity(settingsIntent) }
                     ) 
                 }
-                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick)}
+                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick) }
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks, onPlantClick = onOpenPlant) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
                 item { AdCard() }

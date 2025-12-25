@@ -20,6 +20,7 @@ import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Deprecated("Добавлен общий UpsertTaskDialog")
 fun AddTaskDialog(
     onDismiss: () -> Unit,
     onAddTask: (plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?, amount: Float?, unit: String?) -> Unit,
