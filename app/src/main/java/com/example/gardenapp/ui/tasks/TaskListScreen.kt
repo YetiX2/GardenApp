@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.TaskStatus
 import com.example.gardenapp.ui.common.TaskList
 import com.example.gardenapp.ui.dashboard.UiEvent
+import com.example.gardenapp.ui.dashboard.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.dashboard.dialogs.AddTaskDialog
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
     val allTasks by vm.allTasks.collectAsState(initial = emptyList())
     val allPlants by vm.allPlants.collectAsState(initial = emptyList())
     var showAddTaskDialog by remember { mutableStateOf(false) }
+    val taskToConfirmHarvest by vm.taskToConfirmHarvest.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
@@ -55,6 +57,16 @@ fun TaskListScreen(onBack: () -> Unit, vm: TaskListVm = hiltViewModel()) {
                 showAddTaskDialog = false
             },
             plants = allPlants
+        )
+    }
+
+    taskToConfirmHarvest?.let {
+        AddHarvestLogDialog(
+            onDismiss = { vm.dismissHarvestConfirmation() },
+            onAddLog = { _, weight, date, note -> // plant is not needed here
+                vm.confirmHarvestAndCompleteTask(it.id, it.plantId, weight, date, note)
+            },
+            plants = allPlants.filter { p -> p.id == it.plantId } // Pass only the relevant plant
         )
     }
 

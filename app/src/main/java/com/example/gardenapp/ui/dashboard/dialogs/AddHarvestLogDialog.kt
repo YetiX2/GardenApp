@@ -22,7 +22,7 @@ fun AddHarvestLogDialog(
     onAddLog: (plant: PlantEntity, weight: Float, date: LocalDate, note: String?) -> Unit,
     plants: List<PlantEntity>
 ) {
-    var selectedPlant by remember { mutableStateOf<PlantEntity?>(null) }
+    var selectedPlant by remember { mutableStateOf<PlantEntity?>(plants.firstOrNull()) }
     var plantMenuExpanded by remember { mutableStateOf(false) }
 
     var amount by remember { mutableStateOf("") }
