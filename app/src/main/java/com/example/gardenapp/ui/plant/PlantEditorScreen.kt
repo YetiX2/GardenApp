@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.CareRuleEntity
+import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.ui.dashboard.UiEvent
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import com.example.gardenapp.ui.plant.dialogs.AddFertilizerLogDialog
@@ -22,6 +23,7 @@ import com.example.gardenapp.ui.plant.dialogs.AddTaskDialogForPlant
 import com.example.gardenapp.ui.plant.tabs.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -34,6 +36,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     val varietyDetails by vm.varietyDetails.collectAsState()
     val varietyTags by vm.varietyTags.collectAsState()
     val culture by vm.culture.collectAsState()
+    val taskToConfirmHarvest by vm.taskToConfirmHarvest.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
@@ -87,6 +90,14 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
             onAddRule = { type, days, note, amount, unit ->
                 vm.addCareRule(type, days, note, amount, unit)
                 showAddCareRuleDialog = false
+            }
+        )
+    }
+    taskToConfirmHarvest?.let {
+        AddHarvestLogDialog(
+            onDismiss = { vm.dismissHarvestConfirmation() },
+            onAddLog = { weight, date, note ->
+                vm.confirmHarvestAndCompleteTask(it.id, weight, date, note)
             }
         )
     }

@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
+import kotlin.toString
 
 class GardenRepository @Inject constructor(
     private val db: GardenDatabase,
@@ -43,7 +44,7 @@ class GardenRepository @Inject constructor(
 
     fun careRules(plantId: String): Flow<List<CareRuleEntity>> = db.ruleDao().observeRulesForPlant(plantId)
 
-    suspend fun getAllCareRules(): List<CareRuleEntity> = withContext(Dispatchers.IO) { // MODIFIED
+    suspend fun getAllCareRules(): List<CareRuleEntity> = withContext(Dispatchers.IO) {
         db.ruleDao().getAllCareRules()
     }
 
@@ -51,7 +52,7 @@ class GardenRepository @Inject constructor(
         db.ruleDao().upsert(CareRuleEntity(UUID.randomUUID().toString(), plantId, type, start, everyDays, everyMonths, note, amount, unit))
     }
 
-    suspend fun updateCareRule(rule: CareRuleEntity) { // FIXED
+    suspend fun updateCareRule(rule: CareRuleEntity) {
         db.ruleDao().upsert(rule)
     }
     suspend fun deleteCareRule(rule: CareRuleEntity) = db.ruleDao().delete(rule)
@@ -59,20 +60,13 @@ class GardenRepository @Inject constructor(
     fun allTasksWithPlantInfo(): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeAllWithPlantInfo()
     fun observeTasksForPlant(plantId: String): Flow<List<TaskWithPlantInfo>> = db.taskDao().observeTasksForPlant(plantId)
     suspend fun getLatestTaskForRule(ruleId: String): TaskInstanceEntity? = db.taskDao().getLatestTaskForRule(ruleId)
+    suspend fun getTask(taskId: String): TaskInstanceEntity? = db.taskDao().getTask(taskId)
+    
     suspend fun setTaskStatus(taskId: String, newStatus: TaskStatus) {
         db.taskDao().setStatus(taskId, newStatus)
-        if (newStatus == TaskStatus.DONE) {
-            val task = db.taskDao().getTask(taskId)
-            if (task != null) {
-                when (task.type) {
-                    TaskType.FERTILIZE -> addFertilizerLog(task.plantId, LocalDate.now(), task.amount ?: 0f, "Автоматически из задачи")
-                    TaskType.HARVEST -> addHarvestLog(task.plantId, LocalDate.now(), task.amount ?: 0f, "Автоматически из задачи")
-                    else -> Unit
-                }
-            }
-        }
     }
-    fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> { // ADDED
+    
+    fun getPendingTasksForGardens(gardenId: String): Flow<List<TaskInstanceEntity>> { 
         return getChildGardens(gardenId).flatMapLatest { childGardens ->
             val gardenIds = listOf(gardenId) + childGardens.map { it.id }
             db.taskDao().observePendingTasksForGardens(gardenIds)
@@ -80,14 +74,7 @@ class GardenRepository @Inject constructor(
     }
 
 
-    suspend fun addTask(
-        plant: PlantEntity,
-        type: TaskType,
-        due: LocalDateTime,
-        notes: String? = null,
-        amount: Float?,
-        unit: String?
-    ) { // MODIFIED
+    suspend fun addTask(plant: PlantEntity, type: TaskType, due: LocalDateTime, notes: String?, amount: Float?, unit: String?) {
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -97,14 +84,14 @@ class GardenRepository @Inject constructor(
                 due = due,
                 exact = true,
                 status = TaskStatus.PENDING,
-                notes = notes, // ADDED
+                notes = notes,
                 amount = amount,
                 unit = unit
             )
         )
     }
 
-    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) { // MODIFIED - removed notes param
+    suspend fun createTaskFromRule(rule: CareRuleEntity, due: LocalDateTime) {
         db.taskDao().upsert(
             TaskInstanceEntity(
                 id = UUID.randomUUID().toString(),
@@ -114,7 +101,7 @@ class GardenRepository @Inject constructor(
                 due = due,
                 exact = true,
                 status = TaskStatus.PENDING,
-                notes = rule.note, // FIXED - Use note from the rule
+                notes = rule.note,
                 amount = rule.amount,
                 unit = rule.unit
             )

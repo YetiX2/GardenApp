@@ -33,6 +33,9 @@ class PlantEditorVm @Inject constructor(
     val lastUsedGroupId = settingsManager.lastUsedGroupId.stateIn(viewModelScope, SharingStarted.Lazily, null)
     val lastUsedCultureId = settingsManager.lastUsedCultureId.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
+    private val _taskToConfirmHarvest = MutableStateFlow<TaskInstanceEntity?>(null)
+    val taskToConfirmHarvest: StateFlow<TaskInstanceEntity?> = _taskToConfirmHarvest.asStateFlow()
+
     val varietyDetails: StateFlow<ReferenceVarietyEntity?> = plant.flatMapLatest { p ->
         p?.varietyId?.let { referenceRepo.getVariety(it) } ?: flowOf(null)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -71,8 +74,33 @@ class PlantEditorVm @Inject constructor(
 
     fun updateTaskStatus(taskId: String, newStatus: TaskStatus) {
         viewModelScope.launch {
-            repo.setTaskStatus(taskId, newStatus)
+            val task = repo.getTask(taskId)
+            if (task != null) {
+                when (task.type) {
+                    TaskType.HARVEST -> if (newStatus == TaskStatus.DONE) _taskToConfirmHarvest.value = task else repo.setTaskStatus(taskId, newStatus)
+                    TaskType.FERTILIZE -> {
+                        if (newStatus == TaskStatus.DONE) {
+                            repo.addFertilizerLog(task.plantId, LocalDate.now(), task.amount ?: 0f, "Автоматически из задачи")
+                        }
+                        repo.setTaskStatus(taskId, newStatus)
+                    }
+                    else -> repo.setTaskStatus(taskId, newStatus)
+                }
+            }
         }
+    }
+
+    fun confirmHarvestAndCompleteTask(taskId: String, weight: Float, date: LocalDate, note: String?) {
+        viewModelScope.launch {
+            repo.addHarvestLog(plantId, date, weight, note)
+            repo.setTaskStatus(taskId, TaskStatus.DONE)
+            _taskToConfirmHarvest.value = null
+            _eventFlow.emit(UiEvent.ShowSnackbar("Урожай собран, задача выполнена"))
+        }
+    }
+
+    fun dismissHarvestConfirmation() {
+        _taskToConfirmHarvest.value = null
     }
 
     fun addFertilizerLog(grams: Float, date: LocalDate, note: String?) {

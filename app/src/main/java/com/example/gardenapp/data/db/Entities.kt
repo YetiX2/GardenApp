@@ -85,7 +85,7 @@ data class CareRuleEntity(
 
 enum class TaskType { FERTILIZE, PRUNE, TREAT, WATER, HARVEST, OTHER }
 
-fun TaskType.toRussian(): String = when (this) { // ADDED
+fun TaskType.toRussian(): String = when (this) {
     TaskType.FERTILIZE -> "Подкормить"
     TaskType.PRUNE -> "Обрезать"
     TaskType.TREAT -> "Обработать"
