@@ -96,7 +96,7 @@ fun UpsertTaskDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuExpanded) }
                     )
                     ExposedDropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                        TaskType.values().forEach { type ->
+                        TaskType.entries.forEach { type ->
                             DropdownMenuItem(
                                 text = { Text(type.toRussian()) },
                                 leadingIcon = { Icon(type.icon, contentDescription = null) },

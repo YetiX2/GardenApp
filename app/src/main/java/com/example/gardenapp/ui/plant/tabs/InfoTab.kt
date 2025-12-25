@@ -113,7 +113,7 @@ fun InfoTab(
             if (tags.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     tags.forEach { tag ->
-                        AssistChip(onClick = { }, label = { Text(tag.key +" - "+tag.value) }) // todo: make it more readable
+                        AssistChip(onClick = { }, label = { Text("${tag.key}: ${tag.value}") })
                     }
                 }
             }

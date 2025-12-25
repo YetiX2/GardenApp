@@ -54,8 +54,12 @@ fun PlantEditor(
         if (plant.varietyId == null) { // only on create
             selectedGroupId = lastUsedGroupId
             selectedCultureId = lastUsedCultureId
-        } else {
-            // todo: pre-select on edit
+        } else { // on edit
+            vm.getGroupAndCultureIdsForVariety(plant.varietyId)?.let { (groupId, cultureId) ->
+                selectedGroupId = groupId
+                selectedCultureId = cultureId
+                selectedVarietyId = plant.varietyId
+            }
         }
     }
 

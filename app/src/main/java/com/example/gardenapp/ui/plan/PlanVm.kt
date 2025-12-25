@@ -10,6 +10,7 @@ import com.example.gardenapp.data.settings.SettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,6 +65,17 @@ class PlanVm @Inject constructor(
         viewModelScope.launch {
             settingsManager.setLastUsedIds(groupId, cultureId)
         }
+    }
+
+    suspend fun getGroupAndCultureIdsForVariety(varietyId: String): Pair<String, String>? {
+        val variety = referenceDao.getVariety(varietyId).first()
+        variety?.let {
+            val culture = referenceDao.getCulture(it.cultureId).first()
+            culture?.let { c ->
+                return Pair(c.groupId, c.id)
+            }
+        }
+        return null
     }
 
     // --- СПРАВОЧНИКИ (referenceDao) ---
