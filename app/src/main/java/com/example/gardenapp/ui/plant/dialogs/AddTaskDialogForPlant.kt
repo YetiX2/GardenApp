@@ -10,18 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.icon
+import com.example.gardenapp.data.db.toRussian
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-
-private fun TaskType.toRussian(): String = when (this) {
-    TaskType.FERTILIZE -> "Подкормить"
-    TaskType.PRUNE -> "Обрезать"
-    TaskType.TREAT -> "Обработать"
-    TaskType.WATER -> "Полить"
-    TaskType.HARVEST -> "Сбор урожая"
-    TaskType.OTHER -> "Другое"
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

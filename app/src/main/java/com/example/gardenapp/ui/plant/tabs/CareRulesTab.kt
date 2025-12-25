@@ -22,17 +22,9 @@ import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.icon
+import com.example.gardenapp.data.db.toRussian
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
 import java.time.format.DateTimeFormatter
-
-private fun TaskType.toRussian(): String = when (this) {
-    TaskType.FERTILIZE -> "Подкормить"
-    TaskType.PRUNE -> "Обрезать"
-    TaskType.TREAT -> "Обработать"
-    TaskType.WATER -> "Полить"
-    TaskType.HARVEST -> "Сбор урожая"
-    TaskType.OTHER -> "Другое"
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

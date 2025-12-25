@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.TaskStatus
-import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.TaskWithPlantInfo
 import com.example.gardenapp.data.db.icon
 import com.example.gardenapp.data.db.toRussian
