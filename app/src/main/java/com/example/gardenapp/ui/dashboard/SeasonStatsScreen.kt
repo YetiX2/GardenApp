@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -39,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.GardenType
 import com.example.gardenapp.data.db.ReferenceCultureEntity
+import com.example.gardenapp.ui.common.icon
 import com.example.gardenapp.ui.theme.GardenAppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -109,6 +111,7 @@ fun SeasonStatsScreen(
             items(statsByCulture) {
                 ListItem(
                     modifier = Modifier.clickable { it.representativePlantId?.let(onOpenPlant) },
+                    leadingContent = { Icon(painter = it.culture.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp)) },
                     headlineContent = {
                         Text(it.culture.title, fontWeight = FontWeight.Bold)
                     },
@@ -125,6 +128,7 @@ fun SeasonStatsScreen(
             items(statsByGarden) {
                 ListItem(
                     modifier = Modifier.clickable { onOpenGarden(it.garden.id) },
+                    leadingContent = { Icon(it.garden.type.icon, contentDescription = null) },
                     headlineContent = { Text(it.garden.name) },
                     supportingContent = { Text("${String.format(Locale.getDefault(), "%.1f", it.totalHarvest)} кг") }
                 )

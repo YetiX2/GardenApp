@@ -164,6 +164,7 @@ fun GardenPlanScreen(
                     childGardens = childGardens,
                     pendingTasks = pendingTasks, // ADDED
                     varieties = varieties,
+                    cultures = emptyList(), // This is not needed anymore
                     plantColor = colors.plant,
                     bedColor = colors.bed,
                     greenhouseColor = colors.greenhouse,
