@@ -112,7 +112,7 @@ fun SeasonStatsScreen(
             items(statsByCulture) {
                 ListItem(
                     modifier = Modifier.clickable { it.representativePlantId?.let(onOpenPlant) },
-                    leadingContent = { Icon(painter = it.culture.icon, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(24.dp)) },
+                    leadingContent = { Icon(painter = it.culture.icon, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(40.dp)) },
                     headlineContent = {
                         Text(it.culture.title, fontWeight = FontWeight.Bold)
                     },
