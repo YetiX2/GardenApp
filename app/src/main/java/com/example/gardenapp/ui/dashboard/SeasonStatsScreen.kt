@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -111,7 +112,7 @@ fun SeasonStatsScreen(
             items(statsByCulture) {
                 ListItem(
                     modifier = Modifier.clickable { it.representativePlantId?.let(onOpenPlant) },
-                    leadingContent = { Icon(painter = it.culture.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp)) },
+                    leadingContent = { Icon(painter = it.culture.icon, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(24.dp)) },
                     headlineContent = {
                         Text(it.culture.title, fontWeight = FontWeight.Bold)
                     },
