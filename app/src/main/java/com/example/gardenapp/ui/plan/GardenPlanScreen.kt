@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gardenapp.data.db.GardenEntity
 import com.example.gardenapp.data.db.PlantEntity
+import com.example.gardenapp.data.db.ReferenceCultureEntity
 import com.example.gardenapp.data.db.ReferenceVarietyEntity
 import com.example.gardenapp.data.db.TaskInstanceEntity
 import com.example.gardenapp.ui.theme.LocalIsDarkTheme
@@ -55,11 +56,13 @@ fun GardenPlanScreen(
     var childGardens by remember { mutableStateOf(emptyList<GardenEntity>()) }
     var pendingTasks by remember { mutableStateOf(emptyList<TaskInstanceEntity>()) }
     var varieties by remember { mutableStateOf(emptyList<ReferenceVarietyEntity>()) }
+    var cultures by remember { mutableStateOf(emptyList<ReferenceCultureEntity>()) }
 
     LaunchedEffect(gardenId) { vm.plantsFlow(gardenId).collectLatest { plants = it } }
     LaunchedEffect(gardenId) { vm.childGardensFlow(gardenId).collectLatest { childGardens = it } }
     LaunchedEffect(gardenId) { vm.getPendingTasksForGardens(gardenId).collectLatest { pendingTasks = it } }
     LaunchedEffect(Unit) { vm.getAllVarieties().collectLatest { varieties = it } }
+    LaunchedEffect(Unit) { vm.getAllCultures().collectLatest { cultures = it } }
 
     val state = rememberGardenPlanState(garden = garden, coroutineScope = scope)
 
@@ -164,7 +167,7 @@ fun GardenPlanScreen(
                     childGardens = childGardens,
                     pendingTasks = pendingTasks, // ADDED
                     varieties = varieties,
-                    cultures = emptyList(), // This is not needed anymore
+                    cultures = cultures,
                     plantColor = colors.plant,
                     bedColor = colors.bed,
                     greenhouseColor = colors.greenhouse,
@@ -229,6 +232,8 @@ fun GardenPlanScreen(
                 ) {
                     PlantListSheet(
                         plants = plants,
+                        varieties = varieties,
+                        cultures = cultures,
                         onPlantClick = { plant ->
                             showPlantList = false
                             onOpenPlant(plant.id)
