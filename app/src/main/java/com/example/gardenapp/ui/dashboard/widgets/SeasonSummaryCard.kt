@@ -56,17 +56,20 @@ fun SeasonSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Kpi("Активных растений", summary.activePlants.toString(), Icons.Default.Eco)
-                Kpi("Собрано за сезон", String.format(Locale.getDefault(), "%.1f кг", summary.totalHarvest), Icons.Default.ShoppingBasket)
-                Kpi("Удобрения и обработки", summary.totalTreatments.toString(), Icons.Default.Science)
+                Kpi("Активных растений", summary.activePlants.toString(), Icons.Default.Eco, modifier = Modifier.weight(1f))
+                Kpi("Собрано за сезон", String.format(Locale.getDefault(), "%.1f кг", summary.totalHarvest), Icons.Default.ShoppingBasket, modifier = Modifier.weight(1f))
+                Kpi("Удобрения и обработки", summary.totalTreatments.toString(), Icons.Default.Science, modifier = Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun Kpi(label: String, value: String, icon: ImageVector) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun Kpi(label: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(8.dp))
         Text(value, style = MaterialTheme.typography.headlineMedium)
