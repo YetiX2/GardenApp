@@ -42,6 +42,7 @@ import com.example.gardenapp.data.db.ReferenceCultureEntity
 import com.example.gardenapp.ui.theme.GardenAppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.time.LocalDate
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,10 +59,12 @@ fun SeasonStatsScreen(
 
     var selectedFilter by remember { mutableStateOf("Урожай") }
 
+    val currentYear = LocalDate.now().year
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Статистика сезона") },
+                title = { Text("Статистика сезона $currentYear") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")

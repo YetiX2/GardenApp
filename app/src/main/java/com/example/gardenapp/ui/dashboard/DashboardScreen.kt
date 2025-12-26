@@ -177,7 +177,7 @@ fun DashboardScreen(
                         onGrantPermission = { context.startActivity(settingsIntent) }
                     ) 
                 }
-                item { SeasonSummaryCard(summary = seasonSummary, onDetailsClick = onSeasonStatsClick) }
+                item { SeasonSummaryCard(summary = seasonSummary, onClick = onSeasonStatsClick) }
                 item { TodayTasksCard(tasks = allTasks, onOpenTasks = onOpenTasks, onPlantClick = onOpenPlant) }
                 item { MyGardensCard(gardens = gardens, onOpenGardens = onOpenGardens) }
                 item { AdCard() }
