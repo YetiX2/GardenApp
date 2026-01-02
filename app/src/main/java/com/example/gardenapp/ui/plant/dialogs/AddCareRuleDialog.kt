@@ -42,7 +42,7 @@ fun AddCareRuleDialog(
     var endDate by remember { mutableStateOf(initialRule?.endDate) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
-    val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
+    val formatter = DateTimeFormatter.ofPattern("dd MMMM")
 
     val title = if (initialRule == null) "Новое правило ухода" else "Редактировать правило"
     val showAmount = selectedType in listOf(TaskType.FERTILIZE, TaskType.WATER, TaskType.TREAT)

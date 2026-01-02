@@ -44,10 +44,23 @@ class CareTaskWorker @AssistedInject constructor(
                 val periodStartDate = rule.startDate ?: plant.plantedAt
                 val periodEndDate = rule.endDate
 
-                // Check if the rule is active today
-                val isAfterStartDate = today.isAfter(periodStartDate.minusDays(1))
-                val isBeforeEndDate = periodEndDate == null || today.isBefore(periodEndDate.plusDays(1))
-                val ruleIsActive = isAfterStartDate && isBeforeEndDate
+                val ruleIsActive = if (periodStartDate != null && periodEndDate != null) {
+                    // Season-based rule (day and month matter)
+                    val todayMonthDay = today.withYear(2000) // Use a common year to compare month and day
+                    val startMonthDay = periodStartDate.withYear(2000)
+                    val endMonthDay = periodEndDate.withYear(2000)
+
+                    if (startMonthDay.isAfter(endMonthDay)) { // Rule wraps around the new year (e.g., Nov - Feb)
+                        !todayMonthDay.isBefore(startMonthDay) || !todayMonthDay.isAfter(endMonthDay)
+                    } else { // Rule is within the same year (e.g., Mar - Oct)
+                        !todayMonthDay.isBefore(startMonthDay) && !todayMonthDay.isAfter(endMonthDay)
+                    }
+                } else {
+                    // Rule without a specific period, always active from planting date
+                    val startDate = rule.startDate ?: plant.plantedAt
+                    !today.isBefore(startDate)
+                }
+
 
                 if (ruleIsActive) {
                     rule.everyDays?.let { days ->
