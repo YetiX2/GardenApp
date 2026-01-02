@@ -2,6 +2,7 @@ package com.example.gardenapp.ui.plant.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
@@ -114,35 +116,56 @@ fun AddCareRuleDialog(
                 }
                 OutlinedTextField(value = days, onValueChange = { days = it.filter(Char::isDigit) }, label = { Text("Повторять каждые (дней)") })
 
-                OutlinedTextField(
-                    value = startDate?.format(formatter) ?: "С даты посадки",
-                    onValueChange = { },
-                    label = { Text("Начало периода") },
-                    readOnly = true,
-                    modifier = Modifier.fillMaxWidth().clickable { showStartDatePicker = true },
-                    trailingIcon = {
-                        if (startDate != null) {
-                            IconButton(onClick = { startDate = null }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+                Box {
+                    OutlinedTextField(
+                        value = startDate?.format(formatter) ?: "С даты посадки",
+                        onValueChange = { },
+                        label = { Text("Начало периода") },
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            if (startDate != null) {
+                                IconButton(onClick = { startDate = null }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+                                }
                             }
-                        }
-                    }
-                )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledContainerColor = Color.Transparent,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    Box(modifier = Modifier.matchParentSize().clickable { showStartDatePicker = true })
+                }
 
-                OutlinedTextField(
-                    value = endDate?.format(formatter) ?: "Бессрочно",
-                    onValueChange = {},
-                    label = { Text("Конец периода") },
-                    readOnly = true,
-                    modifier = Modifier.fillMaxWidth().clickable { showEndDatePicker = true },
-                    trailingIcon = {
-                        if (endDate != null) {
-                            IconButton(onClick = { endDate = null }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+
+                Box {
+                    OutlinedTextField(
+                        value = endDate?.format(formatter) ?: "Бессрочно",
+                        onValueChange = {},
+                        label = { Text("Конец периода") },
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            if (endDate != null) {
+                                IconButton(onClick = { endDate = null }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+                                }
                             }
-                        }
-                    }
-                )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledContainerColor = Color.Transparent,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    Box(modifier = Modifier.matchParentSize().clickable { showEndDatePicker = true })
+                }
 
                 if (showAmount) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
