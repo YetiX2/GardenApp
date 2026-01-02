@@ -12,7 +12,7 @@ import androidx.room.TypeConverters
         ReferenceGroupEntity::class, ReferenceCultureEntity::class, ReferenceVarietyEntity::class,
         ReferenceTagEntity::class, ReferenceRegionEntity::class, ReferenceCultivationEntity::class
     ],
-    version = 7, // BUMPED VERSION
+    version = 8, // ВЕРСИЯ УВЕЛИЧЕНА
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -20,11 +20,13 @@ import androidx.room.TypeConverters
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
-        AutoMigration(from = 6, to = 7)
+        AutoMigration(from = 6, to = 7), // Старая миграция
+        AutoMigration(from = 7, to = 8)  // Новая автоматическая миграция
     ]
 )
 @TypeConverters(Converters::class)
 abstract class GardenDatabase : RoomDatabase() {
+
     abstract fun gardenDao(): GardenDao
     abstract fun plantDao(): PlantDao
     abstract fun ruleDao(): RuleDao

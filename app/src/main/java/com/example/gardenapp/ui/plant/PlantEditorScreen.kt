@@ -22,6 +22,7 @@ import com.example.gardenapp.ui.plant.dialogs.AddHarvestLogDialog
 import com.example.gardenapp.ui.plant.tabs.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -87,8 +88,8 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
     if (showAddCareRuleDialog) {
         AddCareRuleDialog(
             onDismiss = { showAddCareRuleDialog = false },
-            onAddRule = { type, days, note, amount, unit ->
-                vm.addCareRule(type, days, note, amount, unit)
+            onAddRule = { type, days, note, amount, unit, startDate, endDate ->
+                vm.addCareRule(type, days, note, amount, unit, startDate, endDate)
                 showAddCareRuleDialog = false
             }
         )
@@ -131,7 +132,7 @@ fun PlantEditorScreen(onBack: () -> Unit, vm: PlantEditorVm = hiltViewModel()) {
                         3 -> HarvestLogTab(logs = harvestLogs, onAdd = { showAddHarvestDialog = true }, onDelete = { vm.deleteHarvestLog(it) })
                         4 -> CareRulesTab(
                             rules = careRules, 
-                            onAddRule = { type, days, note, amount, unit -> vm.addCareRule(type, days, note, amount, unit) },
+                            onAddRule = { showAddCareRuleDialog = true },
                             onUpdateRule = { rule -> vm.updateCareRule(rule) }, 
                             onDeleteRule = { rule -> vm.deleteCareRule(rule) }
                         )

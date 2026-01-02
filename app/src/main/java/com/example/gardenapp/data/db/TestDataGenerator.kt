@@ -103,8 +103,17 @@ class TestDataGenerator @Inject constructor(
             }
             ruleDao.upsert(
                 CareRuleEntity(
-                    UUID.randomUUID().toString(), plant.id, taskTypes.random(), LocalDate.now().minusWeeks(2),
-                    Random.nextInt(3, 30), null
+                    id = UUID.randomUUID().toString(),
+                    plantId = plant.id,
+                    type = taskTypes.random(),
+                    start = LocalDate.now().minusWeeks(2),
+                    startDate = null,
+                    endDate = null,
+                    everyDays = Random.nextInt(3, 30),
+                    everyMonths = null,
+                    note = null,
+                    amount = null,
+                    unit = null
                 )
             )
         }

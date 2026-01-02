@@ -24,21 +24,21 @@ import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.icon
 import com.example.gardenapp.data.db.toRussian
 import com.example.gardenapp.ui.plant.dialogs.AddCareRuleDialog
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CareRulesTab(
     rules: List<CareRuleEntity>,
-    onAddRule: (TaskType, Int, String?, Float?, String?) -> Unit,
+    onAddRule: () -> Unit,
     onUpdateRule: (CareRuleEntity) -> Unit,
     onDeleteRule: (CareRuleEntity) -> Unit
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
     var ruleToEdit by remember { mutableStateOf<CareRuleEntity?>(null) }
 
     Scaffold(
-        floatingActionButton = { FloatingActionButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, null) } }
+        floatingActionButton = { FloatingActionButton(onClick = onAddRule) { Icon(Icons.Default.Add, null) } }
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
@@ -70,7 +70,10 @@ fun CareRulesTab(
                             headlineContent = { Text("${rule.type.toRussian()} $everyText") },
                             supportingContent = {
                                 Column {
-                                    Text("Начиная с ${rule.start.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                                    val formatter = DateTimeFormatter.ofPattern("dd.MM.yy")
+                                    val start = rule.startDate?.format(formatter) ?: "с посадки"
+                                    val end = rule.endDate?.format(formatter) ?: "бессрочно"
+                                    Text("Период: $start - $end")
                                     rule.note?.let {
                                         Text(
                                             text = it,
@@ -104,22 +107,22 @@ fun CareRulesTab(
         }
     }
 
-    if (showAddDialog) {
-        AddCareRuleDialog(
-            onDismiss = { showAddDialog = false },
-            onAddRule = { type, days, note, amount, unit ->
-                onAddRule(type, days, note, amount, unit)
-                showAddDialog = false
-            }
-        )
-    }
-
     ruleToEdit?.let { rule ->
         AddCareRuleDialog(
             initialRule = rule,
             onDismiss = { ruleToEdit = null },
-            onAddRule = { type, days, note, amount, unit ->
-                onUpdateRule(rule.copy(type = type, everyDays = days, note = note, amount = amount, unit = unit))
+            onAddRule = { type, days, note, amount, unit, startDate, endDate ->
+                onUpdateRule(
+                    rule.copy(
+                        type = type,
+                        everyDays = days,
+                        note = note,
+                        amount = amount,
+                        unit = unit,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                )
                 ruleToEdit = null
             }
         )

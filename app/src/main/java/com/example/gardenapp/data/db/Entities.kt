@@ -75,11 +75,13 @@ data class CareRuleEntity(
     @PrimaryKey val id: String,
     val plantId: String,
     val type: TaskType,
-    val start: LocalDate,
+    val start: LocalDate, // Дата создания
+    val startDate: LocalDate? = null, // Начало периода действия
+    val endDate: LocalDate? = null, // Конец периода действия
     val everyDays: Int?,
     val everyMonths: Int? = null,
     val note: String? = null,
-    val amount: Float? = null, 
+    val amount: Float? = null,
     val unit: String? = null
 )
 

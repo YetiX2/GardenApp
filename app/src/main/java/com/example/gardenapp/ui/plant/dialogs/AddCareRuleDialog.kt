@@ -1,9 +1,12 @@
 package com.example.gardenapp.ui.plant.dialogs
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,13 +15,17 @@ import com.example.gardenapp.data.db.CareRuleEntity
 import com.example.gardenapp.data.db.TaskType
 import com.example.gardenapp.data.db.icon
 import com.example.gardenapp.data.db.toRussian
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCareRuleDialog(
     initialRule: CareRuleEntity? = null,
     onDismiss: () -> Unit,
-    onAddRule: (TaskType, Int, String?, Float?, String?) -> Unit // UPDATED signature
+    onAddRule: (TaskType, Int, String?, Float?, String?, LocalDate?, LocalDate?) -> Unit
 ) {
     var selectedType by remember { mutableStateOf(initialRule?.type ?: TaskType.WATER) }
     var typeMenuExpanded by remember { mutableStateOf(false) }
@@ -28,8 +35,57 @@ fun AddCareRuleDialog(
     var unit by remember { mutableStateOf(initialRule?.unit ?: "г") }
     var unitMenuExpanded by remember { mutableStateOf(false) }
 
+    // Date state
+    var startDate by remember { mutableStateOf(initialRule?.startDate) }
+    var endDate by remember { mutableStateOf(initialRule?.endDate) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+    val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
+
     val title = if (initialRule == null) "Новое правило ухода" else "Редактировать правило"
     val showAmount = selectedType in listOf(TaskType.FERTILIZE, TaskType.WATER, TaskType.TREAT)
+
+    // Hoisted DatePicker state
+    val startDatePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = (startDate ?: LocalDate.now()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    )
+    val endDatePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = endDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+    )
+
+    if (showStartDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showStartDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    startDatePickerState.selectedDateMillis?.let {
+                        startDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                    }
+                    showStartDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showStartDatePicker = false }) { Text("Отмена") } }
+        ) {
+            DatePicker(state = startDatePickerState)
+        }
+    }
+
+    if (showEndDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showEndDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    endDatePickerState.selectedDateMillis?.let {
+                        endDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                    }
+                    showEndDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showEndDatePicker = false }) { Text("Отмена") } }
+        ) {
+            DatePicker(state = endDatePickerState)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -57,6 +113,36 @@ fun AddCareRuleDialog(
                     }
                 }
                 OutlinedTextField(value = days, onValueChange = { days = it.filter(Char::isDigit) }, label = { Text("Повторять каждые (дней)") })
+
+                OutlinedTextField(
+                    value = startDate?.format(formatter) ?: "С даты посадки",
+                    onValueChange = { },
+                    label = { Text("Начало периода") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().clickable { showStartDatePicker = true },
+                    trailingIcon = {
+                        if (startDate != null) {
+                            IconButton(onClick = { startDate = null }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+                            }
+                        }
+                    }
+                )
+
+                OutlinedTextField(
+                    value = endDate?.format(formatter) ?: "Бессрочно",
+                    onValueChange = {},
+                    label = { Text("Конец периода") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().clickable { showEndDatePicker = true },
+                    trailingIcon = {
+                        if (endDate != null) {
+                            IconButton(onClick = { endDate = null }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Очистить дату")
+                            }
+                        }
+                    }
+                )
 
                 if (showAmount) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -95,7 +181,7 @@ fun AddCareRuleDialog(
                 onClick = {
                     val daysInt = days.toIntOrNull()
                     if (daysInt != null) {
-                        onAddRule(selectedType, daysInt, note.ifBlank { null }, amount.toFloatOrNull(), if(showAmount) unit else null)
+                        onAddRule(selectedType, daysInt, note.ifBlank { null }, amount.toFloatOrNull(), if(showAmount) unit else null, startDate, endDate)
                     }
                 },
                 enabled = days.isNotBlank()

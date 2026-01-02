@@ -117,9 +117,17 @@ class PlantEditorVm @Inject constructor(
         }
     }
 
-    fun addCareRule(type: TaskType, everyDays: Int, note: String?, amount: Float?, unit: String?) {
+    fun addCareRule(
+        type: TaskType,
+        everyDays: Int,
+        note: String?,
+        amount: Float?,
+        unit: String?,
+        startDate: LocalDate?,
+        endDate: LocalDate?
+    ) {
         viewModelScope.launch {
-            repo.addCareRule(plantId, type, LocalDate.now(), everyDays, null, note, amount, unit)
+            repo.addCareRule(plantId, type, LocalDate.now(), startDate, endDate, everyDays, null, note, amount, unit)
             _eventFlow.emit(UiEvent.ShowSnackbar("Правило ухода добавлено"))
         }
     }

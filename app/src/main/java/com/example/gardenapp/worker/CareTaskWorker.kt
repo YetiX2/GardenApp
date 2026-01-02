@@ -35,16 +35,37 @@ class CareTaskWorker @AssistedInject constructor(
             }
 
             var tasksCreatedCount = 0
-            allRules.forEach { rule ->
-                rule.everyDays?.let { days ->
-                    val lastTask = repository.getLatestTaskForRule(rule.id)
-                    val lastTaskDate = lastTask?.due?.toLocalDate() ?: rule.start
-                    val nextTaskDate = lastTaskDate.plusDays(days.toLong())
+            val today = LocalDate.now()
 
-                    if (!nextTaskDate.isAfter(LocalDate.now())) {
-                        Log.d(TAG, "Creating task for rule: ${rule.id}")
-                        repository.createTaskFromRule(rule, nextTaskDate.atStartOfDay())
-                        tasksCreatedCount++
+            for (rule in allRules) {
+                val plant = repository.getPlant(rule.plantId) ?: continue
+
+                // Determine the active period for the rule
+                val periodStartDate = rule.startDate ?: plant.plantedAt
+                val periodEndDate = rule.endDate
+
+                // Check if the rule is active today
+                val isAfterStartDate = today.isAfter(periodStartDate.minusDays(1))
+                val isBeforeEndDate = periodEndDate == null || today.isBefore(periodEndDate.plusDays(1))
+                val ruleIsActive = isAfterStartDate && isBeforeEndDate
+
+                if (ruleIsActive) {
+                    rule.everyDays?.let { days ->
+                        val lastTask = repository.getLatestTaskForRule(rule.id)
+                        // The date to calculate from is either the last task's date or the start of the active period.
+                        val lastTaskDate = lastTask?.due?.toLocalDate() ?: periodStartDate
+                        var nextTaskDate = lastTaskDate.plusDays(days.toLong())
+
+                        // If the calculated next task date is before the period starts, adjust it to the period start date.
+                        if (nextTaskDate.isBefore(periodStartDate)) {
+                            nextTaskDate = periodStartDate
+                        }
+
+                        if (!nextTaskDate.isAfter(today)) {
+                            Log.d(TAG, "Creating task for rule: ${rule.id} for date $nextTaskDate")
+                            repository.createTaskFromRule(rule, nextTaskDate.atStartOfDay())
+                            tasksCreatedCount++
+                        }
                     }
                 }
             }
